@@ -4,14 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>記事簿</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#3A6B5E">
-<link rel="icon" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-192.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="記事簿">
 <script src="https://accounts.google.com/gsi/client" async defer onload="initGoogleSignIn()"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
 <style>
   :root{
     --bg:#FAFAFA;
@@ -536,6 +532,7 @@
    資料層
 ============================================================ */
 let currentEmail = null;
+let currentStorageKey = null;
 let data = null;
 let ui = { catId:'overview', mainView:'list', filter:'all', calDate:new Date(), weekDate:new Date(), selectedDate:null, expanded:{}, habitDate:null };
 
@@ -759,9 +756,9 @@ function getDayInfo(y,m,d){
   return { lunarText: lunar.text, festival, holiday, isWeekend: (dow===0||dow===6) };
 }
 
-async function loadData(email){
+async function loadData(storageKey){
   try{
-    const res = await window.storage.get(keyFor(email));
+    const res = await storageGet(storageKey);
     data = res ? JSON.parse(res.value) : defaultData();
   }catch(e){ data = defaultData(); }
   delete data.theme;
@@ -796,8 +793,8 @@ let saveTimer=null;
 function persist(){
   clearTimeout(saveTimer);
   saveTimer = setTimeout(async ()=>{
-    try{ await window.storage.set(keyFor(currentEmail), JSON.stringify(data)); }
-    catch(e){ console.error('儲存失敗', e); }
+    const ok = await storageSet(currentStorageKey, JSON.stringify(data));
+    if(!ok) console.error('儲存失敗');
   }, 250);
 }
 
@@ -822,6 +819,54 @@ function confirmModalOk(){
 function notify(message){
   document.getElementById('alertModalBody').textContent = message;
   document.getElementById('alertModal').classList.add('show');
+}
+
+/* ============================================================
+   Firebase（跨裝置雲端同步）
+   到 https://console.firebase.google.com 建立專案（可以直接選用你
+   剛剛那個 Google Cloud 專案），加入一個「網頁應用程式」，把它給你
+   的設定值填進下面的 FIREBASE_CONFIG，並啟用 Firestore Database。
+============================================================ */
+const FIREBASE_CONFIG = {
+  apiKey: "YOUR_FIREBASE_API_KEY",
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+let fbDb = null;
+function isFirebaseConfigured(){
+  return FIREBASE_CONFIG.apiKey && !FIREBASE_CONFIG.apiKey.startsWith('YOUR_');
+}
+function initFirebase(){
+  if(!isFirebaseConfigured() || !window.firebase) return;
+  try{
+    firebase.initializeApp(FIREBASE_CONFIG);
+    fbDb = firebase.firestore();
+  }catch(e){ console.error('Firebase 初始化失敗', e); }
+}
+async function storageGet(key){
+  if(fbDb){
+    try{
+      const snap = await fbDb.collection('userdata').doc(key).get();
+      return snap.exists ? { key, value: snap.data().value } : null;
+    }catch(e){ console.error('Firestore 讀取失敗', e); return null; }
+  }
+  if(window.storage){
+    try{ return await window.storage.get(key); }catch(e){ return null; }
+  }
+  return null;
+}
+async function storageSet(key, value){
+  if(fbDb){
+    try{ await fbDb.collection('userdata').doc(key).set({ value }); return true; }
+    catch(e){ console.error('Firestore 寫入失敗', e); return false; }
+  }
+  if(window.storage){
+    try{ await window.storage.set(key, value); return true; }catch(e){ return false; }
+  }
+  return false;
 }
 
 /* ============================================================
@@ -852,19 +897,28 @@ function base64UrlDecode(str){
 async function handleGoogleCredentialResponse(response){
   try{
     const payload = JSON.parse(base64UrlDecode(response.credential.split('.')[1]));
-    await proceedLogin(payload.name || payload.email, payload.email);
+    let storageKey = keyFor(payload.email);
+    if(fbDb && window.firebase && firebase.auth){
+      try{
+        const credential = firebase.auth.GoogleAuthProvider.credential(response.credential);
+        const result = await firebase.auth().signInWithCredential(credential);
+        storageKey = result.user.uid;
+      }catch(e){ console.error('Firebase Auth 登入失敗，改用本機儲存', e); }
+    }
+    await proceedLogin(payload.name || payload.email, payload.email, storageKey);
     enterAppDirectly();
   }catch(e){
     notify('Google 登入解析失敗，請重新嘗試。');
   }
 }
 
-async function proceedLogin(name, email){
+async function proceedLogin(name, email, storageKey){
   currentEmail = email;
-  await loadData(email);
+  currentStorageKey = storageKey || keyFor(email);
+  await loadData(currentStorageKey);
   document.getElementById('accName').textContent = name;
   document.getElementById('accEmail').textContent = email;
-  try{ await window.storage.set('lastAccount', JSON.stringify({name,email}), false); }catch(e){}
+  try{ localStorage.setItem('lastAccount', JSON.stringify({name, email, storageKey: currentStorageKey})); }catch(e){}
 }
 
 async function doLogin(){
@@ -872,7 +926,7 @@ async function doLogin(){
   const email = document.getElementById('gEmail').value.trim() || (name+'@example.com');
   const btn = document.getElementById('googleConfirmBtn');
   btn.disabled = true; btn.textContent = '登入中...';
-  await proceedLogin(name, email);
+  await proceedLogin(name, email, keyFor(email));
   btn.disabled = false; btn.textContent = '繼續';
   closeModal('googleModal');
   enterAppDirectly();
@@ -883,10 +937,10 @@ async function continueLast(){
   const originalText = btn.textContent;
   btn.disabled = true; btn.textContent = '登入中...';
   try{
-    const res = await window.storage.get('lastAccount');
-    if(res){
-      const {name,email} = JSON.parse(res.value);
-      await proceedLogin(name, email);
+    const raw = localStorage.getItem('lastAccount');
+    if(raw){
+      const {name, email, storageKey} = JSON.parse(raw);
+      await proceedLogin(name, email, storageKey);
       enterAppDirectly();
     }
   }catch(e){}
@@ -906,7 +960,10 @@ function enterAppDirectly(){
 }
 
 function logout(){
-  currentEmail = null; data = null; ui.catId='overview'; ui.mainView='list';
+  currentEmail = null; currentStorageKey = null; data = null; ui.catId='overview'; ui.mainView='list';
+  if(fbDb && window.firebase && firebase.auth && firebase.auth().currentUser){
+    firebase.auth().signOut().catch(()=>{});
+  }
   document.getElementById('appShell').style.display='none';
   document.getElementById('sidePanel').classList.remove('open');
   document.getElementById('sideBackdrop').classList.remove('open');
@@ -919,22 +976,26 @@ function logout(){
 window.addEventListener('resize', ()=>{
   updateBottomNavIndicator();
 });
-if('serviceWorker' in navigator){
-  window.addEventListener('load', ()=>{
-    navigator.serviceWorker.register('service-worker.js').catch(()=>{});
-  });
-}
-
 window.addEventListener('DOMContentLoaded', async ()=>{
   try{
-    const res = await window.storage.get('lastAccount');
-    if(res){
-      const {name} = JSON.parse(res.value);
+    const raw = localStorage.getItem('lastAccount');
+    if(raw){
+      const {name} = JSON.parse(raw);
       const btn = document.getElementById('continueBtn');
       btn.textContent = '以「'+name+'」繼續';
       btn.style.display='block';
     }
   }catch(e){}
+
+  initFirebase();
+  if(fbDb && window.firebase && firebase.auth){
+    firebase.auth().onAuthStateChanged(async (user)=>{
+      if(user && !currentStorageKey){
+        await proceedLogin(user.displayName || user.email, user.email, user.uid);
+        enterAppDirectly();
+      }
+    });
+  }
 });
 
 /* ============================================================
