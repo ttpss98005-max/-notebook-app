@@ -790,12 +790,35 @@ async function loadData(storageKey){
 }
 
 let saveTimer=null;
+let lastWrittenValue = null;
 function persist(){
   clearTimeout(saveTimer);
   saveTimer = setTimeout(async ()=>{
-    const ok = await storageSet(currentStorageKey, JSON.stringify(data));
+    const json = JSON.stringify(data);
+    lastWrittenValue = json;
+    const ok = await storageSet(currentStorageKey, json);
     if(!ok) console.error('儲存失敗');
   }, 250);
+}
+
+let unsubscribeSnapshot = null;
+function startRealtimeSync(storageKey){
+  if(!fbDb) return;
+  if(unsubscribeSnapshot){ unsubscribeSnapshot(); unsubscribeSnapshot = null; }
+  unsubscribeSnapshot = fbDb.collection('userdata').doc(storageKey).onSnapshot((snap)=>{
+    if(!snap.exists) return;
+    const remote = snap.data().value;
+    if(remote === lastWrittenValue) return;
+    try{
+      data = JSON.parse(remote);
+      lastWrittenValue = remote;
+      refreshCurrentView();
+    }catch(e){ console.error('即時同步資料解析失敗', e); }
+  }, (err)=>{ console.error('即時同步監聽失敗', err); });
+}
+function refreshCurrentView(){
+  renderTabs();
+  switchMainView(ui.mainView);
 }
 
 /* ============================================================
@@ -916,6 +939,7 @@ async function proceedLogin(name, email, storageKey){
   currentEmail = email;
   currentStorageKey = storageKey || keyFor(email);
   await loadData(currentStorageKey);
+  startRealtimeSync(currentStorageKey);
   document.getElementById('accName').textContent = name;
   document.getElementById('accEmail').textContent = email;
   try{ localStorage.setItem('lastAccount', JSON.stringify({name, email, storageKey: currentStorageKey})); }catch(e){}
@@ -961,6 +985,7 @@ function enterAppDirectly(){
 
 function logout(){
   currentEmail = null; currentStorageKey = null; data = null; ui.catId='overview'; ui.mainView='list';
+  if(unsubscribeSnapshot){ unsubscribeSnapshot(); unsubscribeSnapshot = null; }
   if(fbDb && window.firebase && firebase.auth && firebase.auth().currentUser){
     firebase.auth().signOut().catch(()=>{});
   }
