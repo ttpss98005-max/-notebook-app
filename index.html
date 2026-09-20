@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>記事簿</title>
+<link rel="preconnect" href="https://accounts.google.com">
+<link rel="dns-prefetch" href="https://accounts.google.com">
 <script src="https://accounts.google.com/gsi/client" async defer onload="initGoogleSignIn()"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
@@ -296,7 +298,9 @@
   <div class="stage show" id="stageLogin">
     <div class="login-anim"><span></span><span></span><span></span></div>
     <h1>記事簿</h1>
-    <div id="gsiButtonContainer" style="display:flex;justify-content:center;min-height:44px;margin-bottom:2px;"></div>
+    <div id="gsiButtonContainer" style="display:flex;justify-content:center;align-items:center;min-height:44px;margin-bottom:2px;">
+      <div class="login-anim" id="gsiLoadingAnim" style="margin:0;"><span></span><span></span><span></span></div>
+    </div>
     <button class="continue-btn" id="continueBtn" style="display:none" onclick="continueLast()">以上次帳號繼續</button>
     <div class="login-note" id="loginNote" style="display:none">Google 登入元件載入失敗，請檢查網路連線後重新整理頁面。</div>
   </div>
@@ -421,6 +425,7 @@
   <div class="modal daily-brief-modal" onclick="event.stopPropagation()">
     <div id="dailyBriefContent"></div>
     <button class="btn-primary" style="width:100%;margin-top:16px;" onclick="closeDailyBrief()">開始今天</button>
+    <button class="text-btn" style="width:100%;margin-top:8px;text-align:center;" onclick="closeDailyBrief()">今天不再提醒</button>
   </div>
 </div>
 
@@ -756,10 +761,13 @@ let saveTimer=null;
 let lastWrittenValue = null;
 function persist(){
   clearTimeout(saveTimer);
+  const keyAtScheduleTime = currentStorageKey;
+  const dataAtScheduleTime = data;
   saveTimer = setTimeout(async ()=>{
-    const json = JSON.stringify(data);
+    if(!keyAtScheduleTime) return;
+    const json = JSON.stringify(dataAtScheduleTime);
     lastWrittenValue = json;
-    const ok = await storageSet(currentStorageKey, json);
+    const ok = await storageSet(keyAtScheduleTime, json);
     if(!ok) console.error('儲存失敗');
   }, 250);
 }
@@ -864,14 +872,17 @@ const GOOGLE_CLIENT_ID = '826476371547-f1omvto42ta1s5t7knkph573a74cm89i.apps.goo
 
 function initGoogleSignIn(){
   if(!window.google || !google.accounts || !google.accounts.id){
+    const anim = document.getElementById('gsiLoadingAnim'); if(anim) anim.remove();
     document.getElementById('loginNote').style.display = 'block';
     return;
   }
   try{
     google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: handleGoogleCredentialResponse });
+    const anim = document.getElementById('gsiLoadingAnim'); if(anim) anim.remove();
     google.accounts.id.renderButton(document.getElementById('gsiButtonContainer'), { theme:'outline', size:'large', shape:'pill', width:280 });
   }catch(e){
     console.error('Google 登入初始化失敗', e);
+    const anim = document.getElementById('gsiLoadingAnim'); if(anim) anim.remove();
     document.getElementById('loginNote').style.display = 'block';
   }
 }
@@ -1004,7 +1015,8 @@ function switchMainView(v){
   if(v==='habits') setHabitTab('checkin');
   if(v==='quicknotes'){
     renderQuickNoteWall();
-    setTimeout(()=>{ const inp=document.getElementById('quickNoteInput'); if(inp) inp.focus(); }, 50);
+    const inp = document.getElementById('quickNoteInput');
+    if(inp) inp.focus();
   }
 }
 function updateBottomNavIndicator(){
@@ -1771,6 +1783,12 @@ function renderHabitStats(){
 /* ============================================================
    隨手記
 ============================================================ */
+const QUICKNOTE_COLORS = ['#FFF3B0','#FFD9C2','#FFC9DE','#E4D8FF','#C9E7FF','#C3F0D0','#FFE8A3','#D9F2E6'];
+function quickNoteColor(id){
+  let hash = 0;
+  for(let i=0;i<id.length;i++) hash = (hash*31 + id.charCodeAt(i)) % QUICKNOTE_COLORS.length;
+  return QUICKNOTE_COLORS[Math.abs(hash)];
+}
 function renderQuickNoteWall(){
   const wall = document.getElementById('quickNoteWall');
   if(!wall) return;
@@ -1783,7 +1801,7 @@ function renderQuickNoteWall(){
     const d = new Date(n.createdAt);
     const pad = x=>String(x).padStart(2,'0');
     const label = `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-    return `<div class="quicknote-card" style="transform:rotate(${rotate}deg)">
+    return `<div class="quicknote-card" style="transform:rotate(${rotate}deg);background:${quickNoteColor(n.id)}">
       <button class="quicknote-del" onclick="deleteQuickNote('${n.id}')">×</button>
       <div class="quicknote-text">${escapeHtml(n.text)}</div>
       <div class="quicknote-time">${label}</div>
@@ -1808,7 +1826,7 @@ function deleteQuickNote(id){
 let quickNoteAnimTimer = null;
 function playStickAnimation(note){
   const layer = document.getElementById('quickNoteAnimLayer');
-  layer.innerHTML = `<div class="quicknote-flying" id="flyingNote">${escapeHtml(note.text)}</div>`;
+  layer.innerHTML = `<div class="quicknote-flying" id="flyingNote" style="background:${quickNoteColor(note.id)}">${escapeHtml(note.text)}</div>`;
   layer.classList.add('show');
   layer.onclick = skipQuickNoteAnimation;
   requestAnimationFrame(()=>{
@@ -1835,11 +1853,9 @@ function skipQuickNoteAnimation(){
 ============================================================ */
 function maybeShowDailyBrief(){
   const today = todayStr();
-  const flagKey = 'lastDailyBrief_' + currentStorageKey;
-  let lastShown = null;
-  try{ lastShown = localStorage.getItem(flagKey); }catch(e){}
-  if(lastShown === today) return;
-  try{ localStorage.setItem(flagKey, today); }catch(e){}
+  if(data.lastDailyBriefDate === today) return;
+  data.lastDailyBriefDate = today;
+  persist();
   showDailyBrief();
 }
 function showDailyBrief(){
