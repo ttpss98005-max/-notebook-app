@@ -301,7 +301,6 @@
     <div id="gsiButtonContainer" style="display:flex;justify-content:center;align-items:center;min-height:44px;margin-bottom:2px;">
       <div class="login-anim" id="gsiLoadingAnim" style="margin:0;"><span></span><span></span><span></span></div>
     </div>
-    <button class="continue-btn" id="continueBtn" style="display:none" onclick="continueLast()">以上次帳號繼續</button>
     <div class="login-note" id="loginNote" style="display:none">Google 登入元件載入失敗，請檢查網路連線後重新整理頁面。</div>
   </div>
 </div>
@@ -380,6 +379,13 @@
         </div>
       </div>
       <div class="setting-block">
+        <h3>每日提醒</h3>
+        <div class="row-inline" style="max-width:300px;">
+          <label style="margin:0;font-size:13px;">今天顯示每日提醒</label>
+          <button class="switch" id="dailyBriefSwitch" onclick="toggleDailyBriefSwitch()"></button>
+        </div>
+      </div>
+      <div class="setting-block">
         <h3>書籤</h3>
         <div class="bm-grid" id="bmGrid"></div>
       </div>
@@ -425,7 +431,7 @@
   <div class="modal daily-brief-modal" onclick="event.stopPropagation()">
     <div id="dailyBriefContent"></div>
     <button class="btn-primary" style="width:100%;margin-top:16px;" onclick="closeDailyBrief()">開始今天</button>
-    <button class="text-btn" style="width:100%;margin-top:8px;text-align:center;" onclick="closeDailyBrief()">今天不再提醒</button>
+    <button class="text-btn" style="width:100%;margin-top:8px;text-align:center;" onclick="dismissDailyBriefToday()">今天不再提醒</button>
   </div>
 </div>
 
@@ -895,19 +901,18 @@ function base64UrlDecode(str){
 
 async function handleGoogleCredentialResponse(response){
   try{
-    const payload = JSON.parse(base64UrlDecode(response.credential.split('.')[1]));
-    let storageKey = keyFor(payload.email);
     if(fbDb && window.firebase && firebase.auth){
-      try{
-        const credential = firebase.auth.GoogleAuthProvider.credential(response.credential);
-        const result = await firebase.auth().signInWithCredential(credential);
-        storageKey = result.user.uid;
-      }catch(e){ console.error('Firebase Auth 登入失敗，改用本機儲存', e); }
+      const credential = firebase.auth.GoogleAuthProvider.credential(response.credential);
+      await firebase.auth().signInWithCredential(credential);
+      // 交由下方的 onAuthStateChanged 統一負責進入 App，避免重複觸發
+    }else{
+      const payload = JSON.parse(base64UrlDecode(response.credential.split('.')[1]));
+      await proceedLogin(payload.name || payload.email, payload.email, keyFor(payload.email));
+      enterAppDirectly();
     }
-    await proceedLogin(payload.name || payload.email, payload.email, storageKey);
-    enterAppDirectly();
   }catch(e){
-    notify('Google 登入解析失敗，請重新嘗試。');
+    console.error('Google 登入失敗', e);
+    notify('Google 登入失敗，請重新嘗試。');
   }
 }
 
@@ -918,22 +923,6 @@ async function proceedLogin(name, email, storageKey){
   startRealtimeSync(currentStorageKey);
   document.getElementById('accName').textContent = name;
   document.getElementById('accEmail').textContent = email;
-  try{ localStorage.setItem('lastAccount', JSON.stringify({name, email, storageKey: currentStorageKey})); }catch(e){}
-}
-
-async function continueLast(){
-  const btn = document.getElementById('continueBtn');
-  const originalText = btn.textContent;
-  btn.disabled = true; btn.textContent = '登入中...';
-  try{
-    const raw = localStorage.getItem('lastAccount');
-    if(raw){
-      const {name, email, storageKey} = JSON.parse(raw);
-      await proceedLogin(name, email, storageKey);
-      enterAppDirectly();
-    }
-  }catch(e){}
-  btn.disabled = false; btn.textContent = originalText;
 }
 
 function enterAppDirectly(){
@@ -949,36 +938,33 @@ function enterAppDirectly(){
   }, 500);
 }
 
-function logout(){
+let isLoggingOut = false;
+async function logout(){
+  isLoggingOut = true;
   currentEmail = null; currentStorageKey = null; data = null; ui.catId='overview'; ui.mainView='list';
   if(unsubscribeSnapshot){ unsubscribeSnapshot(); unsubscribeSnapshot = null; }
-  if(fbDb && window.firebase && firebase.auth && firebase.auth().currentUser){
-    firebase.auth().signOut().catch(()=>{});
-  }
   document.getElementById('appShell').style.display='none';
+  if(fbDb && window.firebase && firebase.auth && firebase.auth().currentUser){
+    try{ await firebase.auth().signOut(); }catch(e){}
+  }
   const bs = document.getElementById('blackScreen');
   bs.style.display='flex'; bs.classList.remove('fade-out');
   document.getElementById('stageLogin').style.display='block';
   requestAnimationFrame(()=> document.getElementById('stageLogin').classList.add('show'));
+  const container = document.getElementById('gsiButtonContainer');
+  if(container) container.innerHTML = '';
+  initGoogleSignIn();
+  isLoggingOut = false;
 }
 
 window.addEventListener('resize', ()=>{
   updateBottomNavIndicator();
 });
 window.addEventListener('DOMContentLoaded', async ()=>{
-  try{
-    const raw = localStorage.getItem('lastAccount');
-    if(raw){
-      const {name} = JSON.parse(raw);
-      const btn = document.getElementById('continueBtn');
-      btn.textContent = '以「'+name+'」繼續';
-      btn.style.display='block';
-    }
-  }catch(e){}
-
   initFirebase();
   if(fbDb && window.firebase && firebase.auth){
     firebase.auth().onAuthStateChanged(async (user)=>{
+      if(isLoggingOut) return;
       if(user && !currentStorageKey){
         await proceedLogin(user.displayName || user.email, user.email, user.uid);
         enterAppDirectly();
@@ -1011,7 +997,7 @@ function switchMainView(v){
   if(v==='list') renderTaskList();
   if(v==='cal') renderCalendar();
   if(v==='week') renderWeek();
-  if(v==='settings'){ renderBookmarks(); renderSettings(); }
+  if(v==='settings'){ renderBookmarks(); renderSettings(); updateDailyBriefSwitch(); }
   if(v==='habits') setHabitTab('checkin');
   if(v==='quicknotes'){
     renderQuickNoteWall();
@@ -1853,9 +1839,7 @@ function skipQuickNoteAnimation(){
 ============================================================ */
 function maybeShowDailyBrief(){
   const today = todayStr();
-  if(data.lastDailyBriefDate === today) return;
-  data.lastDailyBriefDate = today;
-  persist();
+  if(data.dailyBriefDismissedDate === today) return;
   showDailyBrief();
 }
 function showDailyBrief(){
@@ -1882,6 +1866,31 @@ function showDailyBrief(){
 }
 function closeDailyBrief(){
   document.getElementById('dailyBriefOverlay').classList.remove('show');
+}
+function dismissDailyBriefToday(){
+  data.dailyBriefDismissedDate = todayStr();
+  persist();
+  updateDailyBriefSwitch();
+  closeDailyBrief();
+}
+function updateDailyBriefSwitch(){
+  const sw = document.getElementById('dailyBriefSwitch');
+  if(!sw) return;
+  const isOn = data.dailyBriefDismissedDate !== todayStr();
+  sw.classList.toggle('on', isOn);
+}
+function toggleDailyBriefSwitch(){
+  const today = todayStr();
+  if(data.dailyBriefDismissedDate === today){
+    data.dailyBriefDismissedDate = null;
+    persist();
+    updateDailyBriefSwitch();
+    showDailyBrief();
+  }else{
+    data.dailyBriefDismissedDate = today;
+    persist();
+    updateDailyBriefSwitch();
+  }
 }
 
 /* ============================================================
