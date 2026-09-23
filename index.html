@@ -301,6 +301,9 @@
   .recap-title{font-size:18px;font-weight:700;margin-bottom:16px;text-align:center;}
   .recap-next-btn{width:100%;margin-top:18px;}
   .recap-step{transition:opacity 2s ease, transform 2s ease;}
+  .brief-step{transition:opacity 1s ease;}
+  .brief-step.fade-out{opacity:0;}
+  .brief-step.fade-in-init{opacity:0;}
   .recap-step.fade-out{opacity:0;transform:translateY(-12px);}
   .recap-step.fade-in-init{opacity:0;transform:translateY(12px);}
   .mood-row{display:flex;gap:10px;justify-content:center;margin-bottom:16px;}
@@ -330,7 +333,7 @@
   .morning-text{font-size:19px;font-weight:700;text-align:center;line-height:1.7;margin-bottom:6px;}
 
   .daily-brief-modal{max-width:340px;animation:briefPop .4s cubic-bezier(.34,1.56,.64,1);}
-  #dailyBriefOverlay{transition:opacity 2s ease;}
+  #dailyBriefOverlay{transition:opacity 1s ease;}
   #dailyBriefOverlay.fading-out{opacity:0;}
   @keyframes briefPop{from{opacity:0;transform:scale(.85) translateY(10px);} to{opacity:1;transform:scale(1) translateY(0);}}
   .brief-section{margin-bottom:14px;}
@@ -475,6 +478,10 @@
           <label style="margin:0;font-size:13px;">今天顯示每日提醒</label>
           <button class="switch" id="dailyBriefSwitch" onclick="toggleDailyBriefSwitch()"></button>
         </div>
+        <div class="row-inline" style="max-width:300px;margin-top:10px;">
+          <label style="margin:0;font-size:13px;">每次登入都顯示早安動畫</label>
+          <button class="switch" id="morningGreetingSwitch" onclick="toggleMorningGreetingSwitch()"></button>
+        </div>
       </div>
       <div class="setting-block">
         <h3>回顧小結</h3>
@@ -569,7 +576,7 @@
 <!-- ================= 每日提醒動畫 ================= -->
 <div class="overlay" id="dailyBriefOverlay" onclick="closeDailyBrief()">
   <div class="modal daily-brief-modal" onclick="event.stopPropagation()">
-    <div id="morningGreetingStep" class="recap-step">
+    <div id="morningGreetingStep" class="brief-step">
       <div class="morning-sunrise">
         <svg viewBox="0 0 400 200" preserveAspectRatio="none">
           <circle class="morning-sun" cx="200" cy="150" r="55"/>
@@ -580,7 +587,7 @@
       <div class="morning-text">早安！<br>今天也加油</div>
       <button class="btn-primary recap-next-btn" onclick="advanceFromMorningGreeting()">看看今天</button>
     </div>
-    <div id="dailyBriefContentStep" class="recap-step" style="display:none">
+    <div id="dailyBriefContentStep" class="brief-step" style="display:none">
       <div id="dailyBriefContent"></div>
       <button class="btn-primary" style="width:100%;margin-top:16px;" onclick="closeDailyBrief()">開始今天</button>
       <button class="text-btn" style="width:100%;margin-top:8px;text-align:center;" onclick="dismissDailyBriefToday()">今天不再提醒</button>
@@ -940,6 +947,8 @@ async function loadData(storageKey){
   if(!data.quickNotes) data.quickNotes = [];
   if(!data.dayRecaps) data.dayRecaps = {};
   if(data.lastAutoRecapDate===undefined) data.lastAutoRecapDate = null;
+  if(data.morningGreetingAlwaysOn===undefined) data.morningGreetingAlwaysOn = false;
+  if(data.morningGreetingShownDate===undefined) data.morningGreetingShownDate = null;
   data.categories.forEach(c=>{ if(c.paletteId===undefined) c.paletteId = null; });
   if(!data.categories.find(c=>c.id==='work')) data.categories.unshift({id:'work', name:'工作', color:'#2E4057', deletable:false, paletteId:null});
   if(!data.categories.find(c=>c.id==='personal')) data.categories.unshift({id:'personal', name:'私人', color:'#7A5C82', deletable:false, paletteId:null});
@@ -1286,7 +1295,7 @@ function switchMainView(v){
   if(v==='list') renderTaskList();
   if(v==='cal') renderCalendar();
   if(v==='week') renderWeek();
-  if(v==='settings'){ renderBookmarks(); renderSettings(); updateDailyBriefSwitch(); updatePushSwitch('Notification' in window && Notification.permission==='granted' && isPushConfigured()); }
+  if(v==='settings'){ renderBookmarks(); renderSettings(); updateDailyBriefSwitch(); updateMorningGreetingSwitch(); updatePushSwitch('Notification' in window && Notification.permission==='granted' && isPushConfigured()); }
   if(v==='habits') setHabitTab('checkin');
   if(v==='quicknotes'){
     renderQuickNoteWall();
@@ -2324,7 +2333,12 @@ function maybeShowDailyBrief(){
   if(hour < 7) return false;
   const today = todayStr();
   if(data.dailyBriefDismissedDate === today) return false;
-  showDailyBrief(true);
+  const showGreeting = !!data.morningGreetingAlwaysOn || data.morningGreetingShownDate !== today;
+  if(showGreeting){
+    data.morningGreetingShownDate = today;
+    persist();
+  }
+  showDailyBrief(showGreeting);
   return true;
 }
 function showDailyBrief(withGreeting){
@@ -2370,14 +2384,14 @@ function advanceFromMorningGreeting(){
     s2.style.display = 'block';
     s2.classList.add('fade-in-init');
     requestAnimationFrame(()=> requestAnimationFrame(()=> s2.classList.remove('fade-in-init')));
-  }, 2000);
+  }, 1000);
 }
 function closeDailyBrief(){
   const overlay = document.getElementById('dailyBriefOverlay');
   overlay.classList.add('fading-out');
   setTimeout(()=>{
     overlay.classList.remove('show','fading-out');
-  }, 2000);
+  }, 1000);
 }
 
 /* ============================================================
@@ -2531,6 +2545,16 @@ function updateDailyBriefSwitch(){
   if(!sw) return;
   const isOn = data.dailyBriefDismissedDate !== todayStr();
   sw.classList.toggle('on', isOn);
+}
+function updateMorningGreetingSwitch(){
+  const sw = document.getElementById('morningGreetingSwitch');
+  if(!sw) return;
+  sw.classList.toggle('on', !!data.morningGreetingAlwaysOn);
+}
+function toggleMorningGreetingSwitch(){
+  data.morningGreetingAlwaysOn = !data.morningGreetingAlwaysOn;
+  persist();
+  updateMorningGreetingSwitch();
 }
 function toggleDailyBriefSwitch(){
   const today = todayStr();
