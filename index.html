@@ -1797,7 +1797,7 @@ function renderWeek(){
     const isToday = d.toDateString()===today.toDateString();
     const dayStr = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
     const isPastOrToday = dayStr <= todayStr();
-    const recap = data.dayRecaps[dayStr];
+    const recap = (data.dayRecaps || {})[dayStr];
     let recapHtml = '';
     if(isPastOrToday){
       if(recap){
@@ -2358,6 +2358,7 @@ function buildRecapSummaryHtml(day){
 function showNightRecap(day, isManual){
   recapTargetDate = day;
   recapSelectedMood = null;
+  if(!data.dayRecaps) data.dayRecaps = {};
   const existing = data.dayRecaps[day];
   document.getElementById('recapTitle').textContent = (isManual? '' : getRecapLabel()) + '總結';
   document.getElementById('recapSummaryContent').innerHTML = buildRecapSummaryHtml(day);
@@ -2381,6 +2382,7 @@ function selectMood(mood){
 }
 function saveNightRecap(){
   const note = document.getElementById('recapNoteInput').value.trim();
+  if(!data.dayRecaps) data.dayRecaps = {};
   data.dayRecaps[recapTargetDate] = { mood: recapSelectedMood, note, createdAt: Date.now() };
   persist();
   closeNightRecap();
