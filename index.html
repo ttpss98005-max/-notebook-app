@@ -187,13 +187,18 @@
 
   .week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;}
   .week-col{background:#FDFDFB;border:1.5px solid var(--border);border-radius:16px;padding:9px;min-height:150px;}
-  .week-col-head{font-size:11px;font-weight:700;color:var(--ink-soft);margin-bottom:8px;text-align:center;}
+  .week-col-head{font-size:11px;font-weight:700;color:var(--ink-soft);margin-bottom:8px;display:flex;
+    align-items:center;justify-content:space-between;gap:6px;padding:2px 2px 2px 4px;border-radius:10px;}
   .week-col-head.today{color:var(--accent);}
+  .week-col-head.clickable{cursor:pointer;}
+  .week-col-head.clickable:hover{background:#F1F0EA;}
+  .week-col-date{white-space:nowrap;}
+  .week-mood-face{width:20px;height:20px;flex-shrink:0;border-radius:6px;}
+  .week-mood-add{width:20px;height:20px;flex-shrink:0;border-radius:6px;border:1.5px dashed var(--border);
+    display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--ink-soft);}
   .week-item{font-size:11px;border-radius:10px;border-left:3px solid var(--border);padding:6px 8px;margin-bottom:6px;background:#F1F0EA;}
   .week-item .t{color:var(--ink-soft);display:block;font-size:10px;}
   .no-item{font-size:11px;color:#D8D8D8;text-align:center;padding-top:14px;}
-  .week-recap-link{display:flex;align-items:center;gap:5px;justify-content:center;width:100%;margin-top:8px;
-    padding:6px 4px;border:1px dashed var(--border);border-radius:10px;background:none;font-size:10.5px;color:var(--ink-soft);}
 
   .setting-block{margin-bottom:30px;max-width:640px;}
   .setting-block h3{font-size:13px;margin:0 0 12px;color:var(--ink-soft);font-weight:700;}
@@ -277,7 +282,7 @@
 
   /* ============ 今天總結（夜間）／每日提醒（早晨） ============ */
   #nightRecapOverlay{display:none;position:fixed;inset:0;z-index:160;align-items:center;justify-content:center;
-    background:linear-gradient(160deg,#1B2333,#0B0F17);overflow:hidden;transition:opacity 2s ease;}
+    background:linear-gradient(160deg,#1B2333,#0B0F17);overflow:hidden;transition:opacity 1s ease;}
   #nightRecapOverlay.show{display:flex;opacity:1;}
   #nightRecapOverlay.fading-out{opacity:0;}
   .recap-stars{position:absolute;inset:0;pointer-events:none;}
@@ -290,22 +295,17 @@
   @keyframes starDrift1{0%,100%{transform:translate(0,0);opacity:.4;} 50%{transform:translate(8px,-14px);opacity:1;}}
   @keyframes starDrift2{0%,100%{transform:translate(0,0);opacity:.5;} 50%{transform:translate(-10px,10px);opacity:1;}}
   @keyframes recapCardIn{from{opacity:0;transform:translateY(46px) scale(.92);} to{opacity:1;transform:translateY(0) scale(1);}}
-  @keyframes recapCardOut{from{opacity:1;transform:translateY(0) scale(1);} to{opacity:0;transform:translateY(-36px) scale(.94);}}
   @keyframes recapFloat{0%,100%{transform:translateY(0);} 50%{transform:translateY(-9px);}}
   .recap-card{position:relative;background:#FDFDFB;border-radius:26px;padding:30px 26px;max-width:360px;width:88%;
     box-shadow:0 30px 80px rgba(0,0,0,.5);animation:recapCardIn .8s cubic-bezier(.22,1,.36,1) both, recapFloat 5.5s ease-in-out .8s infinite;
-    transition:opacity 2s ease;}
-  .recap-card.closing{animation:recapCardOut .6s ease both;}
+    transition:opacity 1s ease;overflow:hidden;}
   .recap-card.fade-out-card{opacity:0;}
   .recap-close{position:absolute;top:14px;right:16px;background:none;border:none;font-size:18px;color:var(--ink-soft);}
   .recap-title{font-size:18px;font-weight:700;margin-bottom:16px;text-align:center;}
   .recap-next-btn{width:100%;margin-top:18px;}
-  .recap-step{transition:opacity 2s ease, transform 2s ease;}
-  .brief-step{transition:opacity 1s ease;}
-  .brief-step.fade-out{opacity:0;}
-  .brief-step.fade-in-init{opacity:0;}
-  .recap-step.fade-out{opacity:0;transform:translateY(-12px);}
-  .recap-step.fade-in-init{opacity:0;transform:translateY(12px);}
+  .recap-step{transition:opacity 1s ease;}
+  .recap-step.fade-out{opacity:0;}
+  .recap-step.fade-in-init{opacity:0;}
   .mood-row{display:flex;gap:10px;justify-content:center;margin-bottom:16px;}
   .mood-btn{display:flex;flex-direction:column;align-items:center;gap:8px;background:#F1F0EA;border:2px solid transparent;
     border-radius:16px;padding:14px 16px;font-size:12px;color:var(--ink-soft);font-weight:700;transition:.15s;}
@@ -319,22 +319,28 @@
     font-family:inherit;resize:none;}
 
   #recapGoodnightScreen{display:none;position:absolute;inset:0;z-index:5;flex-direction:column;align-items:center;
-    justify-content:center;opacity:0;transition:opacity 2s ease;cursor:pointer;}
+    justify-content:center;opacity:0;transition:opacity 1s ease;cursor:pointer;}
   #recapGoodnightScreen.show{display:flex;opacity:1;}
   .goodnight-mountains{position:absolute;inset:0;width:100%;height:100%;}
   .goodnight-moon{fill:#F5F0E0;filter:drop-shadow(0 0 22px rgba(245,240,224,.65));animation:recapFloat 6s ease-in-out infinite;}
   .goodnight-text{position:relative;z-index:2;color:#fff;font-size:19px;font-weight:700;text-align:center;line-height:1.8;
     text-shadow:0 2px 16px rgba(0,0,0,.6);padding:0 30px;animation:recapFloat 5.5s ease-in-out .3s infinite;}
 
-  .morning-sunrise{position:relative;margin:-30px -26px 16px;height:130px;overflow:hidden;border-radius:26px 26px 0 0;
-    background:linear-gradient(180deg,#FBE3B8,#F6B979);}
-  .morning-sunrise svg{position:absolute;inset:0;width:100%;height:100%;}
-  .morning-sun{fill:#FFD873;filter:drop-shadow(0 0 26px rgba(255,216,115,.85));animation:recapFloat 6s ease-in-out infinite;}
-  .morning-text{font-size:19px;font-weight:700;text-align:center;line-height:1.7;margin-bottom:6px;}
-
-  .daily-brief-modal{max-width:340px;animation:briefPop .4s cubic-bezier(.34,1.56,.64,1);}
-  #dailyBriefOverlay{transition:opacity 1s ease;}
+  #dailyBriefOverlay{display:none;position:fixed;inset:0;z-index:150;align-items:center;justify-content:center;
+    background:linear-gradient(180deg,#FBE3B8,#F3A768);overflow:hidden;transition:opacity .5s ease;}
+  #dailyBriefOverlay.show{display:flex;opacity:1;}
   #dailyBriefOverlay.fading-out{opacity:0;}
+
+  #morningGreetingScreen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;padding:0 30px;cursor:pointer;transition:opacity .5s ease;}
+  #morningGreetingScreen.fade-out{opacity:0;}
+  .sunrise-mountains{position:absolute;inset:0;width:100%;height:100%;z-index:0;}
+  .morning-sun{fill:#FFD873;filter:drop-shadow(0 0 30px rgba(255,216,115,.9));animation:recapFloat 6s ease-in-out infinite;}
+  .morning-text{position:relative;z-index:2;color:#4A2E1E;font-size:22px;font-weight:700;line-height:1.8;
+    text-shadow:0 2px 12px rgba(255,255,255,.5);animation:recapFloat 5.5s ease-in-out .3s infinite;}
+
+  .daily-brief-modal{max-width:340px;opacity:0;transition:opacity .5s ease;}
+  .daily-brief-modal.show-card{opacity:1;}
   @keyframes briefPop{from{opacity:0;transform:scale(.85) translateY(10px);} to{opacity:1;transform:scale(1) translateY(0);}}
   .brief-section{margin-bottom:14px;}
   .brief-label{font-size:11px;color:var(--ink-soft);font-weight:700;margin-bottom:6px;}
@@ -574,24 +580,19 @@
 </div>
 
 <!-- ================= 每日提醒動畫 ================= -->
-<div class="overlay" id="dailyBriefOverlay" onclick="closeDailyBrief()">
-  <div class="modal daily-brief-modal" onclick="event.stopPropagation()">
-    <div id="morningGreetingStep" class="brief-step">
-      <div class="morning-sunrise">
-        <svg viewBox="0 0 400 200" preserveAspectRatio="none">
-          <circle class="morning-sun" cx="200" cy="150" r="55"/>
-          <path d="M0 200 L0 140 L70 165 L140 125 L210 160 L280 135 L340 155 L400 130 L400 200 Z" fill="#E8956B" opacity=".85"/>
-          <path d="M0 200 L0 170 L100 180 L200 165 L300 178 L400 168 L400 200 Z" fill="#C9714F"/>
-        </svg>
-      </div>
-      <div class="morning-text">早安！<br>今天也加油</div>
-      <button class="btn-primary recap-next-btn" onclick="advanceFromMorningGreeting()">看看今天</button>
-    </div>
-    <div id="dailyBriefContentStep" class="brief-step" style="display:none">
-      <div id="dailyBriefContent"></div>
-      <button class="btn-primary" style="width:100%;margin-top:16px;" onclick="closeDailyBrief()">開始今天</button>
-      <button class="text-btn" style="width:100%;margin-top:8px;text-align:center;" onclick="dismissDailyBriefToday()">今天不再提醒</button>
-    </div>
+<div id="dailyBriefOverlay">
+  <div id="morningGreetingScreen" onclick="advanceFromMorningGreeting()">
+    <svg class="sunrise-mountains" viewBox="0 0 400 300" preserveAspectRatio="xMidYMax slice">
+      <circle class="morning-sun" cx="200" cy="95" r="46"/>
+      <path d="M0 300 L0 190 L60 150 L120 185 L180 140 L230 175 L280 155 L340 180 L400 160 L400 300 Z" fill="#E8956B" opacity=".85"/>
+      <path d="M0 300 L0 230 L90 210 L180 240 L260 205 L340 230 L400 215 L400 300 Z" fill="#C9714F"/>
+    </svg>
+    <div class="morning-text">早安！<br>今天也加油</div>
+  </div>
+  <div class="modal daily-brief-modal" id="dailyBriefContentCard" style="display:none" onclick="event.stopPropagation()">
+    <div id="dailyBriefContent"></div>
+    <button class="btn-primary" style="width:100%;margin-top:16px;" onclick="closeDailyBrief()">開始今天</button>
+    <button class="text-btn" style="width:100%;margin-top:8px;text-align:center;" onclick="dismissDailyBriefToday()">今天不再提醒</button>
   </div>
 </div>
 
@@ -1837,6 +1838,11 @@ function renderDayDetail(){
     </div>`).join('') : `<div class="empty-state" style="padding:14px">當日無事項</div>`);
 }
 
+function moodFaceSvgSmall(mood){
+  if(mood==='bad') return `<svg class="week-mood-face" viewBox="0 0 40 40"><rect width="40" height="40" rx="10" fill="#5B9BD5"/><circle cx="14" cy="17" r="2.2" fill="#fff"/><circle cx="26" cy="17" r="2.2" fill="#fff"/><path d="M13 27 Q20 22 27 27" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>`;
+  if(mood==='good') return `<svg class="week-mood-face" viewBox="0 0 40 40"><rect width="40" height="40" rx="10" fill="#F2A93B"/><path d="M11 16 Q14 13 17 16" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M23 16 Q26 13 29 16" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M12 23 Q20 31 28 23" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg>`;
+  return `<svg class="week-mood-face" viewBox="0 0 40 40"><rect width="40" height="40" rx="10" fill="#EDE3CC"/><circle cx="14" cy="17" r="2.2" fill="#5A5346"/><circle cx="26" cy="17" r="2.2" fill="#5A5346"/><line x1="14" y1="26" x2="26" y2="26" stroke="#5A5346" stroke-width="2.2" stroke-linecap="round"/></svg>`;
+}
 function renderWeek(){
   const el = document.getElementById('view-week');
   const base = new Date(ui.weekDate);
@@ -1856,19 +1862,16 @@ function renderWeek(){
     const dayStr = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
     const isPastOrToday = dayStr <= todayStr();
     const recap = (data.dayRecaps || {})[dayStr];
-    let recapHtml = '';
+    let recapIndicator = '';
     if(isPastOrToday){
-      if(recap){
-        const moodClass = recap.mood==='good' ? 'mood-good' : recap.mood==='bad' ? 'mood-bad' : 'mood-ok';
-        recapHtml = `<button class="week-recap-link" onclick="openRecapFromWeek('${dayStr}')"><span class="mood-dot-mini ${moodClass}"></span>編輯總結</button>`;
-      }else{
-        recapHtml = `<button class="week-recap-link" onclick="openRecapFromWeek('${dayStr}')">＋寫總結</button>`;
-      }
+      recapIndicator = recap ? moodFaceSvgSmall(recap.mood) : `<span class="week-mood-add">＋</span>`;
     }
     cols += `<div class="week-col">
-      <div class="week-col-head ${isToday?'today':''}">${dows[i]} ${d.getMonth()+1}/${d.getDate()}</div>
+      <div class="week-col-head ${isToday?'today':''} ${isPastOrToday?'clickable':''}" ${isPastOrToday?`onclick="openRecapFromWeek('${dayStr}')"`:''}>
+        <span class="week-col-date">${dows[i]} ${d.getMonth()+1}/${d.getDate()}</span>
+        ${recapIndicator}
+      </div>
       ${dayItems.length? dayItems.map(it=>`<div class="week-item" style="border-left-color:${it.color}"><span class="t">${it.isDate? '截止' : fmtTime(it.time).split(' ')[1]}</span>${escapeHtml(it.title)}</div>`).join('') : `<div class="no-item">無事項</div>`}
-      ${recapHtml}
     </div>`;
   }
   const endLabel = new Date(start); endLabel.setDate(start.getDate()+6);
@@ -2362,36 +2365,36 @@ function showDailyBrief(withGreeting){
   }
   document.getElementById('dailyBriefContent').innerHTML = html;
 
-  const greetStep = document.getElementById('morningGreetingStep');
-  const contentStep = document.getElementById('dailyBriefContentStep');
-  greetStep.classList.remove('fade-out','fade-in-init');
-  contentStep.classList.remove('fade-out','fade-in-init');
+  const greetScreen = document.getElementById('morningGreetingScreen');
+  const contentCard = document.getElementById('dailyBriefContentCard');
+  greetScreen.classList.remove('fade-out');
+  contentCard.classList.remove('show-card');
   if(withGreeting){
-    greetStep.style.display = 'block';
-    contentStep.style.display = 'none';
+    greetScreen.style.display = 'flex';
+    contentCard.style.display = 'none';
   }else{
-    greetStep.style.display = 'none';
-    contentStep.style.display = 'block';
+    greetScreen.style.display = 'none';
+    contentCard.style.display = 'block';
+    requestAnimationFrame(()=> requestAnimationFrame(()=> contentCard.classList.add('show-card')));
   }
   document.getElementById('dailyBriefOverlay').classList.add('show');
 }
 function advanceFromMorningGreeting(){
-  const s1 = document.getElementById('morningGreetingStep');
-  const s2 = document.getElementById('dailyBriefContentStep');
-  s1.classList.add('fade-out');
+  const greetScreen = document.getElementById('morningGreetingScreen');
+  const contentCard = document.getElementById('dailyBriefContentCard');
+  greetScreen.classList.add('fade-out');
   setTimeout(()=>{
-    s1.style.display = 'none';
-    s2.style.display = 'block';
-    s2.classList.add('fade-in-init');
-    requestAnimationFrame(()=> requestAnimationFrame(()=> s2.classList.remove('fade-in-init')));
-  }, 1000);
+    greetScreen.style.display = 'none';
+    contentCard.style.display = 'block';
+    requestAnimationFrame(()=> requestAnimationFrame(()=> contentCard.classList.add('show-card')));
+  }, 500);
 }
 function closeDailyBrief(){
   const overlay = document.getElementById('dailyBriefOverlay');
   overlay.classList.add('fading-out');
   setTimeout(()=>{
     overlay.classList.remove('show','fading-out');
-  }, 1000);
+  }, 500);
 }
 
 /* ============================================================
@@ -2470,20 +2473,28 @@ function showNightRecap(day, isManual){
   const card = document.getElementById('recapCard');
   card.classList.remove('closing','fade-out-card');
   card.style.display = 'block';
+  card.style.height = '';
+  card.style.transition = '';
   document.getElementById('recapGoodnightScreen').classList.remove('show');
   document.getElementById('recapGoodnightScreen').style.display = 'none';
   overlay.classList.add('show');
 }
 function nightRecapNextStep(){
+  const card = document.getElementById('recapCard');
   const s1 = document.getElementById('recapStep1');
   const s2 = document.getElementById('recapStep2');
+  card.style.height = card.offsetHeight + 'px';
   s1.classList.add('fade-out');
   setTimeout(()=>{
     s1.style.display = 'none';
     s2.style.display = 'block';
+    const endHeight = card.scrollHeight;
+    card.style.transition = 'height 1s ease';
+    requestAnimationFrame(()=> requestAnimationFrame(()=>{ card.style.height = endHeight + 'px'; }));
     s2.classList.add('fade-in-init');
     requestAnimationFrame(()=> requestAnimationFrame(()=> s2.classList.remove('fade-in-init')));
-  }, 2000);
+    setTimeout(()=>{ card.style.height=''; card.style.transition=''; }, 1000);
+  }, 1000);
 }
 function selectMood(mood){
   recapSelectedMood = mood;
@@ -2504,7 +2515,7 @@ function showGoodnightScreen(){
     const screen = document.getElementById('recapGoodnightScreen');
     screen.style.display = 'flex';
     requestAnimationFrame(()=> requestAnimationFrame(()=> screen.classList.add('show')));
-  }, 2000);
+  }, 1000);
 }
 function closeFromGoodnight(){
   const overlay = document.getElementById('nightRecapOverlay');
@@ -2518,7 +2529,7 @@ function closeFromGoodnight(){
       pendingMorningBriefAfterRecap = false;
       maybeShowDailyBrief();
     }
-  }, 2000);
+  }, 1000);
 }
 function closeNightRecap(){
   const overlay = document.getElementById('nightRecapOverlay');
@@ -2529,7 +2540,7 @@ function closeNightRecap(){
       pendingMorningBriefAfterRecap = false;
       maybeShowDailyBrief();
     }
-  }, 2000);
+  }, 1000);
 }
 function openRecapFromWeek(day){
   showNightRecap(day, true);
