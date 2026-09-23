@@ -13,5 +13,28 @@
     { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
     { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "隨手記",
+      "short_name": "隨手記",
+      "description": "直接開啟隨手記，馬上輸入",
+      "url": "./index.html?shortcut=quicknotes",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "習慣打卡",
+      "short_name": "習慣",
+      "description": "直接開啟今日習慣打卡",
+      "url": "./index.html?shortcut=habits",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "新增事項",
+      "short_name": "新增事項",
+      "description": "直接開啟清單並跳出新增事項",
+      "url": "./index.html?shortcut=newtask",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    }
   ]
 }

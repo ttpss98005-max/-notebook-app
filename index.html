@@ -10,6 +10,7 @@
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-messaging-compat.js"></script>
 <style>
   :root{
     --bg:#FAFAFA;
@@ -69,6 +70,20 @@
   .top-bar{position:sticky;top:0;background:var(--surface);border-bottom:1px solid var(--border);
     padding:14px 26px;z-index:10;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
   .brand{font-size:16px;font-weight:700;letter-spacing:1px;flex-shrink:0;}
+  .search-trigger-btn{margin-left:auto;background:#F1F0EA;border:none;width:34px;height:34px;border-radius:50%;
+    color:var(--ink-soft);display:flex;align-items:center;justify-content:center;}
+  .search-result-group{margin-bottom:16px;}
+  .search-result-label{font-size:11px;color:var(--ink-soft);font-weight:700;margin-bottom:6px;}
+  .search-result-item{padding:10px 8px;border-bottom:1px solid var(--border);font-size:13.5px;cursor:pointer;}
+  .search-result-item:hover{background:#F9F8F4;}
+  .search-result-item .sub{font-size:11px;color:var(--ink-soft);margin-top:2px;}
+
+  #undoToast{position:fixed;left:16px;right:16px;bottom:80px;z-index:95;max-width:420px;margin:0 auto;
+    background:var(--ink);color:#fff;border-radius:14px;padding:12px 16px;display:flex;align-items:center;
+    justify-content:space-between;gap:14px;box-shadow:var(--shadow-md);transform:translateY(20px);opacity:0;
+    pointer-events:none;transition:transform .25s ease, opacity .25s ease;font-size:13px;}
+  #undoToast.show{transform:translateY(0);opacity:1;pointer-events:auto;}
+  #undoToast button{background:none;border:none;color:var(--accent);font-weight:700;font-size:13px;flex-shrink:0;}
   .cat-indicator-row{margin-bottom:16px;position:relative;}
   .cat-indicator{display:inline-flex;align-items:center;gap:8px;padding:11px 20px;border-radius:999px;
     background:var(--accent);border:none;font-size:13.5px;font-weight:700;color:#fff;box-shadow:var(--shadow-sm);transition:.15s;}
@@ -123,6 +138,8 @@
   .time-chip{font-size:11.5px;color:var(--ink-soft);white-space:nowrap;background:#F1F0EA;padding:3px 9px;border-radius:999px;flex-shrink:0;}
   .overdue-tag{font-size:11px;color:#fff;font-weight:700;white-space:nowrap;background:var(--danger);padding:3px 9px;border-radius:999px;flex-shrink:0;}
   .text-btn{background:none;border:none;color:var(--ink-soft);font-size:12px;padding:5px 10px;border-radius:999px;flex-shrink:0;}
+  .note-btn.has-note{color:var(--accent);font-weight:700;}
+  .note-preview{font-size:12px;color:var(--ink-soft);background:#F9F8F4;border-radius:10px;padding:7px 12px;margin:0 0 4px 34px;white-space:pre-wrap;word-break:break-word;}
   .text-btn:hover{color:var(--accent);background:var(--accent-soft);}
   .expand-arrow{background:none;border:none;color:var(--ink-soft);width:26px;height:26px;border-radius:50%;
     flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:11px;transition:.15s;}
@@ -309,6 +326,9 @@
 <div id="appShell">
   <div class="top-bar">
     <div class="brand">記事簿</div>
+    <button class="search-trigger-btn" onclick="openSearch()" title="搜尋">
+      <svg viewBox="0 0 24 24" width="19" height="19"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><line x1="15.5" y1="15.5" x2="21" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
   </div>
 
   <div class="main">
@@ -379,11 +399,23 @@
         </div>
       </div>
       <div class="setting-block">
+        <h3>推播通知</h3>
+        <div class="row-inline" style="max-width:300px;">
+          <label style="margin:0;font-size:13px;">背景推播提醒（App沒開也會響）</label>
+          <button class="switch" id="pushSwitch" onclick="togglePushSwitch()"></button>
+        </div>
+      </div>
+      <div class="setting-block">
         <h3>每日提醒</h3>
         <div class="row-inline" style="max-width:300px;">
           <label style="margin:0;font-size:13px;">今天顯示每日提醒</label>
           <button class="switch" id="dailyBriefSwitch" onclick="toggleDailyBriefSwitch()"></button>
         </div>
+      </div>
+      <div class="setting-block">
+        <h3>回顧小結</h3>
+        <button class="btn-ghost" onclick="openSummary('week')">本週小結</button>
+        <button class="btn-ghost" style="margin-left:8px;" onclick="openSummary('month')">本月小結</button>
       </div>
       <div class="setting-block">
         <h3>書籤</h3>
@@ -483,6 +515,43 @@
   </div>
 </div>
 
+<div class="overlay" id="summaryOverlay" onclick="closeSummary()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="pill-tabs" id="summaryTabSeg" style="margin-bottom:16px;">
+      <button class="pill-tab" id="summaryWeekBtn" onclick="openSummary('week')">本週</button>
+      <button class="pill-tab" id="summaryMonthBtn" onclick="openSummary('month')">本月</button>
+    </div>
+    <div id="summaryContent"></div>
+    <button class="btn-primary" style="width:100%;margin-top:16px;" onclick="closeSummary()">知道了</button>
+  </div>
+</div>
+
+<div id="undoToast">
+  <span id="undoToastMsg"></span>
+  <button onclick="clickUndo()">復原</button>
+</div>
+
+<div class="overlay" id="searchOverlay" style="align-items:flex-start;padding-top:60px;">
+  <div class="modal" style="max-width:480px;width:92%;max-height:80vh;display:flex;flex-direction:column;">
+    <div style="display:flex;gap:10px;margin-bottom:14px;">
+      <input id="searchInput" placeholder="搜尋事項、細項、隨手記、習慣..." style="flex:1;padding:10px 14px;border:1.5px solid var(--border);border-radius:14px;font-size:14px;font-family:inherit;" oninput="performSearch()">
+      <button class="btn-ghost" onclick="closeSearch()">取消</button>
+    </div>
+    <div id="searchResults" style="overflow-y:auto;flex:1;"></div>
+  </div>
+</div>
+
+<div class="overlay" id="noteModal">
+  <div class="modal">
+    <h3>備註</h3>
+    <div class="field"><textarea id="noteTextarea" rows="4" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:14px;font-size:13.5px;font-family:inherit;resize:vertical;" placeholder="寫點備註..."></textarea></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal('noteModal')">取消</button>
+      <button class="btn-primary" onclick="saveNote()">儲存</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="habitModal">
   <div class="modal">
     <h3 id="habitModalTitle">新增習慣</h3>
@@ -500,6 +569,10 @@
         <label>單位</label>
         <input id="habitUnit" placeholder="例如：公斤、公升、次">
       </div>
+    </div>
+    <div class="field">
+      <label>每日提醒時間（可留空）</label>
+      <input type="time" id="habitRemindTime">
     </div>
     <div class="modal-actions">
       <button class="btn-ghost" onclick="closeModal('habitModal')">取消</button>
@@ -845,6 +918,77 @@ function initFirebase(){
     fbDb = firebase.firestore();
   }catch(e){ console.error('Firebase 初始化失敗', e); }
 }
+
+/* ============================================================
+   推播通知（Firebase Cloud Messaging）
+   到 Firebase Console →專案設定 →Cloud Messaging →「網頁 Push 憑證」
+   產生一組金鑰，換掉下面的 VAPID_KEY。
+============================================================ */
+const VAPID_KEY = 'BM15AF6_tlv-axwTfJr1oN07_QuOTadwqMpJrKRNCtJ-rIpqA31pJCdvJIhDrfqlVTiIBwK0DJKzgDXC_xXgrQo';
+let fcmMessaging = null;
+function isPushConfigured(){ return VAPID_KEY && !VAPID_KEY.startsWith('YOUR_'); }
+
+async function enablePushNotifications(){
+  if(!isPushConfigured()){ notify('尚未設定推播金鑰，請參考說明設定後再試。'); return; }
+  if(!('serviceWorker' in navigator) || !window.firebase || !firebase.messaging){
+    notify('這個瀏覽器不支援推播通知。'); return;
+  }
+  try{
+    const permission = await Notification.requestPermission();
+    if(permission !== 'granted'){ notify('沒有允許通知權限，無法開啟推播。'); return; }
+    const reg = await navigator.serviceWorker.register('firebase-messaging-sw.js');
+    fcmMessaging = firebase.messaging();
+    const token = await fcmMessaging.getToken({ vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
+    if(token && fbDb && currentStorageKey){
+      await fbDb.collection('deviceTokens').doc(token).set({ uid: currentStorageKey, updatedAt: Date.now() });
+      notify('推播通知已開啟！');
+      updatePushSwitch(true);
+    }
+    fcmMessaging.onMessage((payload)=>{
+      const title = (payload.notification && payload.notification.title) || '提醒';
+      const body = (payload.notification && payload.notification.body) || '';
+      notify(title + (body? '：'+body : ''));
+    });
+  }catch(e){
+    console.error('開啟推播失敗', e);
+    notify('開啟推播失敗，請稍後再試。');
+  }
+}
+function updatePushSwitch(on){
+  const sw = document.getElementById('pushSwitch');
+  if(sw) sw.classList.toggle('on', !!on);
+}
+function togglePushSwitch(){
+  const sw = document.getElementById('pushSwitch');
+  if(sw && sw.classList.contains('on')) return;
+  enablePushNotifications();
+}
+
+async function writeReminderDoc(id, title, body, dueAtMs){
+  if(!fbDb || !currentStorageKey) return;
+  try{
+    await fbDb.collection('reminders').doc(id).set({
+      uid: currentStorageKey, title, body, dueAt: dueAtMs, sent: false
+    });
+  }catch(e){ console.error('寫入提醒排程失敗', e); }
+}
+async function deleteReminderDoc(id){
+  if(!fbDb) return;
+  try{ await fbDb.collection('reminders').doc(id).delete(); }catch(e){}
+}
+async function writeHabitReminderDoc(habit){
+  if(!fbDb || !currentStorageKey) return;
+  try{
+    if(!habit.remindTime){
+      await fbDb.collection('habitReminders').doc(habit.id).delete().catch(()=>{});
+      return;
+    }
+    await fbDb.collection('habitReminders').doc(habit.id).set({
+      uid: currentStorageKey, habitName: habit.name, remindTime: habit.remindTime, lastRemindedDate: null
+    });
+  }catch(e){ console.error('寫入習慣提醒排程失敗', e); }
+}
+
 async function storageGet(key){
   if(fbDb){
     try{
@@ -935,7 +1079,17 @@ function enterAppDirectly(){
     applyTheme();
     renderAll();
     maybeShowDailyBrief();
+    handleShortcutParam();
   }, 500);
+}
+function handleShortcutParam(){
+  const params = new URLSearchParams(location.search);
+  const shortcut = params.get('shortcut');
+  if(!shortcut) return;
+  if(shortcut==='quicknotes') switchMainView('quicknotes');
+  else if(shortcut==='habits') switchMainView('habits');
+  else if(shortcut==='newtask'){ switchMainView('list'); openTaskModal(); }
+  history.replaceState({}, '', location.pathname);
 }
 
 let isLoggingOut = false;
@@ -997,7 +1151,7 @@ function switchMainView(v){
   if(v==='list') renderTaskList();
   if(v==='cal') renderCalendar();
   if(v==='week') renderWeek();
-  if(v==='settings'){ renderBookmarks(); renderSettings(); updateDailyBriefSwitch(); }
+  if(v==='settings'){ renderBookmarks(); renderSettings(); updateDailyBriefSwitch(); updatePushSwitch('Notification' in window && Notification.permission==='granted' && isPushConfigured()); }
   if(v==='habits') setHabitTab('checkin');
   if(v==='quicknotes'){
     renderQuickNoteWall();
@@ -1138,9 +1292,11 @@ function buildTaskHtml(list){
         ${subs.length? `<span class="progress-chip">${doneSub}/${subs.length}</span>`:''}
         ${t.dueDate? `<span class="${taskOverdue?'overdue-tag':'time-chip'}">${taskOverdue?'延誤 ':''}${fmtDate(t.dueDate)}</span>`:''}
         <button class="expand-arrow ${expanded?'expanded':''}" onclick="toggleExpand('${t.id}')"><span class="arrow-glyph">▸</span></button>
+        <button class="text-btn note-btn ${t.note?'has-note':''}" onclick="openNoteModal('task','${t.id}')">備註</button>
         <button class="text-btn" onclick="openTaskModal('${t.id}')">編輯</button>
         <button class="text-btn" onclick="deleteTask('${t.id}')">刪除</button>
       </div>
+      ${t.note? `<div class="note-preview">${escapeHtml(t.note)}</div>`:''}
       ${expanded? `
       <div class="subtasks">
         ${subs.map(s=>{
@@ -1151,9 +1307,11 @@ function buildTaskHtml(list){
             <span class="subtask-title">${escapeHtml(s.title)}</span>
             <span class="${subOverdue?'overdue-tag':'time-chip'}">${subOverdue?'延誤 ':''}${fmtTime(s.time)}</span>
             <span class="reminder-toggle">提醒<button class="switch ${s.reminder?'on':''}" onclick="toggleReminder('${t.id}','${s.id}')"></button></span>
+            <button class="text-btn note-btn ${s.note?'has-note':''}" onclick="openNoteModal('subtask','${t.id}','${s.id}')">備註</button>
             <button class="text-btn" onclick="openSubModal('${t.id}','${s.id}')">編輯</button>
             <button class="text-btn" onclick="deleteSubtask('${t.id}','${s.id}')">刪除</button>
           </div>
+          ${s.note? `<div class="note-preview" style="margin-left:23px;">${escapeHtml(s.note)}</div>`:''}
         `;}).join('')}
         <button class="add-sub-btn" onclick="openSubModal('${t.id}')">＋ 新增細項</button>
       </div>`:''}
@@ -1184,14 +1342,26 @@ function toggleSubtask(tid,sid){
 }
 function deleteTask(id){
   showConfirm('確定要刪除此事項及其所有細項嗎？', ()=>{
-    data.tasks = data.tasks.filter(t=>t.id!==id);
-    persist(); refreshAll();
+    const idx = data.tasks.findIndex(t=>t.id===id);
+    const removed = data.tasks[idx];
+    data.tasks.splice(idx,1);
+    refreshAll();
+    showUndoToast('已刪除「'+removed.title+'」', ()=>{
+      data.tasks.splice(idx,0,removed);
+    }, refreshAll);
   });
 }
 function deleteSubtask(tid,sid){
   const t = data.tasks.find(x=>x.id===tid);
-  t.subtasks = t.subtasks.filter(s=>s.id!==sid);
-  persist(); refreshAll();
+  const idx = t.subtasks.findIndex(s=>s.id===sid);
+  const removed = t.subtasks[idx];
+  t.subtasks.splice(idx,1);
+  renderTaskList();
+  deleteReminderDoc(sid);
+  showUndoToast('已刪除「'+removed.title+'」', ()=>{
+    t.subtasks.splice(idx,0,removed);
+    if(removed.reminder && removed.time) writeReminderDoc(sid, removed.title, t.title, new Date(removed.time).getTime());
+  }, renderTaskList);
 }
 function toggleReminder(tid,sid){
   const t = data.tasks.find(x=>x.id===tid);
@@ -1200,7 +1370,12 @@ function toggleReminder(tid,sid){
     Notification.requestPermission();
   }
   s.reminder = !s.reminder;
-  if(s.reminder) scheduleReminder(t, s);
+  if(s.reminder){
+    scheduleReminder(t, s);
+    if(s.time) writeReminderDoc(sid, s.title, t.title, new Date(s.time).getTime());
+  }else{
+    deleteReminderDoc(sid);
+  }
   persist(); refreshAll();
 }
 function scheduleReminder(task, sub){
@@ -1217,7 +1392,142 @@ function scheduleReminder(task, sub){
   }, ms);
 }
 
+const habitReminderTimers = {};
+function scheduleHabitReminders(){
+  Object.values(habitReminderTimers).forEach(t=> clearTimeout(t));
+  data.habits.forEach(h=>{
+    if(!h.remindTime) return;
+    const [hh,mm] = h.remindTime.split(':').map(Number);
+    const target = new Date();
+    target.setHours(hh, mm, 0, 0);
+    let ms = target.getTime() - Date.now();
+    if(ms<0) ms += 24*60*60*1000;
+    habitReminderTimers[h.id] = setTimeout(()=>{
+      if(!habitHasLog(h, todayStr())){
+        if('Notification' in window && Notification.permission==='granted'){
+          new Notification('習慣提醒：'+h.name, {body:'今天還沒打卡喔'});
+        }else{
+          notify('習慣提醒：'+h.name+'（今天還沒打卡）');
+        }
+      }
+      scheduleHabitReminders();
+    }, ms);
+  });
+}
+
 let editingTaskId = null;
+let noteTarget = null;
+function openSearch(){
+  document.getElementById('searchInput').value = '';
+  document.getElementById('searchResults').innerHTML = '';
+  document.getElementById('searchOverlay').classList.add('show');
+  document.getElementById('searchInput').focus();
+}
+function closeSearch(){
+  document.getElementById('searchOverlay').classList.remove('show');
+}
+function performSearch(){
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  const box = document.getElementById('searchResults');
+  if(!q){ box.innerHTML = ''; return; }
+
+  const taskHits = [];
+  const subHits = [];
+  data.tasks.forEach(t=>{
+    if(t.title.toLowerCase().includes(q) || (t.note||'').toLowerCase().includes(q)){
+      taskHits.push(t);
+    }
+    (t.subtasks||[]).forEach(s=>{
+      if(s.title.toLowerCase().includes(q) || (s.note||'').toLowerCase().includes(q)){
+        subHits.push({task:t, sub:s});
+      }
+    });
+  });
+  const noteHits = data.quickNotes.filter(n=> n.text.toLowerCase().includes(q));
+  const habitHits = data.habits.filter(h=> h.name.toLowerCase().includes(q));
+
+  if(taskHits.length+subHits.length+noteHits.length+habitHits.length===0){
+    box.innerHTML = `<div class="empty-state">找不到符合「${escapeHtml(q)}」的內容</div>`;
+    return;
+  }
+  let html = '';
+  if(taskHits.length){
+    html += `<div class="search-result-group"><div class="search-result-label">事項</div>` +
+      taskHits.map(t=>`<div class="search-result-item" onclick="jumpToTask('${t.categoryId}','${t.id}')">${escapeHtml(t.title)}${t.note?`<div class="sub">${escapeHtml(t.note)}</div>`:''}</div>`).join('') + `</div>`;
+  }
+  if(subHits.length){
+    html += `<div class="search-result-group"><div class="search-result-label">細項</div>` +
+      subHits.map(x=>`<div class="search-result-item" onclick="jumpToTask('${x.task.categoryId}','${x.task.id}')">${escapeHtml(x.sub.title)}<div class="sub">來自：${escapeHtml(x.task.title)}</div></div>`).join('') + `</div>`;
+  }
+  if(noteHits.length){
+    html += `<div class="search-result-group"><div class="search-result-label">隨手記</div>` +
+      noteHits.map(n=>`<div class="search-result-item" onclick="jumpToQuickNotes()">${escapeHtml(n.text.slice(0,60))}</div>`).join('') + `</div>`;
+  }
+  if(habitHits.length){
+    html += `<div class="search-result-group"><div class="search-result-label">習慣</div>` +
+      habitHits.map(h=>`<div class="search-result-item" onclick="jumpToHabits()">${escapeHtml(h.name)}</div>`).join('') + `</div>`;
+  }
+  box.innerHTML = html;
+}
+function jumpToTask(categoryId, taskId){
+  closeSearch();
+  ui.filter = 'all';
+  switchMainView('list');
+  selectCategory(categoryId);
+  ui.expanded[taskId] = true;
+  renderTaskList();
+}
+function jumpToQuickNotes(){
+  closeSearch();
+  switchMainView('quicknotes');
+}
+function jumpToHabits(){
+  closeSearch();
+  switchMainView('habits');
+}
+
+let undoTimer = null;
+let undoState = null;
+function showUndoToast(message, restoreFn, refreshFn){
+  clearTimeout(undoTimer);
+  if(undoState) persist();
+  document.getElementById('undoToastMsg').textContent = message;
+  document.getElementById('undoToast').classList.add('show');
+  undoState = { restoreFn, refreshFn };
+  undoTimer = setTimeout(()=>{
+    document.getElementById('undoToast').classList.remove('show');
+    undoState = null;
+    persist();
+  }, 5000);
+}
+function clickUndo(){
+  if(!undoState) return;
+  clearTimeout(undoTimer);
+  document.getElementById('undoToast').classList.remove('show');
+  undoState.restoreFn();
+  if(undoState.refreshFn) undoState.refreshFn();
+  undoState = null;
+}
+
+function openNoteModal(type, taskId, subId){
+  noteTarget = {type, taskId, subId};
+  const t = data.tasks.find(x=>x.id===taskId);
+  let current = '';
+  if(type==='task') current = t.note || '';
+  else { const s = t.subtasks.find(x=>x.id===subId); current = s.note || ''; }
+  document.getElementById('noteTextarea').value = current;
+  document.getElementById('noteModal').classList.add('show');
+}
+function saveNote(){
+  const text = document.getElementById('noteTextarea').value.trim();
+  const t = data.tasks.find(x=>x.id===noteTarget.taskId);
+  if(noteTarget.type==='task'){ t.note = text || null; }
+  else { const s = t.subtasks.find(x=>x.id===noteTarget.subId); s.note = text || null; }
+  noteTarget = null;
+  closeModal('noteModal');
+  persist(); refreshAll();
+}
+
 function openTaskModal(taskId){
   editingTaskId = taskId || null;
   const task = taskId ? data.tasks.find(t=>t.id===taskId) : null;
@@ -1288,12 +1598,13 @@ function saveSubtask(){
   if(editingSubId){
     const s = t.subtasks.find(x=>x.id===editingSubId);
     s.title = title; s.time = time; s.reminder = reminder;
-    if(reminder) scheduleReminder(t, s);
+    if(reminder && time){ scheduleReminder(t, s); writeReminderDoc(s.id, s.title, t.title, new Date(time).getTime()); }
+    else deleteReminderDoc(s.id);
   }else{
     const sub = {id:uid(), title, time, status:'pending', reminder};
     t.subtasks.push(sub);
     ui.expanded[t.id] = true;
-    if(reminder) scheduleReminder(t, sub);
+    if(reminder && time){ scheduleReminder(t, sub); writeReminderDoc(sub.id, sub.title, t.title, new Date(time).getTime()); }
   }
   editingSubId = null;
   closeModal('subModal');
@@ -1437,10 +1748,11 @@ function selectHabitType(t){
 function openHabitModal(habitId){
   editingHabitId = habitId || null;
   const h = editingHabitId ? data.habits.find(x=>x.id===editingHabitId) : null;
-  document.getElementById('habitModalTitle').textContent = h ? '編輯習慣名稱' : '新增習慣';
+  document.getElementById('habitModalTitle').textContent = h ? '編輯習慣' : '新增習慣';
   document.getElementById('habitSaveBtn').textContent = h ? '儲存' : '新增';
   document.getElementById('habitName').value = h ? h.name : '';
   document.getElementById('habitUnit').value = '';
+  document.getElementById('habitRemindTime').value = h && h.remindTime ? h.remindTime : '';
   if(h){
     document.getElementById('habitTypeFieldWrap').style.display = 'none';
   }else{
@@ -1454,12 +1766,16 @@ function openHabitModal(habitId){
 function saveHabit(){
   const name = document.getElementById('habitName').value.trim();
   if(!name){ notify('請輸入習慣名稱'); return; }
+  const remindTime = document.getElementById('habitRemindTime').value || null;
   if(editingHabitId){
     const h = data.habits.find(x=>x.id===editingHabitId);
     h.name = name;
+    h.remindTime = remindTime;
     editingHabitId = null;
     closeModal('habitModal');
     persist(); renderHabitCheckin();
+    scheduleHabitReminders();
+    writeHabitReminderDoc(h);
     return;
   }
   const type = habitTypeSelected;
@@ -1468,15 +1784,27 @@ function saveHabit(){
     unit = document.getElementById('habitUnit').value.trim();
     if(!unit){ notify('請輸入數量單位，例如：公斤、公升'); return; }
   }
-  data.habits.push({id:uid(), name, type, unit, createdAt: todayStr()});
+  const newHabit = {id:uid(), name, type, unit, remindTime, createdAt: todayStr()};
+  data.habits.push(newHabit);
   closeModal('habitModal');
   persist(); renderHabitCheckin();
+  writeHabitReminderDoc(newHabit);
+  scheduleHabitReminders();
 }
 function deleteHabit(id){
   showConfirm('確定要刪除這個習慣嗎？所有打卡紀錄與統計數值都會一併刪除，此動作無法復原。', ()=>{
-    data.habits = data.habits.filter(h=>h.id!==id);
+    const idx = data.habits.findIndex(h=>h.id===id);
+    const removed = data.habits[idx];
+    const removedLog = data.habitLogs[id];
+    data.habits.splice(idx,1);
     delete data.habitLogs[id];
-    persist(); renderHabitCheckin();
+    renderHabitCheckin();
+    if(fbDb) fbDb.collection('habitReminders').doc(id).delete().catch(()=>{});
+    showUndoToast('已刪除習慣「'+removed.name+'」', ()=>{
+      data.habits.splice(idx,0,removed);
+      if(removedLog) data.habitLogs[id] = removedLog;
+      writeHabitReminderDoc(removed);
+    }, renderHabitCheckin);
   });
 }
 let habitDragCtx = null;
@@ -1805,9 +2133,13 @@ function sendQuickNote(){
   playStickAnimation(note);
 }
 function deleteQuickNote(id){
-  data.quickNotes = data.quickNotes.filter(n=>n.id!==id);
-  persist();
+  const idx = data.quickNotes.findIndex(n=>n.id===id);
+  const removed = data.quickNotes[idx];
+  data.quickNotes.splice(idx,1);
   renderQuickNoteWall();
+  showUndoToast('已刪除便利貼', ()=>{
+    data.quickNotes.splice(idx,0,removed);
+  }, renderQuickNoteWall);
 }
 let quickNoteAnimTimer = null;
 function playStickAnimation(note){
@@ -1893,6 +2225,55 @@ function toggleDailyBriefSwitch(){
   }
 }
 
+function openSummary(range){
+  document.getElementById('summaryWeekBtn').classList.toggle('active', range==='week');
+  document.getElementById('summaryMonthBtn').classList.toggle('active', range==='month');
+  const days = range==='week' ? 7 : 30;
+  const rangeLabel = range==='week' ? '本週' : '本月';
+  const dateList = [];
+  for(let i=days-1;i>=0;i--) dateList.push(dateStrOffset(-i));
+
+  let completedTasks = 0;
+  data.tasks.forEach(t=>{
+    if(t.status==='done') completedTasks++;
+    (t.subtasks||[]).forEach(s=>{
+      if(s.status==='done' && s.time && dateList.includes(s.time.slice(0,10))) completedTasks++;
+    });
+  });
+
+  const habitRows = data.habits.map(h=>{
+    const doneDays = dateList.filter(d=> habitHasLog(h,d)).length;
+    const rate = Math.round((doneDays/days)*100);
+    return {name:h.name, rate};
+  });
+  const avgRate = habitRows.length ? Math.round(habitRows.reduce((s,h)=>s+h.rate,0)/habitRows.length) : 0;
+
+  const noteCount = data.quickNotes.filter(n=>{
+    const d = new Date(n.createdAt);
+    const pad=x=>String(x).padStart(2,'0');
+    const ds = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    return dateList.includes(ds);
+  }).length;
+
+  let html = `<h2 style="margin:0 0 16px;font-size:18px;">${rangeLabel}小結</h2>`;
+  html += `<div class="brief-section"><div class="brief-item">完成了 <b>${completedTasks}</b> 項事項／細項</div></div>`;
+  html += `<div class="brief-section"><div class="brief-item">寫了 <b>${noteCount}</b> 則隨手記</div></div>`;
+  if(habitRows.length){
+    html += `<div class="brief-section"><div class="brief-label">習慣平均達成率 ${avgRate}%</div>` +
+      habitRows.map(h=>`
+        <div class="rate-row">
+          <span class="rate-label">${escapeHtml(h.name)}</span>
+          <div class="rate-bar-track"><div class="rate-bar-fill" style="width:${h.rate}%"></div></div>
+          <span class="rate-value">${h.rate}%</span>
+        </div>`).join('') + `</div>`;
+  }
+  document.getElementById('summaryContent').innerHTML = html;
+  document.getElementById('summaryOverlay').classList.add('show');
+}
+function closeSummary(){
+  document.getElementById('summaryOverlay').classList.remove('show');
+}
+
 /* ============================================================
    書籤
 ============================================================ */
@@ -1921,8 +2302,13 @@ function saveBookmark(){
   persist(); renderBookmarks();
 }
 function deleteBookmark(id){
-  data.bookmarks = data.bookmarks.filter(b=>b.id!==id);
-  persist(); renderBookmarks();
+  const idx = data.bookmarks.findIndex(b=>b.id===id);
+  const removed = data.bookmarks[idx];
+  data.bookmarks.splice(idx,1);
+  renderBookmarks();
+  showUndoToast('已刪除書籤「'+removed.title+'」', ()=>{
+    data.bookmarks.splice(idx,0,removed);
+  }, renderBookmarks);
 }
 
 /* ============================================================
@@ -2015,6 +2401,7 @@ function escapeAttr(s){ return escapeHtml(s); }
 function renderAll(){
   renderTabs();
   switchMainView('habits');
+  scheduleHabitReminders();
 }
 </script>
 </body>
