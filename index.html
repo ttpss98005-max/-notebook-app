@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>記事簿</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#3A6B5E">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="記事簿">
 <link rel="preconnect" href="https://accounts.google.com">
 <link rel="dns-prefetch" href="https://accounts.google.com">
 <script src="https://accounts.google.com/gsi/client" async defer onload="initGoogleSignIn()"></script>
@@ -936,7 +943,7 @@ async function enablePushNotifications(){
   try{
     const permission = await Notification.requestPermission();
     if(permission !== 'granted'){ notify('沒有允許通知權限，無法開啟推播。'); return; }
-    const reg = await navigator.serviceWorker.register('firebase-messaging-sw.js');
+    const reg = swRegistration || await navigator.serviceWorker.register('service-worker.js');
     fcmMessaging = firebase.messaging();
     const token = await fcmMessaging.getToken({ vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
     if(token && fbDb && currentStorageKey){
@@ -1109,6 +1116,14 @@ async function logout(){
   if(container) container.innerHTML = '';
   initGoogleSignIn();
   isLoggingOut = false;
+}
+
+let swRegistration = null;
+if('serviceWorker' in navigator){
+  window.addEventListener('load', async ()=>{
+    try{ swRegistration = await navigator.serviceWorker.register('service-worker.js'); }
+    catch(e){ console.error('Service Worker 註冊失敗', e); }
+  });
 }
 
 window.addEventListener('resize', ()=>{
