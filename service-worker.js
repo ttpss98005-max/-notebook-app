@@ -16,12 +16,12 @@ messaging.onBackgroundMessage((payload) => {
   const options = {
     body: (payload.notification && payload.notification.body) || '',
     icon: 'icon-192.png',
-    badge: 'icon-192.png'
+    badge: 'icon-notification.png'
   };
   self.registration.showNotification(title, options);
 });
 
-const CACHE_NAME = 'jishibu-cache-v7';
+const CACHE_NAME = 'jishibu-cache-v11';
 const CORE_ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (event) => {

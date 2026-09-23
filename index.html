@@ -192,6 +192,8 @@
   .week-item{font-size:11px;border-radius:10px;border-left:3px solid var(--border);padding:6px 8px;margin-bottom:6px;background:#F1F0EA;}
   .week-item .t{color:var(--ink-soft);display:block;font-size:10px;}
   .no-item{font-size:11px;color:#D8D8D8;text-align:center;padding-top:14px;}
+  .week-recap-link{display:flex;align-items:center;gap:5px;justify-content:center;width:100%;margin-top:8px;
+    padding:6px 4px;border:1px dashed var(--border);border-radius:10px;background:none;font-size:10.5px;color:var(--ink-soft);}
 
   .setting-block{margin-bottom:30px;max-width:640px;}
   .setting-block h3{font-size:13px;margin:0 0 12px;color:var(--ink-soft);font-weight:700;}
@@ -274,6 +276,39 @@
   .quicknote-flying.landed{transform:scale(0.85) rotate(-4deg) translateY(140px);opacity:.9;}
 
   /* ============ 每日提醒 ============ */
+  /* ============ 今天總結（夜間） ============ */
+  #nightRecapOverlay{display:none;position:fixed;inset:0;z-index:160;align-items:center;justify-content:center;
+    background:linear-gradient(160deg,#1B2333,#0B0F17);overflow:hidden;}
+  #nightRecapOverlay.show{display:flex;}
+  .recap-stars{position:absolute;inset:0;pointer-events:none;}
+  .recap-star{position:absolute;width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.55);}
+  .recap-star.s1{top:12%;left:18%;animation:starDrift1 7s ease-in-out infinite;}
+  .recap-star.s2{top:22%;left:78%;width:3px;height:3px;animation:starDrift2 9s ease-in-out infinite;}
+  .recap-star.s3{top:68%;left:12%;width:4px;height:4px;animation:starDrift2 8s ease-in-out infinite;}
+  .recap-star.s4{top:78%;left:82%;animation:starDrift1 10s ease-in-out infinite;}
+  .recap-star.s5{top:40%;left:50%;width:3px;height:3px;animation:starDrift1 6s ease-in-out infinite;}
+  @keyframes starDrift1{0%,100%{transform:translate(0,0);opacity:.4;} 50%{transform:translate(8px,-14px);opacity:1;}}
+  @keyframes starDrift2{0%,100%{transform:translate(0,0);opacity:.5;} 50%{transform:translate(-10px,10px);opacity:1;}}
+  @keyframes recapCardIn{from{opacity:0;transform:translateY(46px) scale(.92);} to{opacity:1;transform:translateY(0) scale(1);}}
+  @keyframes recapCardOut{from{opacity:1;transform:translateY(0) scale(1);} to{opacity:0;transform:translateY(-36px) scale(.94);}}
+  @keyframes recapFloat{0%,100%{transform:translateY(0);} 50%{transform:translateY(-9px);}}
+  .recap-card{position:relative;background:#FDFDFB;border-radius:26px;padding:30px 26px;max-width:360px;width:88%;
+    box-shadow:0 30px 80px rgba(0,0,0,.5);animation:recapCardIn .8s cubic-bezier(.22,1,.36,1) both, recapFloat 5.5s ease-in-out .8s infinite;}
+  .recap-card.closing{animation:recapCardOut .6s ease both;}
+  .recap-close{position:absolute;top:14px;right:16px;background:none;border:none;font-size:18px;color:var(--ink-soft);}
+  .recap-title{font-size:18px;font-weight:700;margin-bottom:16px;text-align:center;}
+  .recap-next-btn{width:100%;margin-top:18px;}
+  .mood-row{display:flex;gap:10px;justify-content:center;margin-bottom:16px;}
+  .mood-btn{display:flex;flex-direction:column;align-items:center;gap:8px;background:#F1F0EA;border:2px solid transparent;
+    border-radius:16px;padding:14px 16px;font-size:12px;color:var(--ink-soft);font-weight:700;transition:.15s;}
+  .mood-btn.selected{border-color:var(--accent);background:var(--accent-soft);color:var(--ink);}
+  .mood-face{width:34px;height:34px;border-radius:50%;display:block;}
+  .mood-bad{background:#E0685A;}
+  .mood-ok{background:#D9A441;}
+  .mood-good{background:#3F9C6E;}
+  #recapNoteInput{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:14px;font-size:13.5px;
+    font-family:inherit;resize:none;}
+
   .daily-brief-modal{max-width:340px;animation:briefPop .4s cubic-bezier(.34,1.56,.64,1);}
   @keyframes briefPop{from{opacity:0;transform:scale(.85) translateY(10px);} to{opacity:1;transform:scale(1) translateY(0);}}
   .brief-section{margin-bottom:14px;}
@@ -466,6 +501,37 @@
 </div>
 
 <!-- ================= 每日提醒動畫 ================= -->
+<div id="nightRecapOverlay">
+  <div class="recap-stars">
+    <span class="recap-star s1"></span><span class="recap-star s2"></span><span class="recap-star s3"></span>
+    <span class="recap-star s4"></span><span class="recap-star s5"></span>
+  </div>
+  <div class="recap-card" id="recapCard">
+    <button class="recap-close" onclick="closeNightRecap()">×</button>
+    <div id="recapStep1">
+      <div class="recap-title" id="recapTitle">今天總結</div>
+      <div id="recapSummaryContent"></div>
+      <button class="btn-primary recap-next-btn" onclick="nightRecapNextStep()">繼續</button>
+    </div>
+    <div id="recapStep2" style="display:none">
+      <div class="recap-title">今天心情如何？</div>
+      <div class="mood-row">
+        <button class="mood-btn" data-mood="bad" onclick="selectMood('bad')">
+          <span class="mood-face mood-bad"></span><span>不好</span>
+        </button>
+        <button class="mood-btn" data-mood="ok" onclick="selectMood('ok')">
+          <span class="mood-face mood-ok"></span><span>普通</span>
+        </button>
+        <button class="mood-btn" data-mood="good" onclick="selectMood('good')">
+          <span class="mood-face mood-good"></span><span>好</span>
+        </button>
+      </div>
+      <textarea id="recapNoteInput" rows="3" placeholder="想留下一段話嗎...（可留空）"></textarea>
+      <button class="btn-primary recap-next-btn" onclick="saveNightRecap()">完成</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="dailyBriefOverlay" onclick="closeDailyBrief()">
   <div class="modal daily-brief-modal" onclick="event.stopPropagation()">
     <div id="dailyBriefContent"></div>
@@ -679,6 +745,8 @@ function defaultData(){
     habits: [],
     habitLogs: {},
     quickNotes: [],
+    dayRecaps: {},
+    lastAutoRecapDate: null,
     globalPaletteId:'p01',
     customPalettes:[]
   };
@@ -822,6 +890,8 @@ async function loadData(storageKey){
   if(!data.habits) data.habits = [];
   if(!data.habitLogs) data.habitLogs = {};
   if(!data.quickNotes) data.quickNotes = [];
+  if(!data.dayRecaps) data.dayRecaps = {};
+  if(data.lastAutoRecapDate===undefined) data.lastAutoRecapDate = null;
   data.categories.forEach(c=>{ if(c.paletteId===undefined) c.paletteId = null; });
   if(!data.categories.find(c=>c.id==='work')) data.categories.unshift({id:'work', name:'工作', color:'#2E4057', deletable:false, paletteId:null});
   if(!data.categories.find(c=>c.id==='personal')) data.categories.unshift({id:'personal', name:'私人', color:'#7A5C82', deletable:false, paletteId:null});
@@ -1086,6 +1156,7 @@ function enterAppDirectly(){
     applyTheme();
     renderAll();
     maybeShowDailyBrief();
+    maybeShowNightRecap();
     handleShortcutParam();
   }, 500);
 }
@@ -1400,7 +1471,7 @@ function scheduleReminder(task, sub){
   setTimeout(()=>{
     if(!sub.reminder) return;
     if('Notification' in window && Notification.permission==='granted'){
-      new Notification('提醒：'+sub.title, {body: task.title+'（'+fmtTime(sub.time)+'）'});
+      new Notification('提醒：'+sub.title, {body: task.title+'（'+fmtTime(sub.time)+'）', icon:'icon-192.png', badge:'icon-notification.png'});
     }else{
       notify('提醒：'+sub.title);
     }
@@ -1420,7 +1491,7 @@ function scheduleHabitReminders(){
     habitReminderTimers[h.id] = setTimeout(()=>{
       if(!habitHasLog(h, todayStr())){
         if('Notification' in window && Notification.permission==='granted'){
-          new Notification('習慣提醒：'+h.name, {body:'今天還沒打卡喔'});
+          new Notification('習慣提醒：'+h.name, {body:'今天還沒打卡喔', icon:'icon-192.png', badge:'icon-notification.png'});
         }else{
           notify('習慣提醒：'+h.name+'（今天還沒打卡）');
         }
@@ -1715,6 +1786,7 @@ function renderWeek(){
   const items = allTimedItems();
   const today = new Date();
   const dows=['日','一','二','三','四','五','六'];
+  const pad=n=>String(n).padStart(2,'0');
   let cols='';
   for(let i=0;i<7;i++){
     const d = new Date(start); d.setDate(start.getDate()+i);
@@ -1723,9 +1795,22 @@ function renderWeek(){
       return t.getFullYear()===d.getFullYear()&&t.getMonth()===d.getMonth()&&t.getDate()===d.getDate();
     }).sort((a,b)=>a.time.localeCompare(b.time));
     const isToday = d.toDateString()===today.toDateString();
+    const dayStr = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    const isPastOrToday = dayStr <= todayStr();
+    const recap = data.dayRecaps[dayStr];
+    let recapHtml = '';
+    if(isPastOrToday){
+      if(recap){
+        const moodClass = recap.mood==='good' ? 'mood-good' : recap.mood==='bad' ? 'mood-bad' : 'mood-ok';
+        recapHtml = `<button class="week-recap-link" onclick="openRecapFromWeek('${dayStr}')"><span class="mood-face ${moodClass}" style="width:9px;height:9px;"></span>編輯總結</button>`;
+      }else{
+        recapHtml = `<button class="week-recap-link" onclick="openRecapFromWeek('${dayStr}')">＋寫總結</button>`;
+      }
+    }
     cols += `<div class="week-col">
       <div class="week-col-head ${isToday?'today':''}">${dows[i]} ${d.getMonth()+1}/${d.getDate()}</div>
       ${dayItems.length? dayItems.map(it=>`<div class="week-item" style="border-left-color:${it.color}"><span class="t">${it.isDate? '截止' : fmtTime(it.time).split(' ')[1]}</span>${escapeHtml(it.title)}</div>`).join('') : `<div class="no-item">無事項</div>`}
+      ${recapHtml}
     </div>`;
   }
   const endLabel = new Date(start); endLabel.setDate(start.getDate()+6);
@@ -2213,6 +2298,104 @@ function showDailyBrief(){
 }
 function closeDailyBrief(){
   document.getElementById('dailyBriefOverlay').classList.remove('show');
+}
+
+/* ============================================================
+   今天總結（夜間回顧）
+============================================================ */
+function getRecapDateStr(){
+  const hour = new Date().getHours();
+  return hour >= 22 ? todayStr() : dateStrOffset(-1);
+}
+function getRecapLabel(){
+  const hour = new Date().getHours();
+  return (hour >= 22 || hour < 4) ? '今天' : '昨天';
+}
+function isNightRecapWindow(){
+  const hour = new Date().getHours();
+  return hour >= 22 || hour < 10;
+}
+function maybeShowNightRecap(){
+  if(!isNightRecapWindow()) return;
+  const recapDay = getRecapDateStr();
+  if(data.lastAutoRecapDate === recapDay) return;
+  data.lastAutoRecapDate = recapDay;
+  persist();
+  showNightRecap(recapDay);
+}
+
+let recapTargetDate = null;
+let recapSelectedMood = null;
+function buildRecapSummaryHtml(day){
+  const doneItems = [];
+  const undoneItems = [];
+  const overdueItems = [];
+  data.tasks.forEach(t=>{
+    if(t.status==='done') doneItems.push(t.title);
+    else if(t.dueDate && t.dueDate < day) overdueItems.push(t.title);
+    else if(t.dueDate === day) undoneItems.push(t.title);
+    (t.subtasks||[]).forEach(s=>{
+      if(!s.time) return;
+      const sDay = s.time.slice(0,10);
+      if(sDay !== day) return;
+      if(s.status==='done') doneItems.push(s.title);
+      else undoneItems.push(s.title);
+    });
+  });
+  let html = '';
+  html += `<div class="brief-section"><div class="brief-label">今天完成了</div>` +
+    (doneItems.length? doneItems.map(x=>`<div class="brief-item">${escapeHtml(x)}</div>`).join('') : `<div class="brief-item" style="color:var(--ink-soft)">今天沒有完成的項目</div>`) + `</div>`;
+  if(undoneItems.length){
+    html += `<div class="brief-section"><div class="brief-label">還沒做</div>` +
+      undoneItems.map(x=>`<div class="brief-item">${escapeHtml(x)}</div>`).join('') + `</div>`;
+  }
+  if(overdueItems.length){
+    html += `<div class="brief-section"><div class="brief-label" style="color:var(--danger)">已經延誤</div>` +
+      overdueItems.map(x=>`<div class="brief-item" style="color:var(--danger)">${escapeHtml(x)}</div>`).join('') + `</div>`;
+  }
+  return html;
+}
+function showNightRecap(day, isManual){
+  recapTargetDate = day;
+  recapSelectedMood = null;
+  const existing = data.dayRecaps[day];
+  document.getElementById('recapTitle').textContent = (isManual? '' : getRecapLabel()) + '總結';
+  document.getElementById('recapSummaryContent').innerHTML = buildRecapSummaryHtml(day);
+  document.getElementById('recapStep1').style.display = 'block';
+  document.getElementById('recapStep2').style.display = 'none';
+  document.getElementById('recapNoteInput').value = existing ? (existing.note||'') : '';
+  document.querySelectorAll('.mood-btn').forEach(b=> b.classList.toggle('selected', !!existing && existing.mood===b.dataset.mood));
+  if(existing) recapSelectedMood = existing.mood;
+  const overlay = document.getElementById('nightRecapOverlay');
+  const card = document.getElementById('recapCard');
+  card.classList.remove('closing');
+  overlay.classList.add('show');
+}
+function nightRecapNextStep(){
+  document.getElementById('recapStep1').style.display = 'none';
+  document.getElementById('recapStep2').style.display = 'block';
+}
+function selectMood(mood){
+  recapSelectedMood = mood;
+  document.querySelectorAll('.mood-btn').forEach(b=> b.classList.toggle('selected', b.dataset.mood===mood));
+}
+function saveNightRecap(){
+  const note = document.getElementById('recapNoteInput').value.trim();
+  data.dayRecaps[recapTargetDate] = { mood: recapSelectedMood, note, createdAt: Date.now() };
+  persist();
+  closeNightRecap();
+}
+function closeNightRecap(){
+  const overlay = document.getElementById('nightRecapOverlay');
+  const card = document.getElementById('recapCard');
+  card.classList.add('closing');
+  setTimeout(()=>{
+    overlay.classList.remove('show');
+    card.classList.remove('closing');
+  }, 550);
+}
+function openRecapFromWeek(day){
+  showNightRecap(day, true);
 }
 function dismissDailyBriefToday(){
   data.dailyBriefDismissedDate = todayStr();
