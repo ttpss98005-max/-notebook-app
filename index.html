@@ -481,8 +481,8 @@
   .quicknote-time{font-size:10px;color:rgba(0,0,0,.4);padding-right:38px;}
   .quicknote-del{position:absolute;top:2px;right:6px;background:none;border:none;font-size:15px;color:rgba(0,0,0,.3);}
   .quicknote-pin{position:absolute;top:0;left:50%;transform:translate(-50%,-50%);width:11px;height:11px;
-    border-radius:50%;background:radial-gradient(circle at 35% 30%, #E5E5E0, #A8A8A2);
-    box-shadow:0 1px 2px rgba(0,0,0,.4);z-index:3;}
+    border-radius:50%;background:#D4D4CF;
+    box-shadow:0 1px 2px rgba(0,0,0,.3);z-index:3;}
   .quicknote-move{position:absolute;bottom:4px;right:6px;background:rgba(0,0,0,.08);border:none;font-size:9.5px;
     color:rgba(0,0,0,.5);padding:2px 7px;border-radius:999px;}
   #quickNoteInputBar{position:fixed;left:16px;right:16px;bottom:76px;z-index:15;background:var(--surface);
@@ -589,10 +589,12 @@
   #morningGreetingScreen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
     text-align:center;padding:0 30px;cursor:pointer;transition:opacity .5s ease;}
   #morningGreetingScreen.fade-out{opacity:0;}
-  .sunrise-mountains{position:absolute;inset:0;width:100%;height:100%;z-index:0;}
-  .morning-sun{fill:#FFD873;filter:drop-shadow(0 0 30px rgba(255,216,115,.9));
-    animation:sunRise 1.4s cubic-bezier(.22,1,.36,1) both, recapFloat 6s ease-in-out 1.4s infinite;}
-  @keyframes sunRise{from{transform:translateY(40px);opacity:0;} to{transform:translateY(0);opacity:1;}}
+  .sunrise-sky{position:absolute;inset:0;z-index:0;overflow:hidden;}
+  .sunrise-mountains{position:absolute;left:0;bottom:0;width:100%;height:33%;z-index:1;}
+  .morning-sun-svg{position:absolute;top:11%;left:50%;transform:translateX(-50%);width:92px;height:92px;
+    animation:sunRise 2.6s cubic-bezier(.22,1,.36,1) both, recapFloat 6s ease-in-out 2.6s infinite;}
+  .morning-sun{fill:#FFD873;filter:drop-shadow(0 0 30px rgba(255,216,115,.9));}
+  @keyframes sunRise{from{transform:translateY(50px);opacity:0;} to{transform:translateY(0);opacity:1;}}
   .morning-text{position:relative;z-index:2;color:#fff;font-size:22px;font-weight:700;line-height:1.8;
     text-shadow:0 2px 14px rgba(0,0,0,.35);animation:recapFloat 5.5s ease-in-out .3s infinite;}
 
@@ -853,10 +855,14 @@
 <!-- ================= 每日提醒動畫 ================= -->
 <div id="dailyBriefOverlay" onclick="closeDailyBrief()">
   <div id="morningGreetingScreen" onclick="event.stopPropagation(); advanceFromMorningGreeting()">
-    <svg class="sunrise-mountains" viewBox="0 0 400 300" preserveAspectRatio="xMidYMax slice">
-      <circle class="morning-sun" cx="200" cy="95" r="46"/>
-      <path d="M0 300 L0 190 L60 150 L120 185 L180 140 L230 175 L280 155 L340 180 L400 160 L400 300 Z" fill="#E8956B" opacity=".85"/>
-      <path d="M0 300 L0 230 L90 210 L180 240 L260 205 L340 230 L400 215 L400 300 Z" fill="#C9714F"/>
+    <div class="sunrise-sky">
+      <svg class="morning-sun-svg" viewBox="0 0 100 100">
+        <circle class="morning-sun" cx="50" cy="50" r="42"/>
+      </svg>
+    </div>
+    <svg class="sunrise-mountains" viewBox="0 0 400 100" preserveAspectRatio="none">
+      <path d="M0 100 C20 65,60 58,90 68 C130 82,160 42,200 47 C250 53,270 75,310 70 C350 66,380 76,400 69 L400 100 Z" fill="#E8956B" opacity=".85"/>
+      <path d="M0 100 C40 87,80 82,120 89 C170 96,210 80,260 84 C310 88,350 82,400 87 L400 100 Z" fill="#C9714F"/>
     </svg>
     <div class="morning-text">早安！<br>今天也加油</div>
   </div>
@@ -2567,20 +2573,31 @@ function buildHabitLineChart(h){
   const stepX = days.length>1 ? innerW/(days.length-1) : 0;
   const scaleY = v => padT + innerH * (1 - (v-min)/(max-min));
   const dotR = days.length>60 ? 0 : days.length>30 ? 1.8 : 3.2;
-  let segments = [], cur = '';
+  let segPts = [], allSegs = [];
   let dots = '';
   pts.forEach((v,i)=>{
     const x = padL + i*stepX;
-    if(v===null){ if(cur){ segments.push(cur); cur=''; } return; }
+    if(v===null){ if(segPts.length){ allSegs.push(segPts); segPts=[]; } return; }
     const y = scaleY(v);
-    cur += (cur===''?'M':'L') + x.toFixed(1) + ',' + y.toFixed(1) + ' ';
+    segPts.push({x, y});
     if(dotR>0){
       const dotDelay = (i/Math.max(days.length-1,1)) * 1.1;
       dots += `<circle class="chart-dot" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${dotR}" fill="var(--accent)" style="animation-delay:${dotDelay.toFixed(2)}s"></circle>`;
     }
   });
-  if(cur) segments.push(cur);
-  const pathD = segments.join(' ');
+  if(segPts.length) allSegs.push(segPts);
+  const smoothSegment = (p)=>{
+    if(p.length===1) return '';
+    if(p.length===2) return `M${p[0].x.toFixed(1)},${p[0].y.toFixed(1)} L${p[1].x.toFixed(1)},${p[1].y.toFixed(1)} `;
+    let d = `M${p[0].x.toFixed(1)},${p[0].y.toFixed(1)} `;
+    for(let i=1;i<p.length-1;i++){
+      const midX = (p[i].x+p[i+1].x)/2, midY = (p[i].y+p[i+1].y)/2;
+      d += `Q${p[i].x.toFixed(1)},${p[i].y.toFixed(1)} ${midX.toFixed(1)},${midY.toFixed(1)} `;
+    }
+    d += `L${p[p.length-1].x.toFixed(1)},${p[p.length-1].y.toFixed(1)} `;
+    return d;
+  };
+  const pathD = allSegs.map(smoothSegment).join(' ');
   const fmt = v => h.type==='time' ? minutesToTimeLabel(v) : (Math.round(v*10)/10) + (h.unit? ' '+h.unit : '');
   const xFirst = days[0].slice(5).replace('-','/');
   const xLast = days[days.length-1].slice(5).replace('-','/');
