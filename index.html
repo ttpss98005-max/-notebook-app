@@ -2181,7 +2181,14 @@ function timeToMinutes(t){ const parts=t.split(':'); return Number(parts[0])*60+
 function minutesToTimeLabel(m){ const h=Math.floor(m/60), mm=Math.round(m%60); return String(((h%24)+24)%24).padStart(2,'0')+':'+String(mm).padStart(2,'0'); }
 function buildHabitLineChart(h){
   const days = [];
-  for(let i=13;i>=0;i--) days.push(dateStrOffset(-i));
+  const start = new Date(h.createdAt || dateStrOffset(-13));
+  const end = new Date(todayStr());
+  const cursor = new Date(start);
+  while(cursor <= end){
+    const pad=n=>String(n).padStart(2,'0');
+    days.push(`${cursor.getFullYear()}-${pad(cursor.getMonth()+1)}-${pad(cursor.getDate())}`);
+    cursor.setDate(cursor.getDate()+1);
+  }
   const pts = days.map(d=>{
     const entry = habitEntry(h, d);
     if(!entry || !entry.checked || entry.value===undefined || entry.value===''){ return null; }
@@ -2190,7 +2197,7 @@ function buildHabitLineChart(h){
   });
   const validVals = pts.filter(v=>v!==null);
   if(validVals.length===0){
-    return `<div class="empty-state" style="padding:24px">近14天尚無紀錄</div>`;
+    return `<div class="empty-state" style="padding:24px">尚無紀錄</div>`;
   }
   let min = Math.min(...validVals), max = Math.max(...validVals);
   if(min===max){ min -= 1; max += 1; }
@@ -2198,6 +2205,7 @@ function buildHabitLineChart(h){
   const innerW = W-padL-padR, innerH = H-padT-padB;
   const stepX = days.length>1 ? innerW/(days.length-1) : 0;
   const scaleY = v => padT + innerH * (1 - (v-min)/(max-min));
+  const dotR = days.length>60 ? 0 : days.length>30 ? 1.8 : 3.2;
   let segments = [], cur = '';
   let dots = '';
   pts.forEach((v,i)=>{
@@ -2205,7 +2213,7 @@ function buildHabitLineChart(h){
     if(v===null){ if(cur){ segments.push(cur); cur=''; } return; }
     const y = scaleY(v);
     cur += (cur===''?'M':'L') + x.toFixed(1) + ',' + y.toFixed(1) + ' ';
-    dots += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.2" fill="var(--accent)"></circle>`;
+    if(dotR>0) dots += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${dotR}" fill="var(--accent)"></circle>`;
   });
   if(cur) segments.push(cur);
   const pathD = segments.join(' ');
@@ -2248,7 +2256,7 @@ function renderHabitStats(){
       </div>`;
     }else{
       return `<div class="habit-stats-card">
-        <h4>${escapeHtml(h.name)}（近14天趨勢）</h4>
+        <h4>${escapeHtml(h.name)}（歷史趨勢）</h4>
         ${buildHabitLineChart(h)}
       </div>`;
     }
@@ -2576,8 +2584,10 @@ function toggleDailyBriefSwitch(){
     showDailyBrief(false);
   }else{
     data.dailyBriefDismissedDate = today;
+    data.morningGreetingAlwaysOn = false;
     persist();
     updateDailyBriefSwitch();
+    updateMorningGreetingSwitch();
   }
 }
 
