@@ -265,11 +265,20 @@
   #quickNoteWall{display:flex;flex-wrap:wrap;gap:16px;padding:4px 4px 110px;min-height:120px;}
   .quicknote-card{position:relative;width:140px;min-height:120px;padding:14px 12px;background:#FFF3B0;
     box-shadow:var(--shadow-sm);border-radius:4px;font-size:13px;transform-origin:50% 0%;
-    transform:rotate(var(--lo,-8deg));animation:windSway 4s ease-in-out infinite;}
+    transform:rotate(2deg);animation:windSway 5s ease-in-out infinite;}
   @keyframes windSway{
-    0%{transform:rotate(var(--lo,-8deg));}
-    20%{transform:rotate(var(--hi,26deg));}
-    100%{transform:rotate(var(--lo,-8deg));}
+    0%{transform:rotate(2deg);}
+    8%{transform:rotate(-3deg);}
+    16%{transform:rotate(4deg);}
+    24%{transform:rotate(-2deg);}
+    32%{transform:rotate(var(--hi,10deg));}
+    44%{transform:rotate(1deg);}
+    52%{transform:rotate(-4deg);}
+    60%{transform:rotate(3deg);}
+    68%{transform:rotate(-2deg);}
+    76%{transform:rotate(var(--lo,-6deg));}
+    88%{transform:rotate(2deg);}
+    100%{transform:rotate(2deg);}
   }
   .quicknote-text{white-space:pre-wrap;word-break:break-word;margin-bottom:10px;line-height:1.5;}
   .quicknote-time{font-size:10px;color:rgba(0,0,0,.4);}
@@ -2297,16 +2306,15 @@ function renderQuickNoteWall(){
   }
   wall.innerHTML = data.quickNotes.slice().reverse().map((n)=>{
     const hash = quickNoteHash(n.id);
-    const lo = -4 - (hash % 7);
-    const hi = 20 + ((hash>>3) % 11);
+    const hi = 5 + (hash % 11);
+    const lo = -(3 + ((hash>>3) % (hi-2)));
     const w = 128 + (hash % 34);
     const h = 112 + ((hash>>2) % 30);
     const delay = -((hash % 4) / 20);
-    const dur = 3.8 + ((hash>>1) % 5)/10;
     const d = new Date(n.createdAt);
     const pad = x=>String(x).padStart(2,'0');
     const label = `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-    return `<div class="quicknote-card" style="--lo:${lo}deg;--hi:${hi}deg;width:${w}px;min-height:${h}px;background:${quickNoteColor(n.id)};animation-delay:${delay}s;animation-duration:${dur}s;">
+    return `<div class="quicknote-card" style="--lo:${lo}deg;--hi:${hi}deg;width:${w}px;min-height:${h}px;background:${quickNoteColor(n.id)};animation-delay:${delay}s;">
       <button class="quicknote-del" onclick="deleteQuickNote('${n.id}')">×</button>
       <div class="quicknote-text">${escapeHtml(n.text)}</div>
       <div class="quicknote-time">${label}</div>
