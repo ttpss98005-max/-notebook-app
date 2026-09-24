@@ -2326,7 +2326,7 @@ function renderQuickNoteWall(){
   wall.innerHTML = data.quickNotes.slice().reverse().map((n)=>{
     const hash = quickNoteHash(n.id);
     const hi = 5 + (hash % 11);
-    const lo = -(3 + ((hash>>3) % (hi-2)));
+    const lo = -(2 + ((hash>>3) % 4));
     const w = 128 + (hash % 34);
     const h = 112 + ((hash>>2) % 30);
     const delay = -((hash % 4) / 20);
