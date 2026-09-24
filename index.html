@@ -136,6 +136,14 @@
   .task.done{opacity:.7;}
   .task-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:15px 16px;}
   .check{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);background:#fff;flex-shrink:0;position:relative;transition:.15s;}
+  @keyframes checkBounce{0%{transform:scale(1);} 40%{transform:scale(1.35);} 70%{transform:scale(.88);} 100%{transform:scale(1);}}
+  .check.bounce{animation:checkBounce .4s ease;}
+  @keyframes streakMilestone{
+    0%{box-shadow:0 0 0 0 rgba(242,169,59,.7);}
+    60%{box-shadow:0 0 0 10px rgba(242,169,59,0);}
+    100%{box-shadow:0 0 0 0 rgba(242,169,59,0);}
+  }
+  .streak-badge.milestone{animation:streakMilestone .9s ease-out;}
   .check:disabled{opacity:.35;cursor:not-allowed;}
   .check.done{background:var(--accent);border-color:var(--accent);}
   .check.done::after{content:'';position:absolute;left:6px;top:2px;width:6px;height:11px;border-right:2.5px solid #fff;border-bottom:2.5px solid #fff;transform:rotate(45deg);}
@@ -250,7 +258,13 @@
   .rate-row{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
   .rate-label{width:52px;font-size:11.5px;color:var(--ink-soft);flex-shrink:0;}
   .rate-bar-track{flex:1;height:8px;background:var(--border);border-radius:999px;overflow:hidden;}
-  .rate-bar-fill{height:100%;background:var(--accent);border-radius:999px;}
+  .rate-bar-fill{height:100%;background:var(--accent);border-radius:999px;transition:width .8s cubic-bezier(.22,1,.36,1);}
+  @keyframes viewFadeIn{from{opacity:0;transform:translateY(6px);} to{opacity:1;transform:translateY(0);}}
+  .view-enter{animation:viewFadeIn .3s ease;}
+  .chart-line-draw{stroke-dasharray:1000;stroke-dashoffset:1000;animation:drawLine 1.1s ease-out forwards;}
+  @keyframes drawLine{to{stroke-dashoffset:0;}}
+  .chart-dot{opacity:0;animation:dotAppear .3s ease forwards;}
+  @keyframes dotAppear{to{opacity:1;}}
   .rate-value{width:40px;text-align:right;font-size:11.5px;color:var(--ink-soft);flex-shrink:0;}
   .cat-palette-row select{padding:7px 10px;border:1.5px solid var(--border);border-radius:999px;font-size:12.5px;font-family:inherit;}
   .color-input{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--border);padding:0;background:none;overflow:hidden;}
@@ -467,7 +481,7 @@
   .quicknote-time{font-size:10px;color:rgba(0,0,0,.4);padding-right:38px;}
   .quicknote-del{position:absolute;top:2px;right:6px;background:none;border:none;font-size:15px;color:rgba(0,0,0,.3);}
   .quicknote-pin{position:absolute;top:0;left:50%;transform:translate(-50%,-50%);width:11px;height:11px;
-    border-radius:50%;background:radial-gradient(circle at 35% 30%, #FF8A7A, #C23B2E);
+    border-radius:50%;background:radial-gradient(circle at 35% 30%, #E5E5E0, #A8A8A2);
     box-shadow:0 1px 2px rgba(0,0,0,.4);z-index:3;}
   .quicknote-move{position:absolute;bottom:4px;right:6px;background:rgba(0,0,0,.08);border:none;font-size:9.5px;
     color:rgba(0,0,0,.5);padding:2px 7px;border-radius:999px;}
@@ -485,7 +499,7 @@
     transition:transform .5s cubic-bezier(.34,1.56,.64,1), opacity .5s;}
   .quicknote-flying.landed{transform:scale(0.85) rotate(-4deg) translateY(140px);opacity:.9;}
   @keyframes quicknoteAppear{from{opacity:0;} to{opacity:1;}}
-  #quickNoteLeafLayer{position:fixed;inset:0;pointer-events:none;z-index:8;overflow:hidden;}
+  #quickNoteLeafLayer{position:fixed;inset:0;pointer-events:none;z-index:50;overflow:hidden;}
   .quicknote-leaf{position:absolute;left:-30px;animation:leafDrift linear forwards;}
   @keyframes leafDrift{
     0%{transform:translate(0,0) rotate(0deg);opacity:0;}
@@ -523,6 +537,8 @@
   .mood-row{display:flex;gap:10px;justify-content:center;margin-bottom:16px;}
   .mood-btn{display:flex;flex-direction:column;align-items:center;gap:8px;background:#F1F0EA;border:2px solid transparent;
     border-radius:16px;padding:14px 16px;font-size:12px;color:var(--ink-soft);font-weight:700;transition:.15s;}
+  @keyframes moodBounce{0%{transform:scale(1);} 45%{transform:scale(1.18);} 75%{transform:scale(.94);} 100%{transform:scale(1);}}
+  .mood-btn.bounce{animation:moodBounce .35s ease;}
   .mood-btn.selected{border-color:var(--accent);background:var(--accent-soft);color:var(--ink);}
   .mood-face{width:38px;height:38px;display:block;}
   .mood-dot-mini{width:9px;height:9px;border-radius:50%;display:inline-block;}
@@ -574,7 +590,9 @@
     text-align:center;padding:0 30px;cursor:pointer;transition:opacity .5s ease;}
   #morningGreetingScreen.fade-out{opacity:0;}
   .sunrise-mountains{position:absolute;inset:0;width:100%;height:100%;z-index:0;}
-  .morning-sun{fill:#FFD873;filter:drop-shadow(0 0 30px rgba(255,216,115,.9));animation:recapFloat 6s ease-in-out infinite;}
+  .morning-sun{fill:#FFD873;filter:drop-shadow(0 0 30px rgba(255,216,115,.9));
+    animation:sunRise 1.4s cubic-bezier(.22,1,.36,1) both, recapFloat 6s ease-in-out 1.4s infinite;}
+  @keyframes sunRise{from{transform:translateY(40px);opacity:0;} to{transform:translateY(0);opacity:1;}}
   .morning-text{position:relative;z-index:2;color:#fff;font-size:22px;font-weight:700;line-height:1.8;
     text-shadow:0 2px 14px rgba(0,0,0,.35);animation:recapFloat 5.5s ease-in-out .3s infinite;}
 
@@ -1568,7 +1586,12 @@ window.addEventListener('DOMContentLoaded', async ()=>{
 function switchMainView(v){
   ui.mainView = v;
   ['list','cal','week','settings','habits','quicknotes'].forEach(k=>{
-    document.getElementById('view-'+k).style.display = (k===v)?'block':'none';
+    const el = document.getElementById('view-'+k);
+    el.style.display = (k===v)?'block':'none';
+    if(k===v){
+      el.classList.remove('view-enter');
+      requestAnimationFrame(()=> requestAnimationFrame(()=> el.classList.add('view-enter')));
+    }
   });
 
   document.querySelectorAll('.bottom-nav-item').forEach(b=> b.classList.toggle('active', b.dataset.view===v));
@@ -1724,7 +1747,7 @@ function buildTaskHtml(list){
     return `
     <div class="task ${t.status==='done'?'done':''}">
       <div class="task-row">
-        <button class="check ${t.status==='done'?'done':''}" onclick="toggleTask('${t.id}')"></button>
+        <button class="check ${t.status==='done'?'done':''}" data-check-id="task:${t.id}" onclick="toggleTask('${t.id}')"></button>
         ${ui.catId==='overview' && cat ? `<span class="cat-dot" style="background:${cat.color}"></span>`:''}
         <span class="task-title">${escapeHtml(t.title)}</span>
         ${subs.length? `<span class="progress-chip">${doneSub}/${subs.length}</span>`:''}
@@ -1741,7 +1764,7 @@ function buildTaskHtml(list){
           const subOverdue = isOverdueTime(s.time, s.status);
           return `
           <div class="subtask-row ${s.status==='done'?'done':''}">
-            <button class="check ${s.status==='done'?'done':''}" style="width:15px;height:15px" onclick="toggleSubtask('${t.id}','${s.id}')"></button>
+            <button class="check ${s.status==='done'?'done':''}" style="width:15px;height:15px" data-check-id="sub:${t.id}:${s.id}" onclick="toggleSubtask('${t.id}','${s.id}')"></button>
             <span class="subtask-title">${escapeHtml(s.title)}</span>
             <span class="${subOverdue?'overdue-tag':'time-chip'}">${subOverdue?'延誤 ':''}${fmtTime(s.time)}</span>
             <span class="reminder-toggle">提醒<button class="switch ${s.reminder?'on':''}" onclick="toggleReminder('${t.id}','${s.id}')"></button></span>
@@ -1767,16 +1790,42 @@ function toggleExpand(id){
   ui.expanded[id] = !currentlyExpanded;
   renderTaskList();
 }
+function bounceCheck(checkId){
+  requestAnimationFrame(()=>{
+    const el = document.querySelector(`[data-check-id="${checkId}"]`);
+    if(!el) return;
+    el.classList.remove('bounce');
+    requestAnimationFrame(()=>{
+      el.classList.add('bounce');
+      setTimeout(()=> el.classList.remove('bounce'), 400);
+    });
+  });
+}
+function flashMilestone(habitId){
+  requestAnimationFrame(()=>{
+    const el = document.querySelector(`[data-habit-id="${habitId}"] .streak-badge`);
+    if(!el) return;
+    el.classList.remove('milestone');
+    requestAnimationFrame(()=>{
+      el.classList.add('milestone');
+      setTimeout(()=> el.classList.remove('milestone'), 900);
+    });
+  });
+}
 function toggleTask(id){
   const t = data.tasks.find(x=>x.id===id);
+  const nowDone = t.status !== 'done';
   t.status = t.status==='done' ? 'pending' : 'done';
   persist(); refreshAll();
+  if(nowDone) bounceCheck(`task:${id}`);
 }
 function toggleSubtask(tid,sid){
   const t = data.tasks.find(x=>x.id===tid);
   const s = t.subtasks.find(x=>x.id===sid);
+  const nowDone = s.status !== 'done';
   s.status = s.status==='done' ? 'pending' : 'done';
   persist(); refreshAll();
+  if(nowDone) bounceCheck(`sub:${tid}:${sid}`);
 }
 function deleteTask(id){
   showConfirm('確定要刪除此事項及其所有細項嗎？', ()=>{
@@ -2343,29 +2392,48 @@ function setHabitBoolean(id, day){
   if(isFutureDay(day)) return;
   if(!data.habitLogs[id]) data.habitLogs[id] = {};
   const cur = data.habitLogs[id][day];
-  data.habitLogs[id][day] = (cur && cur.checked) ? {value:true, checked:false} : {value:true, checked:true};
+  const nowChecked = !(cur && cur.checked);
+  data.habitLogs[id][day] = nowChecked ? {value:true, checked:true} : {value:true, checked:false};
   persist(); renderHabitCheckin();
+  if(nowChecked){
+    bounceCheck(`habit:${id}:${day}`);
+    const h = data.habits.find(x=>x.id===id);
+    if(h && [7,30,100,365].includes(habitStreak(h))) flashMilestone(id);
+  }
 }
 function setHabitChecked(id, day){
   if(isFutureDay(day)) return;
   if(!data.habitLogs[id]) data.habitLogs[id] = {};
   const cur = data.habitLogs[id][day] || {value:undefined, checked:false};
-  cur.checked = !cur.checked;
+  const nowChecked = !cur.checked;
+  cur.checked = nowChecked;
   data.habitLogs[id][day] = cur;
   persist(); renderHabitCheckin();
+  if(nowChecked){
+    bounceCheck(`habit:${id}:${day}`);
+    const h = data.habits.find(x=>x.id===id);
+    if(h && [7,30,100,365].includes(habitStreak(h))) flashMilestone(id);
+  }
 }
 function setHabitValue(id, day, rawValue, type){
   if(isFutureDay(day)) return;
   if(!data.habitLogs[id]) data.habitLogs[id] = {};
+  let justChecked = false;
   if(rawValue===''){
     delete data.habitLogs[id][day];
   }else if(type==='quantity'){
     const num = parseFloat(rawValue);
-    if(!isNaN(num)) data.habitLogs[id][day] = {value:num, checked:true};
+    if(!isNaN(num)){ data.habitLogs[id][day] = {value:num, checked:true}; justChecked = true; }
   }else{
     data.habitLogs[id][day] = {value:rawValue, checked:true};
+    justChecked = true;
   }
   persist(); renderHabitCheckin();
+  if(justChecked){
+    bounceCheck(`habit:${id}:${day}`);
+    const h = data.habits.find(x=>x.id===id);
+    if(h && [7,30,100,365].includes(habitStreak(h))) flashMilestone(id);
+  }
 }
 function selectHabitDate(day){
   ui.habitDate = day;
@@ -2422,13 +2490,13 @@ function renderHabitCheckin(){
       inputHtml = `<input type="number" step="any" class="habit-value-input" value="${val!==undefined?val:''}" ${future?'disabled':''}
         onchange="setHabitValue('${h.id}','${day}', this.value, 'quantity')">
         <span class="habit-unit-label">${escapeHtml(h.unit)}</span>`;
-      checkBtn = `<button class="check ${checked?'done':''}" ${future?'disabled':''} onclick="setHabitChecked('${h.id}','${day}')"></button>`;
+      checkBtn = `<button class="check ${checked?'done':''}" data-check-id="habit:${h.id}:${day}" ${future?'disabled':''} onclick="setHabitChecked('${h.id}','${day}')"></button>`;
     }else if(h.type==='time'){
       inputHtml = `<input type="time" class="habit-value-input" value="${val||''}" ${future?'disabled':''}
         onchange="setHabitValue('${h.id}','${day}', this.value, 'time')">`;
-      checkBtn = `<button class="check ${checked?'done':''}" ${future?'disabled':''} onclick="setHabitChecked('${h.id}','${day}')"></button>`;
+      checkBtn = `<button class="check ${checked?'done':''}" data-check-id="habit:${h.id}:${day}" ${future?'disabled':''} onclick="setHabitChecked('${h.id}','${day}')"></button>`;
     }else{
-      checkBtn = `<button class="check ${checked?'done':''}" ${future?'disabled':''} onclick="setHabitBoolean('${h.id}','${day}')"></button>`;
+      checkBtn = `<button class="check ${checked?'done':''}" data-check-id="habit:${h.id}:${day}" ${future?'disabled':''} onclick="setHabitBoolean('${h.id}','${day}')"></button>`;
     }
     return `<div class="habit-grid-row" data-habit-id="${h.id}">
       <div class="habit-grid-num">
@@ -2506,7 +2574,10 @@ function buildHabitLineChart(h){
     if(v===null){ if(cur){ segments.push(cur); cur=''; } return; }
     const y = scaleY(v);
     cur += (cur===''?'M':'L') + x.toFixed(1) + ',' + y.toFixed(1) + ' ';
-    if(dotR>0) dots += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${dotR}" fill="var(--accent)"></circle>`;
+    if(dotR>0){
+      const dotDelay = (i/Math.max(days.length-1,1)) * 1.1;
+      dots += `<circle class="chart-dot" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${dotR}" fill="var(--accent)" style="animation-delay:${dotDelay.toFixed(2)}s"></circle>`;
+    }
   });
   if(cur) segments.push(cur);
   const pathD = segments.join(' ');
@@ -2516,13 +2587,19 @@ function buildHabitLineChart(h){
   return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:150px;display:block;">
     <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${H-padB}" stroke="var(--border)" stroke-width="1"></line>
     <line x1="${padL}" y1="${H-padB}" x2="${W-padR}" y2="${H-padB}" stroke="var(--border)" stroke-width="1"></line>
-    <path d="${pathD}" fill="none" stroke="var(--accent)" stroke-width="2"></path>
+    <path d="${pathD}" pathLength="1000" class="chart-line-draw" fill="none" stroke="var(--accent)" stroke-width="2"></path>
     ${dots}
     <text x="2" y="${padT+4}" font-size="9" fill="var(--ink-soft)">${escapeHtml(String(fmt(max)))}</text>
     <text x="2" y="${H-padB}" font-size="9" fill="var(--ink-soft)">${escapeHtml(String(fmt(min)))}</text>
     <text x="${padL}" y="${H-4}" font-size="9" fill="var(--ink-soft)">${xFirst}</text>
     <text x="${W-padR-26}" y="${H-4}" font-size="9" fill="var(--ink-soft)">${xLast}</text>
   </svg>`;
+}
+function animateRateBars(container){
+  const bars = container.querySelectorAll('.rate-bar-fill[data-target]');
+  requestAnimationFrame(()=> requestAnimationFrame(()=>{
+    bars.forEach(b=> b.style.width = b.dataset.target + '%');
+  }));
 }
 function renderHabitStats(){
   const box = document.getElementById('habitStatsView');
@@ -2538,7 +2615,7 @@ function renderHabitStats(){
       const bar = (label, val) => `
         <div class="rate-row">
           <span class="rate-label">${label}</span>
-          <div class="rate-bar-track"><div class="rate-bar-fill" style="width:${val}%"></div></div>
+          <div class="rate-bar-track"><div class="rate-bar-fill" data-target="${val}" style="width:0%"></div></div>
           <span class="rate-value">${val}%</span>
         </div>`;
       return `<div class="habit-stats-card">
@@ -2554,6 +2631,7 @@ function renderHabitStats(){
       </div>`;
     }
   }).join('');
+  animateRateBars(box);
 }
 
 /* ============================================================
@@ -2946,7 +3024,17 @@ function nightRecapNextStep(){
 }
 function selectMood(mood){
   recapSelectedMood = mood;
-  document.querySelectorAll('.mood-btn').forEach(b=> b.classList.toggle('selected', b.dataset.mood===mood));
+  document.querySelectorAll('.mood-btn').forEach(b=>{
+    const isSel = b.dataset.mood===mood;
+    b.classList.toggle('selected', isSel);
+    if(isSel){
+      b.classList.remove('bounce');
+      requestAnimationFrame(()=>{
+        b.classList.add('bounce');
+        setTimeout(()=> b.classList.remove('bounce'), 350);
+      });
+    }
+  });
 }
 function saveNightRecap(){
   const note = document.getElementById('recapNoteInput').value.trim();
@@ -3075,12 +3163,13 @@ function openSummary(range){
       habitRows.map(h=>`
         <div class="rate-row">
           <span class="rate-label">${escapeHtml(h.name)}</span>
-          <div class="rate-bar-track"><div class="rate-bar-fill" style="width:${h.rate}%"></div></div>
+          <div class="rate-bar-track"><div class="rate-bar-fill" data-target="${h.rate}" style="width:0%"></div></div>
           <span class="rate-value">${h.rate}%</span>
         </div>`).join('') + `</div>`;
   }
   document.getElementById('summaryContent').innerHTML = html;
   document.getElementById('summaryOverlay').classList.add('show');
+  animateRateBars(document.getElementById('summaryContent'));
 }
 function closeSummary(){
   document.getElementById('summaryOverlay').classList.remove('show');
