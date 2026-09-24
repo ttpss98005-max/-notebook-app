@@ -264,7 +264,13 @@
   /* ============ 隨手記 ============ */
   #quickNoteWall{display:flex;flex-wrap:wrap;gap:16px;padding:4px 4px 110px;min-height:120px;}
   .quicknote-card{position:relative;width:140px;min-height:120px;padding:14px 12px;background:#FFF3B0;
-    box-shadow:var(--shadow-sm);border-radius:4px;font-size:13px;}
+    box-shadow:var(--shadow-sm);border-radius:4px;font-size:13px;transform-origin:50% 0%;
+    transform:rotate(var(--rot,0deg));animation:windSway 4.5s ease-in-out infinite;}
+  @keyframes windSway{
+    0%,100%{transform:rotate(var(--rot,0deg));}
+    35%{transform:rotate(calc(var(--rot,0deg) + 5deg)) translateX(3px);}
+    70%{transform:rotate(calc(var(--rot,0deg) - 2deg)) translateX(-1px);}
+  }
   .quicknote-text{white-space:pre-wrap;word-break:break-word;margin-bottom:10px;line-height:1.5;}
   .quicknote-time{font-size:10px;color:rgba(0,0,0,.4);}
   .quicknote-del{position:absolute;top:2px;right:6px;background:none;border:none;font-size:15px;color:rgba(0,0,0,.3);}
@@ -327,17 +333,18 @@
     text-shadow:0 2px 16px rgba(0,0,0,.6);padding:0 30px;animation:recapFloat 5.5s ease-in-out .3s infinite;}
 
   #dailyBriefOverlay{display:none;position:fixed;inset:0;z-index:150;align-items:center;justify-content:center;
-    background:linear-gradient(180deg,#FBE3B8,#F3A768);overflow:hidden;transition:opacity .5s ease;}
+    background:linear-gradient(180deg,#FBE3B8,#F3A768);overflow:hidden;transition:opacity .5s ease;padding:20px;}
   #dailyBriefOverlay.show{display:flex;opacity:1;}
   #dailyBriefOverlay.fading-out{opacity:0;}
+  #dailyBriefOverlay.plain-mode{background:rgba(0,0,0,.35);}
 
   #morningGreetingScreen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
     text-align:center;padding:0 30px;cursor:pointer;transition:opacity .5s ease;}
   #morningGreetingScreen.fade-out{opacity:0;}
   .sunrise-mountains{position:absolute;inset:0;width:100%;height:100%;z-index:0;}
   .morning-sun{fill:#FFD873;filter:drop-shadow(0 0 30px rgba(255,216,115,.9));animation:recapFloat 6s ease-in-out infinite;}
-  .morning-text{position:relative;z-index:2;color:#4A2E1E;font-size:22px;font-weight:700;line-height:1.8;
-    text-shadow:0 2px 12px rgba(255,255,255,.5);animation:recapFloat 5.5s ease-in-out .3s infinite;}
+  .morning-text{position:relative;z-index:2;color:#fff;font-size:22px;font-weight:700;line-height:1.8;
+    text-shadow:0 2px 14px rgba(0,0,0,.35);animation:recapFloat 5.5s ease-in-out .3s infinite;}
 
   .daily-brief-modal{max-width:340px;opacity:0;transition:opacity .5s ease;}
   .daily-brief-modal.show-card{opacity:1;}
@@ -359,6 +366,7 @@
   .row-inline{display:flex;align-items:center;justify-content:space-between;}
   .switch{position:relative;width:38px;height:22px;background:#DDD;border-radius:999px;border:none;flex-shrink:0;}
   .switch.on{background:var(--accent);}
+  .switch.disabled{opacity:.4;}
   .switch::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;background:#fff;border-radius:50%;transition:.15s;box-shadow:var(--shadow-sm);}
   .switch.on::after{left:18px;}
 
@@ -480,9 +488,12 @@
       </div>
       <div class="setting-block">
         <h3>每日提醒</h3>
-        <div class="row-inline" style="max-width:300px;">
+        <div class="row-inline" style="max-width:340px;">
           <label style="margin:0;font-size:13px;">今天顯示每日提醒</label>
-          <button class="switch" id="dailyBriefSwitch" onclick="toggleDailyBriefSwitch()"></button>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <button class="text-btn" style="padding:4px 10px;color:var(--accent);font-weight:700;" onclick="viewDailyBriefNow()">查看</button>
+            <button class="switch" id="dailyBriefSwitch" onclick="toggleDailyBriefSwitch()"></button>
+          </div>
         </div>
         <div class="row-inline" style="max-width:300px;margin-top:10px;">
           <label style="margin:0;font-size:13px;">每次登入都顯示早安動畫</label>
@@ -580,8 +591,8 @@
 </div>
 
 <!-- ================= 每日提醒動畫 ================= -->
-<div id="dailyBriefOverlay">
-  <div id="morningGreetingScreen" onclick="advanceFromMorningGreeting()">
+<div id="dailyBriefOverlay" onclick="closeDailyBrief()">
+  <div id="morningGreetingScreen" onclick="event.stopPropagation(); advanceFromMorningGreeting()">
     <svg class="sunrise-mountains" viewBox="0 0 400 300" preserveAspectRatio="xMidYMax slice">
       <circle class="morning-sun" cx="200" cy="95" r="46"/>
       <path d="M0 300 L0 190 L60 150 L120 185 L180 140 L230 175 L280 155 L340 180 L400 160 L400 300 Z" fill="#E8956B" opacity=".85"/>
@@ -2266,11 +2277,16 @@ function renderHabitStats(){
 /* ============================================================
    隨手記
 ============================================================ */
-const QUICKNOTE_COLORS = ['#FFF3B0','#FFD9C2','#FFC9DE','#E4D8FF','#C9E7FF','#C3F0D0','#FFE8A3','#D9F2E6'];
+const QUICKNOTE_COLORS = ['#FFF8D6','#FFE9DC','#FFE0EC','#EEE6FF','#DDF1FF','#D8F6E1','#FFF0C7','#E3F8ED'];
 function quickNoteColor(id){
   let hash = 0;
   for(let i=0;i<id.length;i++) hash = (hash*31 + id.charCodeAt(i)) % QUICKNOTE_COLORS.length;
   return QUICKNOTE_COLORS[Math.abs(hash)];
+}
+function quickNoteHash(id){
+  let hash = 0;
+  for(let i=0;i<id.length;i++) hash = (hash*17 + id.charCodeAt(i)) % 1000;
+  return Math.abs(hash);
 }
 function renderQuickNoteWall(){
   const wall = document.getElementById('quickNoteWall');
@@ -2280,11 +2296,16 @@ function renderQuickNoteWall(){
     return;
   }
   wall.innerHTML = data.quickNotes.slice().reverse().map((n)=>{
-    const rotate = ((n.id.charCodeAt(0) % 7) - 3);
+    const hash = quickNoteHash(n.id);
+    const rotate = (hash % 7) - 3;
+    const w = 128 + (hash % 34);
+    const h = 112 + ((hash>>2) % 30);
+    const delay = -(hash % 45) / 10;
+    const dur = 4.2 + (hash % 20)/10;
     const d = new Date(n.createdAt);
     const pad = x=>String(x).padStart(2,'0');
     const label = `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-    return `<div class="quicknote-card" style="transform:rotate(${rotate}deg);background:${quickNoteColor(n.id)}">
+    return `<div class="quicknote-card" style="--rot:${rotate}deg;width:${w}px;min-height:${h}px;background:${quickNoteColor(n.id)};animation-delay:${delay}s;animation-duration:${dur}s;">
       <button class="quicknote-del" onclick="deleteQuickNote('${n.id}')">×</button>
       <div class="quicknote-text">${escapeHtml(n.text)}</div>
       <div class="quicknote-time">${label}</div>
@@ -2373,10 +2394,12 @@ function showDailyBrief(withGreeting){
   }
   document.getElementById('dailyBriefContent').innerHTML = html;
 
+  const overlay = document.getElementById('dailyBriefOverlay');
   const greetScreen = document.getElementById('morningGreetingScreen');
   const contentCard = document.getElementById('dailyBriefContentCard');
   greetScreen.classList.remove('fade-out');
   contentCard.classList.remove('show-card');
+  overlay.classList.toggle('plain-mode', !withGreeting);
   if(withGreeting){
     greetScreen.style.display = 'flex';
     contentCard.style.display = 'none';
@@ -2385,7 +2408,10 @@ function showDailyBrief(withGreeting){
     contentCard.style.display = 'block';
     requestAnimationFrame(()=> requestAnimationFrame(()=> contentCard.classList.add('show-card')));
   }
-  document.getElementById('dailyBriefOverlay').classList.add('show');
+  overlay.classList.add('show');
+}
+function viewDailyBriefNow(){
+  showDailyBrief(false);
 }
 function advanceFromMorningGreeting(){
   const greetScreen = document.getElementById('morningGreetingScreen');
@@ -2568,9 +2594,15 @@ function updateDailyBriefSwitch(){
 function updateMorningGreetingSwitch(){
   const sw = document.getElementById('morningGreetingSwitch');
   if(!sw) return;
-  sw.classList.toggle('on', !!data.morningGreetingAlwaysOn);
+  const dailyOff = data.dailyBriefDismissedDate === todayStr();
+  sw.classList.toggle('on', !dailyOff && !!data.morningGreetingAlwaysOn);
+  sw.classList.toggle('disabled', dailyOff);
 }
 function toggleMorningGreetingSwitch(){
+  if(data.dailyBriefDismissedDate === todayStr()){
+    notify('請先開啟每日提醒');
+    return;
+  }
   data.morningGreetingAlwaysOn = !data.morningGreetingAlwaysOn;
   persist();
   updateMorningGreetingSwitch();
@@ -2581,7 +2613,7 @@ function toggleDailyBriefSwitch(){
     data.dailyBriefDismissedDate = null;
     persist();
     updateDailyBriefSwitch();
-    showDailyBrief(false);
+    updateMorningGreetingSwitch();
   }else{
     data.dailyBriefDismissedDate = today;
     data.morningGreetingAlwaysOn = false;
