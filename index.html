@@ -111,8 +111,10 @@
   #blindsOverlay{position:fixed;inset:0;z-index:300;pointer-events:none;display:none;perspective:700px;overflow:hidden;}
   #blindsOverlay.show{display:block;}
   .blind-slat{position:absolute;left:0;width:100%;height:10%;background:#F1E9D8;z-index:calc(20 - var(--i));
-    border-bottom:1px solid rgba(0,0,0,.2);box-shadow:0 3px 3px rgba(0,0,0,.6);
+    border-bottom:1px solid rgba(0,0,0,.2);
     transform-origin:top center;transform:rotateX(62deg);opacity:0;}
+  .blind-slat::after{content:'';position:absolute;left:0;top:100%;width:100%;height:50%;
+    background:linear-gradient(to bottom, rgba(0,0,0,.55), rgba(0,0,0,0));pointer-events:none;}
   .blind-slat.anim-close{animation:slatClose .5s cubic-bezier(.4,0,.2,1) forwards;
     animation-delay:calc(var(--i) * 0.045s);}
   .blind-slat.anim-open{animation:slatOpen .5s cubic-bezier(.4,0,.2,1) forwards;}
@@ -125,11 +127,12 @@
     0%{transform:rotateX(0deg) translateY(0);opacity:1;}
     100%{transform:rotateX(0deg) translateY(-115vh);opacity:1;}
   }
-  .blinds-cord{position:absolute;right:26px;top:0;width:4px;height:75vh;z-index:2;}
-  .blinds-cord-line{width:2px;height:calc(100% - 26px);background:linear-gradient(90deg,#A89A7C,#C9BC9C,#A89A7C);margin:0 auto;
+  .blinds-cord{position:absolute;right:26px;top:0;width:16px;height:75vh;z-index:30;
+    display:flex;flex-direction:column;align-items:center;}
+  .blinds-cord-line{width:2px;height:calc(100% - 36px);background:linear-gradient(90deg,#A89A7C,#C9BC9C,#A89A7C);flex-shrink:0;
     box-shadow:1px 0 1px rgba(0,0,0,.2);}
-  .blinds-cord-handle{width:16px;height:36px;border-radius:8px;background:#B8A67E;
-    margin:0 auto;box-shadow:0 3px 5px rgba(0,0,0,.4);}
+  .blinds-cord-handle{width:16px;height:36px;border-radius:8px;background:#B8A67E;flex-shrink:0;
+    box-shadow:0 3px 5px rgba(0,0,0,.4);}
   .blinds-cord.anim-pull{animation:cordPull .35s ease-out;}
   .blinds-cord.anim-open{animation:cordPullUp .5s ease-in forwards;}
   @keyframes cordPull{
@@ -2959,10 +2962,10 @@ function startDragLeaf(e, leaf){
   e.preventDefault();
   leaf.__caught = true;
   if(leaf._onAnimEnd){ leaf.removeEventListener('animationend', leaf._onAnimEnd); leaf._onAnimEnd = null; }
-  leaf.style.animation = 'none';
   const layer = document.getElementById('quickNoteLeafLayer');
   const layerRect = layer.getBoundingClientRect();
   const rect = leaf.getBoundingClientRect();
+  leaf.style.animation = 'none';
   leaf.style.right = 'auto';
   leaf.style.left = (rect.left - layerRect.left) + 'px';
   leaf.style.top = (rect.top - layerRect.top) + 'px';
