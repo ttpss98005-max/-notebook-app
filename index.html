@@ -127,7 +127,7 @@
 
   /* ============ TASK LIST ============ */
   .task{border:1.5px solid var(--border);border-radius:18px;margin-bottom:12px;background:#FDFDFB;box-shadow:var(--shadow-sm);overflow:hidden;transition:.15s;}
-  .task:hover{box-shadow:var(--shadow-md);}
+  .task:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);}
   .task.done{opacity:.7;}
   .task-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:15px 16px;}
   .check{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);background:#fff;flex-shrink:0;position:relative;transition:.15s;}
@@ -171,7 +171,8 @@
   .cal-title{font-size:14.5px;font-weight:700;}
   .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
   .cal-dow{text-align:center;font-size:11px;color:var(--ink-soft);font-weight:700;padding:6px 0;}
-  .cal-cell{min-height:74px;padding:6px;font-size:11.5px;background:#FDFDFB;border:1.5px solid var(--border);border-radius:14px;cursor:pointer;transition:.15s;position:relative;}
+  .cal-cell{min-height:74px;padding:6px;font-size:11.5px;background:#FDFDFB;border:1.5px solid var(--border);border-radius:16px;box-shadow:var(--shadow-sm);cursor:pointer;transition:.15s;position:relative;}
+  .cal-cell:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);}
   .cal-lunar{font-size:9px;color:var(--ink-soft);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .cal-lunar.festival{color:var(--danger);font-weight:700;}
   .cal-lunar.holiday-day{color:var(--danger);}
@@ -189,7 +190,8 @@
   .item-line .t{color:var(--ink-soft);margin-right:8px;}
 
   .week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;}
-  .week-col{background:#FDFDFB;border:1.5px solid var(--border);border-radius:16px;padding:9px;min-height:150px;}
+  .week-col{background:#FDFDFB;border:1.5px solid var(--border);border-radius:16px;padding:9px;min-height:150px;box-shadow:var(--shadow-sm);transition:.15s;}
+  .week-col:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);}
   .week-col-head{font-size:11px;font-weight:700;color:var(--ink-soft);margin-bottom:8px;display:flex;
     align-items:center;justify-content:space-between;gap:6px;padding:2px 2px 2px 4px;border-radius:10px;}
   .week-col-head.today{color:var(--accent);}
@@ -236,7 +238,8 @@
 
   .habit-summary{font-size:12.5px;color:var(--ink-soft);margin-bottom:14px;}
   .habit-table{display:flex;flex-direction:column;gap:10px;}
-  .habit-grid-row{display:grid;grid-template-columns:40px 1fr 128px;align-items:stretch;background:#FDFDFB;border:1.5px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-sm);}
+  .habit-grid-row{display:grid;grid-template-columns:40px 1fr 128px;align-items:stretch;background:#FDFDFB;border:1.5px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-sm);transition:transform .2s ease,box-shadow .2s ease;}
+  .habit-grid-row:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);}
   .habit-grid-num{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:10px;color:var(--ink-soft);padding:6px 2px;}
   .drag-handle{display:flex;flex-direction:column;gap:3px;align-items:center;justify-content:center;padding:8px 6px;background:none;border:none;cursor:grab;touch-action:none;}
   .drag-handle span{width:14px;height:2px;background:var(--ink-soft);border-radius:1px;display:block;}
@@ -277,7 +280,7 @@
   #quickNoteWall{column-width:150px;column-gap:16px;padding:4px 4px 110px;min-height:120px;}
   .quicknote-card{position:relative;display:inline-block;width:100%;box-sizing:border-box;margin-bottom:16px;
     break-inside:avoid;transition:transform .25s ease;}
-  .quicknote-card:hover{transform:translateY(-7px) scale(1.035);z-index:20;}
+  .quicknote-card:hover{transform:translateY(-2px);z-index:20;}
   .quicknote-inner{position:relative;padding:14px 12px;background:#FFF3B0;
     box-shadow:var(--shadow-sm);border-radius:4px;font-size:13px;transform-origin:50% 0%;
     transform:rotate(0deg);animation-duration:45s;animation-timing-function:ease-in-out;animation-iteration-count:infinite;}
