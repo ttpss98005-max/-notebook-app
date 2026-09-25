@@ -1283,25 +1283,41 @@ async function loadData(storageKey){
     }
   });
   lastPersistedCount = totalContentCount(data);
+  lastPersistedCounts = categoryCounts(data);
 }
 
 function totalContentCount(d){
   if(!d) return 0;
   return (d.tasks?d.tasks.length:0) + (d.habits?d.habits.length:0) + (d.quickNotes?d.quickNotes.length:0) + (d.dayRecaps?Object.keys(d.dayRecaps).length:0);
 }
+function categoryCounts(d){
+  if(!d) return {tasks:0, habits:0, quickNotes:0, dayRecaps:0};
+  return {
+    tasks: d.tasks ? d.tasks.length : 0,
+    habits: d.habits ? d.habits.length : 0,
+    quickNotes: d.quickNotes ? d.quickNotes.length : 0,
+    dayRecaps: d.dayRecaps ? Object.keys(d.dayRecaps).length : 0
+  };
+}
 
 let saveTimer=null;
 let lastWrittenValue = null;
 let lastPersistedCount = null;
+let lastPersistedCounts = {tasks:0, habits:0, quickNotes:0, dayRecaps:0};
 function persist(){
   clearTimeout(saveTimer);
   const keyAtScheduleTime = currentStorageKey;
   const dataAtScheduleTime = data;
   saveTimer = setTimeout(async ()=>{
     if(!keyAtScheduleTime || !dataAtScheduleTime) return;
-    const currentCount = totalContentCount(dataAtScheduleTime);
-    if(currentCount===0 && lastPersistedCount!==null && lastPersistedCount>3){
-      console.error('偵測到內容從', lastPersistedCount, '筆瞬間全部清空,已阻止此次自動儲存以保護雲端資料,重新從雲端讀取確認狀態');
+    const cats = categoryCounts(dataAtScheduleTime);
+    const currentCount = cats.tasks + cats.habits + cats.quickNotes + cats.dayRecaps;
+    const fullWipe = (currentCount===0 && lastPersistedCount!==null && lastPersistedCount>3);
+    const categoryWiped = Object.keys(cats).some(k=> cats[k]===0 && lastPersistedCounts[k]>3);
+    const severeDrop = (lastPersistedCount!==null && lastPersistedCount>3 && currentCount < lastPersistedCount*0.5);
+    if(fullWipe || categoryWiped || severeDrop){
+      const reason = fullWipe ? '總數瞬間全部清空' : categoryWiped ? '某個分類瞬間全部清空' : '總數驟降超過一半';
+      console.error('偵測到異常(' + reason + '):', lastPersistedCounts, '->', cats, ',已阻止此次自動儲存以保護雲端資料,重新從雲端讀取確認狀態');
       notify('偵測到資料異常，已暫停自動儲存以保護你的紀錄');
       try{
         await loadData(keyAtScheduleTime);
@@ -1314,6 +1330,7 @@ function persist(){
     const ok = await storageSet(keyAtScheduleTime, json);
     if(ok){
       lastPersistedCount = currentCount;
+      lastPersistedCounts = cats;
       maybeBackupHistory(keyAtScheduleTime, json);
     }
     else console.error('儲存失敗');
@@ -1619,6 +1636,9 @@ if('serviceWorker' in navigator){
 
 window.addEventListener('resize', ()=>{
   updateBottomNavIndicator();
+});
+window.addEventListener('focus', ()=>{
+  if(currentStorageKey) startRealtimeSync(currentStorageKey);
 });
 window.addEventListener('DOMContentLoaded', async ()=>{
   initFirebase();
@@ -3375,6 +3395,7 @@ function clearAllDataConfirm(){
   showConfirm('確定要清除所有資料嗎？所有事項、習慣、書籤、自訂分類與配色都會被清空，只保留最基本的預設內容，此動作無法復原。', ()=>{
     data = defaultData();
     lastPersistedCount = 0;
+    lastPersistedCounts = {tasks:0, habits:0, quickNotes:0, dayRecaps:0};
     ui.expanded = {}; ui.selectedDate = null; ui.habitDate = null; ui.habitWeekOffset = 0; ui.catId = 'overview'; ui.filter = 'all';
     applyTheme();
     persist();
