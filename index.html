@@ -64,11 +64,6 @@
   .login-anim span:nth-child(2){animation-delay:.15s;}
   .login-anim span:nth-child(3){animation-delay:.3s;}
 
-  .g-btn{width:100%;padding:14px 16px;border-radius:999px;border:1.5px solid var(--border);background:#fff;
-    display:flex;align-items:center;justify-content:center;gap:10px;font-weight:700;font-size:14.5px;
-    box-shadow:var(--shadow-sm);transition:.15s;}
-  .g-btn:hover{border-color:var(--accent);transform:translateY(-1px);box-shadow:var(--shadow-md);}
-  .continue-btn{margin-top:12px;width:100%;padding:12px;border-radius:999px;border:1.5px dashed var(--border);background:transparent;color:var(--ink-soft);font-size:12.5px;}
   .login-note{margin-top:22px;font-size:11px;color:#B5B5B5;line-height:1.7;text-align:left;background:#FAFAF7;border-radius:14px;padding:12px 14px;}
 
   /* ============ APP SHELL ============ */
@@ -123,7 +118,6 @@
   .seg{display:flex;position:relative;gap:24px;border:none;overflow:visible;border-bottom:2px solid var(--border);}
   .seg button{padding:8px 4px 10px;border:none;background:none;font-size:13px;font-weight:700;color:var(--ink-soft);}
   .seg button.active{color:var(--accent);}
-  .seg-underline{position:absolute;bottom:-2px;height:3px;border-radius:3px;background:var(--accent);transition:left .25s ease, width .25s ease;left:0;width:0;}
   .btn-primary{background:var(--accent);color:#fff;border:none;padding:11px 22px;border-radius:999px;font-size:13.5px;font-weight:700;
     box-shadow:var(--shadow-sm);transition:.15s;}
   .btn-primary:hover{transform:translateY(-1px);box-shadow:var(--shadow-md);}
@@ -546,10 +540,6 @@
   .mood-btn.bounce{animation:moodBounce .35s ease;}
   .mood-btn.selected{border-color:var(--accent);background:var(--accent-soft);color:var(--ink);}
   .mood-face{width:38px;height:38px;display:block;}
-  .mood-dot-mini{width:9px;height:9px;border-radius:50%;display:inline-block;}
-  .mood-dot-mini.mood-bad{background:#5B9BD5;}
-  .mood-dot-mini.mood-ok{background:#D9A441;}
-  .mood-dot-mini.mood-good{background:#F2A93B;}
   #recapNoteInput{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:14px;font-size:13.5px;
     font-family:inherit;resize:none;}
 
@@ -613,7 +603,6 @@
 
   .daily-brief-modal{max-width:340px;opacity:0;transition:opacity .5s ease;}
   .daily-brief-modal.show-card{opacity:1;}
-  @keyframes briefPop{from{opacity:0;transform:scale(.85) translateY(10px);} to{opacity:1;transform:scale(1) translateY(0);}}
   .brief-section{margin-bottom:14px;}
   .brief-label{font-size:11px;color:var(--ink-soft);font-weight:700;margin-bottom:6px;}
   .brief-item{font-size:13.5px;padding:8px 0;border-bottom:1px dotted var(--border);}
@@ -1293,20 +1282,38 @@ async function loadData(storageKey){
       });
     }
   });
+  lastPersistedCount = totalContentCount(data);
+}
+
+function totalContentCount(d){
+  if(!d) return 0;
+  return (d.tasks?d.tasks.length:0) + (d.habits?d.habits.length:0) + (d.quickNotes?d.quickNotes.length:0) + (d.dayRecaps?Object.keys(d.dayRecaps).length:0);
 }
 
 let saveTimer=null;
 let lastWrittenValue = null;
+let lastPersistedCount = null;
 function persist(){
   clearTimeout(saveTimer);
   const keyAtScheduleTime = currentStorageKey;
   const dataAtScheduleTime = data;
   saveTimer = setTimeout(async ()=>{
     if(!keyAtScheduleTime || !dataAtScheduleTime) return;
+    const currentCount = totalContentCount(dataAtScheduleTime);
+    if(currentCount===0 && lastPersistedCount!==null && lastPersistedCount>3){
+      console.error('偵測到內容從', lastPersistedCount, '筆瞬間全部清空,已阻止此次自動儲存以保護雲端資料,重新從雲端讀取確認狀態');
+      notify('偵測到資料異常，已暫停自動儲存以保護你的紀錄');
+      try{
+        await loadData(keyAtScheduleTime);
+        refreshCurrentView();
+      }catch(e){ console.error('保護機制重新讀取失敗', e); }
+      return;
+    }
     const json = JSON.stringify(dataAtScheduleTime);
     lastWrittenValue = json;
     const ok = await storageSet(keyAtScheduleTime, json);
-    if(!ok) console.error('儲存失敗');
+    if(ok) lastPersistedCount = currentCount;
+    else console.error('儲存失敗');
   }, 250);
 }
 
@@ -3347,6 +3354,7 @@ function resetTheme(){
 function clearAllDataConfirm(){
   showConfirm('確定要清除所有資料嗎？所有事項、習慣、書籤、自訂分類與配色都會被清空，只保留最基本的預設內容，此動作無法復原。', ()=>{
     data = defaultData();
+    lastPersistedCount = 0;
     ui.expanded = {}; ui.selectedDate = null; ui.habitDate = null; ui.habitWeekOffset = 0; ui.catId = 'overview'; ui.filter = 'all';
     applyTheme();
     persist();
