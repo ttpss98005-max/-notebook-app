@@ -276,7 +276,9 @@
   /* ============ 隨手記 ============ */
   #quickNoteWall{column-width:150px;column-gap:16px;padding:4px 4px 110px;min-height:120px;}
   .quicknote-card{position:relative;display:inline-block;width:100%;box-sizing:border-box;margin-bottom:16px;
-    break-inside:avoid;padding:14px 12px;background:#FFF3B0;
+    break-inside:avoid;transition:transform .25s ease;}
+  .quicknote-card:hover{transform:translateY(-7px) scale(1.035);z-index:20;}
+  .quicknote-inner{position:relative;padding:14px 12px;background:#FFF3B0;
     box-shadow:var(--shadow-sm);border-radius:4px;font-size:13px;transform-origin:50% 0%;
     transform:rotate(0deg);animation-duration:45s;animation-timing-function:ease-in-out;animation-iteration-count:infinite;}
   @keyframes windSway1{
@@ -499,7 +501,7 @@
   .quicknote-flying.landed{transform:scale(0.85) rotate(-4deg) translateY(140px);opacity:.9;}
   @keyframes quicknoteAppear{from{opacity:0;} to{opacity:1;}}
   #quickNoteLeafLayer{position:fixed;inset:0;pointer-events:none;z-index:50;overflow:hidden;}
-  .quicknote-leaf{position:absolute;right:-30px;animation:leafDrift linear forwards;}
+  .quicknote-leaf{position:absolute;right:-30px;animation:leafDrift linear forwards;pointer-events:auto;cursor:pointer;}
   @keyframes leafDrift{
     0%{transform:translate(0,0) rotate(0deg);opacity:0;}
     8%{opacity:.85;}
@@ -2775,16 +2777,18 @@ function quickNoteCardHtml(n, entering){
   const d = new Date(n.createdAt);
   const pad = x=>String(x).padStart(2,'0');
   const label = `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  const style = entering
-    ? `width:${widthPct}%;background:${quickNoteColor(n.id)};animation-name:quicknoteAppear,windSway${variant};animation-duration:.5s,45s;animation-timing-function:ease-out,ease-in-out;animation-iteration-count:1,infinite;animation-fill-mode:both,none;animation-delay:0s,${delay}s;`
-    : `width:${widthPct}%;background:${quickNoteColor(n.id)};animation-name:windSway${variant};animation-delay:${delay}s;`;
-  return `<div class="quicknote-card" data-note-id="${n.id}" style="${style}">
+  const innerStyle = entering
+    ? `background:${quickNoteColor(n.id)};animation-name:quicknoteAppear,windSway${variant};animation-duration:.5s,45s;animation-timing-function:ease-out,ease-in-out;animation-iteration-count:1,infinite;animation-fill-mode:both,none;animation-delay:0s,${delay}s;`
+    : `background:${quickNoteColor(n.id)};animation-name:windSway${variant};animation-delay:${delay}s;`;
+  return `<div class="quicknote-card" data-note-id="${n.id}" style="width:${widthPct}%">
+    <div class="quicknote-inner" style="${innerStyle}">
       <span class="quicknote-pin"></span>
       <button class="quicknote-del" onclick="deleteQuickNote('${n.id}')">×</button>
       <button class="quicknote-move" onclick="openMoveNoteModal('${n.id}')">移至</button>
       <div class="quicknote-text">${escapeHtml(n.text)}</div>
       <div class="quicknote-time">${label}</div>
-    </div>`;
+    </div>
+  </div>`;
 }
 let leafTimer = null;
 function spawnLeaf(){
@@ -2804,7 +2808,54 @@ function spawnLeaf(){
   leaf.style.animationDuration = dur+'s';
   leaf.innerHTML = `<svg viewBox="0 0 30 20" width="26" height="18"><path d="M2 10 Q8 0 28 2 Q22 12 15 18 Q6 18 2 10Z" fill="#8FAE7A"/><path d="M3 10 Q14 8 27 3" stroke="#6E8F5C" stroke-width="1" fill="none" opacity="0.6"/></svg>`;
   leaf.addEventListener('animationend', ()=> leaf.remove());
+  leaf.addEventListener('click', ()=> catchLeaf(leaf));
   layer.appendChild(leaf);
+}
+function catchLeaf(leaf){
+  if(leaf.__caught) return;
+  leaf.__caught = true;
+  const layer = document.getElementById('quickNoteLeafLayer');
+  const layerRect = layer.getBoundingClientRect();
+  const rect = leaf.getBoundingClientRect();
+  leaf.style.animation = 'none';
+  leaf.style.right = 'auto';
+  leaf.style.left = (rect.left - layerRect.left) + 'px';
+  leaf.style.top = (rect.top - layerRect.top) + 'px';
+  leaf.style.transform = 'none';
+  leaf.style.opacity = '1';
+
+  let x = rect.left - layerRect.left;
+  let y = rect.top - layerRect.top;
+  let vx = -30;
+  let vy = 0;
+  const gravity = 900;
+  const windAccel = -160;
+  let bounced = false;
+  const leafH = leaf.offsetHeight || 18;
+  const groundY = layerRect.height - leafH - 2;
+  let lastT = performance.now();
+
+  function step(now){
+    const dt = Math.min((now - lastT) / 1000, 0.05);
+    lastT = now;
+    vy += gravity * dt;
+    vx += windAccel * dt;
+    x += vx * dt;
+    y += vy * dt;
+    if(y >= groundY){
+      y = groundY;
+      vy = 0;
+      if(!bounced){ vx = vx / 2; bounced = true; }
+    }
+    leaf.style.left = x + 'px';
+    leaf.style.top = y + 'px';
+    if(x < -60 || x > layerRect.width + 60){
+      leaf.remove();
+      return;
+    }
+    requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
 }
 function scheduleNextLeaf(){
   clearTimeout(leafTimer);
