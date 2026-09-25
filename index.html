@@ -220,7 +220,12 @@
   .palette-name{font-size:11.5px;font-weight:700;}
   .cat-palette-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:14px;background:#FDFDFB;border:1.5px solid var(--border);font-size:13px;margin-bottom:8px;}
 
-  .habit-week-strip{display:flex;justify-content:space-between;gap:4px;margin-bottom:18px;}
+  .habit-week-strip{margin-bottom:18px;}
+  .habit-week-nav{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:8px;}
+  .habit-week-arrow{background:#F1F0EA;border:none;width:26px;height:26px;border-radius:50%;font-size:14px;color:var(--ink-soft);}
+  .habit-week-arrow:disabled{opacity:.35;}
+  .habit-week-range{font-size:11.5px;color:var(--ink-soft);font-weight:700;min-width:80px;text-align:center;}
+  .habit-week-days{display:flex;justify-content:space-between;gap:4px;}
   .habit-day{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 2px;border-radius:16px;background:none;border:none;flex:1;transition:.15s;}
   .habit-day:hover{background:#F1F0EA;}
   .habit-day .dow{font-size:11px;color:var(--ink-soft);}
@@ -835,7 +840,7 @@
   <div id="recapGoodnightScreen" onclick="closeFromGoodnight()">
     <div class="goodnight-sky">
       <svg class="goodnight-moon-svg" viewBox="0 0 40 40">
-        <path d="M25 4 A16 16 0 1 0 25 36 A12 12 0 1 1 25 4 Z" fill="#F5F0E0"/>
+        <path d="M20 4 C11 4 4 11 4 20 C4 29 11 36 20 36 C16 32 13 27 13 20 C13 13 16 8 20 4 Z" fill="#F5F0E0"/>
       </svg>
       <span class="goodnight-twinkle t1"></span><span class="goodnight-twinkle t2"></span>
       <span class="goodnight-twinkle t3"></span><span class="goodnight-twinkle t4"></span>
@@ -2441,6 +2446,10 @@ function setHabitValue(id, day, rawValue, type){
     if(h && [7,30,100,365].includes(habitStreak(h))) flashMilestone(id);
   }
 }
+function changeHabitWeek(delta){
+  ui.habitWeekOffset = Math.min(0, (ui.habitWeekOffset||0) + delta);
+  renderHabitWeekStrip();
+}
 function selectHabitDate(day){
   ui.habitDate = day;
   renderHabitWeekStrip();
@@ -2448,12 +2457,19 @@ function selectHabitDate(day){
 }
 function renderHabitWeekStrip(){
   if(!ui.habitDate) ui.habitDate = todayStr();
+  if(!ui.habitWeekOffset) ui.habitWeekOffset = 0;
   const box = document.getElementById('habitWeekStrip');
   const today = todayStr();
   const dows = ['日','一','二','三','四','五','六'];
   const base = new Date();
+  base.setDate(base.getDate() + ui.habitWeekOffset*7);
   const start = new Date(base); start.setDate(base.getDate()-base.getDay());
-  let html = '';
+  const end = new Date(start); end.setDate(start.getDate()+6);
+  let html = `<div class="habit-week-nav">
+    <button class="habit-week-arrow" onclick="changeHabitWeek(-1)">‹</button>
+    <span class="habit-week-range">${start.getMonth()+1}/${start.getDate()} - ${end.getMonth()+1}/${end.getDate()}</span>
+    <button class="habit-week-arrow" ${ui.habitWeekOffset>=0?'disabled':''} onclick="changeHabitWeek(1)">›</button>
+  </div><div class="habit-week-days">`;
   for(let i=0;i<7;i++){
     const d = new Date(start); d.setDate(start.getDate()+i);
     const pad=n=>String(n).padStart(2,'0');
@@ -2465,6 +2481,7 @@ function renderHabitWeekStrip(){
       <span class="num">${d.getDate()}</span>
     </button>`;
   }
+  html += `</div>`;
   box.innerHTML = html;
 }
 function habitStreak(h){
@@ -2590,11 +2607,15 @@ function buildHabitLineChart(h){
     if(p.length===1) return '';
     if(p.length===2) return `M${p[0].x.toFixed(1)},${p[0].y.toFixed(1)} L${p[1].x.toFixed(1)},${p[1].y.toFixed(1)} `;
     let d = `M${p[0].x.toFixed(1)},${p[0].y.toFixed(1)} `;
-    for(let i=1;i<p.length-1;i++){
-      const midX = (p[i].x+p[i+1].x)/2, midY = (p[i].y+p[i+1].y)/2;
-      d += `Q${p[i].x.toFixed(1)},${p[i].y.toFixed(1)} ${midX.toFixed(1)},${midY.toFixed(1)} `;
+    for(let i=0;i<p.length-1;i++){
+      const p0 = p[i-1] || p[i];
+      const p1 = p[i];
+      const p2 = p[i+1];
+      const p3 = p[i+2] || p2;
+      const c1x = p1.x + (p2.x-p0.x)/6, c1y = p1.y + (p2.y-p0.y)/6;
+      const c2x = p2.x - (p3.x-p1.x)/6, c2y = p2.y - (p3.y-p1.y)/6;
+      d += `C${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)} `;
     }
-    d += `L${p[p.length-1].x.toFixed(1)},${p[p.length-1].y.toFixed(1)} `;
     return d;
   };
   const pathD = allSegs.map(smoothSegment).join(' ');
@@ -3301,7 +3322,7 @@ function resetTheme(){
 function clearAllDataConfirm(){
   showConfirm('確定要清除所有資料嗎？所有事項、習慣、書籤、自訂分類與配色都會被清空，只保留最基本的預設內容，此動作無法復原。', ()=>{
     data = defaultData();
-    ui.expanded = {}; ui.selectedDate = null; ui.habitDate = null; ui.catId = 'overview'; ui.filter = 'all';
+    ui.expanded = {}; ui.selectedDate = null; ui.habitDate = null; ui.habitWeekOffset = 0; ui.catId = 'overview'; ui.filter = 'all';
     applyTheme();
     persist();
     renderTabs();
