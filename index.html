@@ -594,8 +594,8 @@
   .sky-layer.white{background:#FFFFFF;opacity:0;}
   .sky-layer.morning{background:linear-gradient(180deg,#FBE3B8,#F3A768);opacity:1;}
   #dailyBriefOverlay.plain-mode .sky-layer{display:none;}
-  #dailyBriefOverlay.sky-cycle .sky-layer.morning{animation:morningFadeOut 10s ease 2s both;}
-  #dailyBriefOverlay.sky-cycle .sky-layer.white{animation:whiteFadeInOut 10s ease 2s both;}
+  #dailyBriefOverlay.sky-cycle .sky-layer.morning{animation:morningFadeOut 10s ease both;}
+  #dailyBriefOverlay.sky-cycle .sky-layer.white{animation:whiteFadeInOut 10s ease both;}
   @keyframes morningFadeOut{0%{opacity:1;} 100%{opacity:0;}}
   @keyframes whiteFadeInOut{0%{opacity:0;} 50%{opacity:1;} 100%{opacity:0;}}
 
@@ -606,7 +606,7 @@
   .morning-sun-el{position:absolute;left:50%;width:110px;height:110px;border-radius:50%;
     transform:translateX(-50%);background:#FFD873;filter:drop-shadow(0 0 30px rgba(255,216,115,.9));
     top:80%;z-index:0;
-    animation:sunRiseNew 10s cubic-bezier(.25,.1,.25,1) 2s both, recapFloat 6s ease-in-out 12s infinite;}
+    animation:sunRiseNew 10s cubic-bezier(.25,.1,.25,1) both, recapFloat 6s ease-in-out 10s infinite;}
   @keyframes sunRiseNew{from{top:80%;} to{top:25%;}}
   .morning-text{position:relative;z-index:2;color:#fff;font-size:22px;font-weight:700;line-height:1.8;
     text-shadow:0 2px 14px rgba(0,0,0,.35);animation:recapFloat 5.5s ease-in-out .3s infinite;}
