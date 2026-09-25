@@ -650,7 +650,8 @@
   <div class="stage show" id="stageLogin">
     <div class="login-anim"><span></span><span></span><span></span></div>
     <h1>記事簿</h1>
-    <div id="gsiButtonContainer" style="display:flex;justify-content:center;align-items:center;min-height:44px;margin-bottom:2px;">
+    <div class="login-note" id="authCheckingNote">正在確認登入狀態...</div>
+    <div id="gsiButtonContainer" style="display:none;justify-content:center;align-items:center;min-height:44px;margin-bottom:2px;">
       <div class="login-anim" id="gsiLoadingAnim" style="margin:0;"><span></span><span></span><span></span></div>
     </div>
     <div class="login-note" id="loginNote" style="display:none">Google 登入元件載入失敗，請檢查網路連線後重新整理頁面。</div>
@@ -1622,6 +1623,7 @@ async function logout(){
   requestAnimationFrame(()=> document.getElementById('stageLogin').classList.add('show'));
   const container = document.getElementById('gsiButtonContainer');
   if(container) container.innerHTML = '';
+  revealLoginButton();
   initGoogleSignIn();
   isLoggingOut = false;
 }
@@ -1651,11 +1653,22 @@ window.addEventListener('DOMContentLoaded', async ()=>{
           enterAppDirectly();
         }catch(e){
           try{ await firebase.auth().signOut(); }catch(e2){}
+          revealLoginButton();
         }
+      }else if(!user){
+        revealLoginButton();
       }
     });
+  }else{
+    revealLoginButton();
   }
 });
+function revealLoginButton(){
+  const checkingNote = document.getElementById('authCheckingNote');
+  const btnContainer = document.getElementById('gsiButtonContainer');
+  if(checkingNote) checkingNote.style.display = 'none';
+  if(btnContainer) btnContainer.style.display = 'flex';
+}
 
 /* ============================================================
    右側可開關側邊欄
