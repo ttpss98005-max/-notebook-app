@@ -274,7 +274,7 @@
     padding:7px 14px;border-radius:999px;}
 
   /* ============ 隨手記 ============ */
-  #quickNoteWall{column-count:2;column-gap:16px;padding:4px 4px 110px;min-height:120px;}
+  #quickNoteWall{column-width:150px;column-gap:16px;padding:4px 4px 110px;min-height:120px;}
   .quicknote-card{position:relative;display:inline-block;width:100%;box-sizing:border-box;margin-bottom:16px;
     break-inside:avoid;padding:14px 12px;background:#FFF3B0;
     box-shadow:var(--shadow-sm);border-radius:4px;font-size:13px;transform-origin:50% 0%;
@@ -2714,12 +2714,13 @@ function quickNoteCardHtml(n, entering){
   const hash = quickNoteHash(n.id);
   const variant = (hash % 6) + 1;
   const delay = -((hash % 9) / 6);
+  const widthPct = 78 + (hash % 23);
   const d = new Date(n.createdAt);
   const pad = x=>String(x).padStart(2,'0');
   const label = `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
   const style = entering
-    ? `background:${quickNoteColor(n.id)};animation-name:quicknoteAppear,windSway${variant};animation-duration:.5s,45s;animation-timing-function:ease-out,ease-in-out;animation-iteration-count:1,infinite;animation-fill-mode:both,none;animation-delay:0s,${delay}s;`
-    : `background:${quickNoteColor(n.id)};animation-name:windSway${variant};animation-delay:${delay}s;`;
+    ? `width:${widthPct}%;background:${quickNoteColor(n.id)};animation-name:quicknoteAppear,windSway${variant};animation-duration:.5s,45s;animation-timing-function:ease-out,ease-in-out;animation-iteration-count:1,infinite;animation-fill-mode:both,none;animation-delay:0s,${delay}s;`
+    : `width:${widthPct}%;background:${quickNoteColor(n.id)};animation-name:windSway${variant};animation-delay:${delay}s;`;
   return `<div class="quicknote-card" data-note-id="${n.id}" style="${style}">
       <span class="quicknote-pin"></span>
       <button class="quicknote-del" onclick="deleteQuickNote('${n.id}')">×</button>
