@@ -594,12 +594,10 @@
   #morningGreetingScreen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
     text-align:center;padding:0 30px;cursor:pointer;transition:opacity .5s ease;}
   #morningGreetingScreen.fade-out{opacity:0;}
-  .sunrise-sky{position:absolute;inset:0;z-index:0;overflow:hidden;}
-  .sunrise-mountains{position:absolute;left:0;bottom:0;width:100%;height:33%;z-index:1;}
-  .morning-sun-svg{position:absolute;top:11%;left:50%;transform:translateX(-50%);width:92px;height:92px;
+  .sunrise-mountains{position:absolute;inset:0;width:100%;height:100%;z-index:0;}
+  .morning-sun{fill:#FFD873;filter:drop-shadow(0 0 30px rgba(255,216,115,.9));transform-box:fill-box;transform-origin:50% 50%;
     animation:sunRise 2.6s cubic-bezier(.22,1,.36,1) both, recapFloat 6s ease-in-out 2.6s infinite;}
-  .morning-sun{fill:#FFD873;filter:drop-shadow(0 0 30px rgba(255,216,115,.9));}
-  @keyframes sunRise{from{transform:translateY(50px);opacity:0;} to{transform:translateY(0);opacity:1;}}
+  @keyframes sunRise{from{transform:translateY(60px);opacity:0;} to{transform:translateY(0);opacity:1;}}
   .morning-text{position:relative;z-index:2;color:#fff;font-size:22px;font-weight:700;line-height:1.8;
     text-shadow:0 2px 14px rgba(0,0,0,.35);animation:recapFloat 5.5s ease-in-out .3s infinite;}
 
@@ -860,14 +858,10 @@
 <!-- ================= 每日提醒動畫 ================= -->
 <div id="dailyBriefOverlay" onclick="closeDailyBrief()">
   <div id="morningGreetingScreen" onclick="event.stopPropagation(); advanceFromMorningGreeting()">
-    <div class="sunrise-sky">
-      <svg class="morning-sun-svg" viewBox="0 0 100 100">
-        <circle class="morning-sun" cx="50" cy="50" r="42"/>
-      </svg>
-    </div>
-    <svg class="sunrise-mountains" viewBox="0 0 400 100" preserveAspectRatio="none">
-      <path d="M0 100 C20 65,60 58,90 68 C130 82,160 42,200 47 C250 53,270 75,310 70 C350 66,380 76,400 69 L400 100 Z" fill="#E8956B" opacity=".85"/>
-      <path d="M0 100 C40 87,80 82,120 89 C170 96,210 80,260 84 C310 88,350 82,400 87 L400 100 Z" fill="#C9714F"/>
+    <svg class="sunrise-mountains" viewBox="0 0 400 300" preserveAspectRatio="xMidYMax meet">
+      <circle class="morning-sun" cx="195" cy="95" r="48"/>
+      <path d="M0 300 C40 230,90 165,150 180 C185 189,165 25,195 45 C225 63,235 170,290 178 C335 184,365 165,400 172 L400 300 Z" fill="#E8956B" opacity=".85"/>
+      <path d="M0 300 C60 255,110 230,170 240 C210 247,225 195,270 208 C315 220,355 232,400 225 L400 300 Z" fill="#C9714F"/>
     </svg>
     <div class="morning-text">早安！<br>今天也加油</div>
   </div>
