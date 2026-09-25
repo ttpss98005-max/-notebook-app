@@ -594,26 +594,22 @@
   .sky-layer.white{background:#FFFFFF;opacity:0;}
   .sky-layer.morning{background:linear-gradient(180deg,#FBE3B8,#F3A768);opacity:1;}
   #dailyBriefOverlay.plain-mode .sky-layer{display:none;}
-  #dailyBriefOverlay.sky-cycle .sky-layer.morning{animation:morningFadeOut 15s ease forwards;}
-  #dailyBriefOverlay.sky-cycle .sky-layer.white{animation:whiteFadeInOut 15s ease forwards;}
-  @keyframes morningFadeOut{0%{opacity:1;} 33%{opacity:1;} 66%{opacity:0;} 100%{opacity:0;}}
-  @keyframes whiteFadeInOut{0%{opacity:0;} 33%{opacity:0;} 50%{opacity:1;} 80%{opacity:1;} 100%{opacity:0;}}
+  #dailyBriefOverlay.sky-cycle .sky-layer.morning{animation:morningFadeOut 10s ease 2s both;}
+  #dailyBriefOverlay.sky-cycle .sky-layer.white{animation:whiteFadeInOut 10s ease 2s both;}
+  @keyframes morningFadeOut{0%{opacity:1;} 100%{opacity:0;}}
+  @keyframes whiteFadeInOut{0%{opacity:0;} 50%{opacity:1;} 100%{opacity:0;}}
 
   #morningGreetingScreen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
     text-align:center;padding:0 30px;cursor:pointer;transition:opacity .5s ease;}
   #morningGreetingScreen.fade-out{opacity:0;}
-  .sunrise-mountains{position:absolute;inset:0;width:100%;height:100%;z-index:0;}
-  .morning-sun{fill:#FFD873;filter:drop-shadow(0 0 30px rgba(255,216,115,.9));transform-box:fill-box;transform-origin:50% 50%;
-    animation:sunRise 3.5s cubic-bezier(.22,1,.36,1) both, recapFloat 6s ease-in-out 3.5s infinite;}
-  @keyframes sunRise{from{transform:translateY(130px);opacity:0;} to{transform:translateY(0);opacity:1;}}
+  .sunrise-mountains{position:absolute;left:0;bottom:0;width:100%;height:33%;z-index:1;}
+  .morning-sun-el{position:absolute;left:50%;width:110px;height:110px;border-radius:50%;
+    transform:translateX(-50%);background:#FFD873;filter:drop-shadow(0 0 30px rgba(255,216,115,.9));
+    top:80%;z-index:0;
+    animation:sunRiseNew 10s cubic-bezier(.25,.1,.25,1) 2s both, recapFloat 6s ease-in-out 12s infinite;}
+  @keyframes sunRiseNew{from{top:80%;} to{top:25%;}}
   .morning-text{position:relative;z-index:2;color:#fff;font-size:22px;font-weight:700;line-height:1.8;
     text-shadow:0 2px 14px rgba(0,0,0,.35);animation:recapFloat 5.5s ease-in-out .3s infinite;}
-  #morningRoadLayer{position:absolute;left:0;bottom:0;width:100%;height:46px;z-index:2;overflow:hidden;pointer-events:none;}
-  .morning-car{position:absolute;bottom:0;animation-timing-function:linear;animation-fill-mode:forwards;}
-  .morning-car.dir-right{left:-90px;animation-name:carDriveRight;}
-  .morning-car.dir-left{right:-90px;animation-name:carDriveLeft;}
-  @keyframes carDriveRight{from{transform:translateX(0);} to{transform:translateX(calc(100vw + 120px));}}
-  @keyframes carDriveLeft{from{transform:translateX(0) scaleX(-1);} to{transform:translateX(calc(-100vw - 120px)) scaleX(-1);}}
 
   .daily-brief-modal{max-width:340px;opacity:0;transition:opacity .5s ease;}
   .daily-brief-modal.show-card{opacity:1;}
@@ -875,12 +871,11 @@
     <div class="sky-layer day"></div>
     <div class="sky-layer white"></div>
     <div class="sky-layer morning"></div>
-    <svg class="sunrise-mountains" viewBox="0 0 400 900" preserveAspectRatio="xMidYMax meet">
-      <circle class="morning-sun" cx="195" cy="300" r="96"/>
-      <path d="M0,650 C10.0,641.7 40.0,621.7 60.0,600.0 C80.0,578.3 101.7,545.0 120.0,520.0 C138.3,495.0 157.5,465.8 170.0,450.0 C182.5,434.2 185.8,424.2 195.0,425.0 C204.2,425.8 212.5,432.5 225.0,455.0 C237.5,477.5 254.2,535.0 270.0,560.0 C285.8,585.0 303.3,602.5 320.0,605.0 C336.7,607.5 356.7,576.7 370.0,575.0 C383.3,573.3 395.0,591.7 400.0,595.0 L400,900 L0,900 Z" fill="#E8956B" opacity=".85"/>
-      <path d="M0,760 C11.7,754.2 46.7,737.5 70.0,725.0 C93.3,712.5 118.3,696.7 140.0,685.0 C161.7,673.3 180.0,656.7 200.0,655.0 C220.0,653.3 240.0,666.7 260.0,675.0 C280.0,683.3 301.7,702.5 320.0,705.0 C338.3,707.5 356.7,689.5 370.0,690.0 C383.3,690.5 395.0,705.0 400.0,708.0 L400,900 L0,900 Z" fill="#C9714F"/>
+    <div class="morning-sun-el"></div>
+    <svg class="sunrise-mountains" viewBox="0 0 400 100" preserveAspectRatio="none">
+      <path d="M0,55.0 C10.0,52.8 40.0,42.5 60.0,42.0 C80.0,41.5 101.7,55.7 120.0,52.0 C138.3,48.3 153.3,22.3 170.0,20.0 C186.7,17.7 203.3,38.8 220.0,38.0 C236.7,37.2 253.3,13.3 270.0,15.0 C286.7,16.7 303.3,45.2 320.0,48.0 C336.7,50.8 356.7,32.5 370.0,32.0 C383.3,31.5 395.0,42.8 400.0,45.0 L400,100 L0,100 Z" fill="#E8956B" opacity=".85"/>
+      <path d="M0,72.0 C11.7,70.8 46.7,64.5 70.0,65.0 C93.3,65.5 116.7,76.2 140.0,75.0 C163.3,73.8 186.7,58.5 210.0,58.0 C233.3,57.5 258.3,71.3 280.0,72.0 C301.7,72.7 320.0,62.3 340.0,62.0 C360.0,61.7 390.0,68.7 400.0,70.0 L400,100 L0,100 Z" fill="#C9714F"/>
     </svg>
-    <div id="morningRoadLayer"></div>
     <div class="morning-text">早安！<br>今天也加油</div>
   </div>
   <div class="modal daily-brief-modal" id="dailyBriefContentCard" style="display:none" onclick="event.stopPropagation()">
@@ -2915,99 +2910,6 @@ function maybeShowDailyBrief(){
   showDailyBrief(showGreeting);
   return true;
 }
-const MORNING_CAR_COLORS = ['#E74C3C','#3498DB','#2ECC71','#F1C40F','#9B59B6','#1ABC9C','#E67E22','#34495E'];
-let morningCarTimer = null;
-let morningCarStage = 0;
-const MORNING_VEHICLE_MAKERS = [
-  (color)=>`<svg viewBox="0 0 60 32" width="60" height="32">
-    <path d="M4 24 Q4 12 16 12 L20 8 Q24 5 32 5 L42 5 Q50 5 52 12 L56 12 Q58 12 58 18 L58 24 Z" fill="${color}"/>
-    <path d="M22 9 L20 14 L34 14 L34 8 Z" fill="#2B3A4A"/>
-    <rect x="35" y="8" width="14" height="7" rx="1" fill="#FFFFFF"/>
-    <circle cx="16" cy="25" r="6" fill="#2B2B2B"/><circle cx="46" cy="25" r="6" fill="#2B2B2B"/>
-    <circle cx="16" cy="25" r="2.5" fill="#AAB4BD"/><circle cx="46" cy="25" r="2.5" fill="#AAB4BD"/>
-    <circle cx="6" cy="18" r="2" fill="#FFD873"/>
-  </svg>`,
-  (color)=>`<svg viewBox="0 0 90 34" width="90" height="34">
-    <rect x="2" y="10" width="18" height="16" rx="2" fill="${color}"/>
-    <rect x="5" y="12" width="9" height="8" rx="1" fill="#4A5B6B"/>
-    <rect x="22" y="4" width="64" height="22" rx="2" fill="${color}"/>
-    <line x1="34" y1="6" x2="34" y2="24" stroke="#C0392B" stroke-width="2"/>
-    <line x1="48" y1="6" x2="48" y2="24" stroke="#C0392B" stroke-width="2"/>
-    <line x1="62" y1="6" x2="62" y2="24" stroke="#C0392B" stroke-width="2"/>
-    <line x1="76" y1="6" x2="76" y2="24" stroke="#C0392B" stroke-width="2"/>
-    <circle cx="12" cy="28" r="5" fill="#2B2B2B"/><circle cx="40" cy="28" r="5" fill="#2B2B2B"/><circle cx="70" cy="28" r="5" fill="#2B2B2B"/>
-    <circle cx="12" cy="28" r="2" fill="#AAB4BD"/><circle cx="40" cy="28" r="2" fill="#AAB4BD"/><circle cx="70" cy="28" r="2" fill="#AAB4BD"/>
-    <circle cx="4" cy="18" r="1.6" fill="#FFD873"/>
-  </svg>`,
-  ()=>`<svg viewBox="0 0 62 32" width="62" height="32">
-    <path d="M4 22 Q4 10 16 10 L20 6 Q24 4 32 4 L42 4 Q50 4 52 10 L58 10 Q60 10 60 16 L60 22 Z" fill="#ECEFF1"/>
-    <rect x="20" y="7" width="12" height="7" rx="1" fill="#29B6F6"/>
-    <rect x="34" y="7" width="14" height="7" rx="1" fill="#29B6F6"/>
-    <rect x="4" y="22" width="56" height="6" fill="#26324A"/>
-    <rect x="24" y="1" width="6" height="4" rx="1" fill="#E74C3C"/>
-    <rect x="31" y="1" width="6" height="4" rx="1" fill="#4FC3F7"/>
-    <circle cx="16" cy="27" r="5" fill="#2B2B2B"/><circle cx="46" cy="27" r="5" fill="#2B2B2B"/>
-    <circle cx="16" cy="27" r="2" fill="#888"/><circle cx="46" cy="27" r="2" fill="#888"/>
-    <circle cx="6" cy="18" r="2" fill="#FFD873"/>
-  </svg>`,
-  (color)=>`<svg viewBox="0 0 84 32" width="84" height="32">
-    <rect x="2" y="20" width="80" height="8" rx="4" fill="#4A6B7A"/>
-    <circle cx="12" cy="26" r="4" fill="#7FA8C9"/><circle cx="26" cy="26" r="4" fill="#7FA8C9"/>
-    <circle cx="40" cy="26" r="4" fill="#7FA8C9"/><circle cx="54" cy="26" r="4" fill="#7FA8C9"/><circle cx="68" cy="26" r="4" fill="#7FA8C9"/>
-    <rect x="8" y="12" width="60" height="10" rx="2" fill="${color}"/>
-    <rect x="26" y="5" width="20" height="9" rx="2" fill="${color}"/>
-    <rect x="44" y="7" width="30" height="4" rx="1" fill="#4A6B7A"/>
-    <rect x="32" y="2" width="7" height="5" rx="1" fill="#4A6B7A"/>
-  </svg>`,
-  (color)=>`<svg viewBox="0 0 56 32" width="56" height="32">
-    <circle cx="11" cy="25" r="6.5" fill="none" stroke="#2B2B2B" stroke-width="3"/>
-    <circle cx="43" cy="25" r="6.5" fill="none" stroke="#2B2B2B" stroke-width="3"/>
-    <path d="M11 25 Q18 12 26 12 Q34 8 40 10 L43 25" fill="none" stroke="${color}" stroke-width="4" stroke-linecap="round"/>
-    <rect x="20" y="9" width="14" height="5" rx="2" fill="#2B2B2B"/>
-    <path d="M38 9 L44 6" stroke="#555" stroke-width="3" stroke-linecap="round"/>
-    <circle cx="44" cy="6" r="1.8" fill="#333"/>
-    <circle cx="9" cy="15" r="2.6" fill="${color}"/>
-  </svg>`,
-  (color)=>`<svg viewBox="0 0 56 30" width="56" height="30">
-    <circle cx="11" cy="22" r="7" fill="none" stroke="#2B2B2B" stroke-width="2.6"/>
-    <circle cx="43" cy="22" r="7" fill="none" stroke="#2B2B2B" stroke-width="2.6"/>
-    <path d="M11 22 L24 9 L36 9 L43 22 M24 9 L27 22 M27 22 L11 22 M27 22 L43 22" stroke="${color}" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M20 7 L28 7" stroke="#333" stroke-width="3" stroke-linecap="round"/>
-    <path d="M36 9 L40 6" stroke="#333" stroke-width="2.4" stroke-linecap="round"/>
-  </svg>`,
-];
-function spawnMorningCar(){
-  const layer = document.getElementById('morningRoadLayer');
-  if(!layer) return;
-  const car = document.createElement('div');
-  const dir = Math.random()<0.5 ? 'dir-right' : 'dir-left';
-  car.className = 'morning-car ' + dir;
-  const colorPoolSize = Math.min(MORNING_CAR_COLORS.length, 2+morningCarStage);
-  const color = MORNING_CAR_COLORS[Math.floor(Math.random()*colorPoolSize)];
-  const typePoolSize = Math.min(MORNING_VEHICLE_MAKERS.length, 1+Math.ceil(morningCarStage/2));
-  const maker = MORNING_VEHICLE_MAKERS[Math.floor(Math.random()*typePoolSize)];
-  const dur = 3.8 + Math.random()*2.2;
-  car.style.animationDuration = dur+'s';
-  car.innerHTML = maker(color);
-  car.addEventListener('animationend', ()=> car.remove());
-  layer.appendChild(car);
-}
-function scheduleMorningCars(){
-  clearTimeout(morningCarTimer);
-  const gap = Math.max(1200, 4200 - morningCarStage*350);
-  morningCarTimer = setTimeout(()=>{
-    spawnMorningCar();
-    morningCarStage++;
-    scheduleMorningCars();
-  }, gap);
-}
-function stopMorningCars(){
-  clearTimeout(morningCarTimer);
-  morningCarTimer = null;
-  morningCarStage = 0;
-  const layer = document.getElementById('morningRoadLayer');
-  if(layer) layer.innerHTML = '';
-}
 function showDailyBrief(withGreeting){
   const day = todayStr();
   const dueTasks = data.tasks.filter(t=> t.status!=='done' && t.dueDate && t.dueDate<=day);
@@ -3036,12 +2938,10 @@ function showDailyBrief(withGreeting){
   contentCard.classList.remove('show-card');
   overlay.classList.toggle('plain-mode', !withGreeting);
   overlay.classList.remove('sky-cycle');
-  stopMorningCars();
   if(withGreeting){
     greetScreen.style.display = 'flex';
     contentCard.style.display = 'none';
     requestAnimationFrame(()=> requestAnimationFrame(()=> overlay.classList.add('sky-cycle')));
-    scheduleMorningCars();
   }else{
     greetScreen.style.display = 'none';
     contentCard.style.display = 'block';
@@ -3057,7 +2957,6 @@ function advanceFromMorningGreeting(){
   const contentCard = document.getElementById('dailyBriefContentCard');
   const overlay = document.getElementById('dailyBriefOverlay');
   greetScreen.classList.add('fade-out');
-  stopMorningCars();
   overlay.classList.remove('sky-cycle');
   setTimeout(()=>{
     greetScreen.style.display = 'none';
@@ -3068,7 +2967,6 @@ function advanceFromMorningGreeting(){
 function closeDailyBrief(){
   const overlay = document.getElementById('dailyBriefOverlay');
   overlay.classList.add('fading-out');
-  stopMorningCars();
   overlay.classList.remove('sky-cycle');
   setTimeout(()=>{
     overlay.classList.remove('show','fading-out');
