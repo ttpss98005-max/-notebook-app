@@ -110,25 +110,35 @@
   /* ============ 隨手記頁:百葉窗轉場 ============ */
   #blindsOverlay{position:fixed;inset:0;z-index:300;pointer-events:none;display:none;perspective:700px;overflow:hidden;}
   #blindsOverlay.show{display:block;}
-  .blind-slat{position:absolute;left:0;width:100%;height:10%;background:#F1E9D8;
-    border-bottom:1px solid rgba(0,0,0,.1);box-shadow:0 4px 8px rgba(0,0,0,.18);
+  .blind-slat{position:absolute;left:0;width:100%;height:10%;background:#F1E9D8;z-index:1;
+    border-bottom:1px solid rgba(0,0,0,.15);box-shadow:0 8px 16px rgba(0,0,0,.45),0 2px 4px rgba(0,0,0,.3);
     transform-origin:top center;transform:rotateX(62deg);opacity:0;}
   .blind-slat.anim-close{animation:slatClose .5s cubic-bezier(.4,0,.2,1) forwards;
     animation-delay:calc(var(--i) * 0.045s);}
+  .blind-slat.anim-open{animation:slatOpen .5s cubic-bezier(.4,0,.2,1) forwards;}
   @keyframes slatClose{
-    0%{transform:rotateX(62deg);opacity:.5;}
-    65%{transform:rotateX(-6deg);opacity:1;}
-    100%{transform:rotateX(0deg);opacity:1;}
+    0%{transform:rotateX(62deg) translateY(0);opacity:.5;}
+    65%{transform:rotateX(-6deg) translateY(0);opacity:1;}
+    100%{transform:rotateX(0deg) translateY(0);opacity:1;}
   }
-  .blinds-cord{position:absolute;right:26px;top:0;width:2px;height:42px;}
+  @keyframes slatOpen{
+    0%{transform:rotateX(0deg) translateY(0);opacity:1;}
+    100%{transform:rotateX(0deg) translateY(-115vh);opacity:1;}
+  }
+  .blinds-cord{position:absolute;right:26px;top:0;width:2px;height:42px;z-index:2;}
   .blinds-cord-line{width:2px;height:100%;background:#B8AE99;margin:0 auto;}
   .blinds-cord-handle{width:14px;height:14px;border-radius:50%;background:#B8AE99;margin:-2px auto 0;
     box-shadow:0 2px 4px rgba(0,0,0,.25);}
   .blinds-cord.anim-pull{animation:cordPull .35s ease-out;}
+  .blinds-cord.anim-open{animation:cordPullUp .5s ease-in forwards;}
   @keyframes cordPull{
     0%{transform:translateY(0);}
     45%{transform:translateY(20px);}
     100%{transform:translateY(0);}
+  }
+  @keyframes cordPullUp{
+    0%{transform:translateY(0);opacity:1;}
+    100%{transform:translateY(-115vh);opacity:1;}
   }
 
   #undoToast{position:fixed;left:16px;right:16px;bottom:80px;z-index:95;max-width:420px;margin:0 auto;
@@ -554,7 +564,7 @@
   .quicknote-flying.landed{transform:scale(0.85) rotate(-4deg) translateY(140px);opacity:.9;}
   @keyframes quicknoteAppear{from{opacity:0;} to{opacity:1;}}
   #quickNoteLeafLayer{position:fixed;inset:0;pointer-events:none;z-index:50;overflow:hidden;}
-  .quicknote-leaf{position:absolute;right:-30px;animation:leafDrift linear forwards;pointer-events:auto;cursor:pointer;}
+  .quicknote-leaf{position:absolute;right:-30px;animation:leafDrift linear forwards;pointer-events:auto;cursor:grab;}
   @keyframes leafDrift{
     0%{transform:translate(0,0) rotate(0deg);opacity:0;}
     8%{opacity:.85;}
@@ -1779,19 +1789,27 @@ function playBlindsTransition(onDone){
   const overlay = document.getElementById('blindsOverlay');
   const slats = overlay.querySelectorAll('.blind-slat');
   const cord = overlay.querySelector('.blinds-cord');
-  slats.forEach(s=> s.classList.remove('anim-close'));
-  cord.classList.remove('anim-pull');
+  slats.forEach(s=> s.classList.remove('anim-close','anim-open'));
+  cord.classList.remove('anim-pull','anim-open');
   overlay.classList.add('show');
   requestAnimationFrame(()=> requestAnimationFrame(()=>{
     cord.classList.add('anim-pull');
     slats.forEach(s=> s.classList.add('anim-close'));
   }));
-  const totalClose = 500 + 9*45 + 60;
-  setTimeout(()=>{ onDone(); }, totalClose);
+  const closeDone = 500 + 9*45 + 60;
+  setTimeout(()=>{
+    onDone();
+  }, closeDone);
+  setTimeout(()=>{
+    cord.classList.remove('anim-pull');
+    cord.classList.add('anim-open');
+    slats.forEach(s=> s.classList.add('anim-open'));
+  }, closeDone + 120);
   setTimeout(()=>{
     overlay.classList.remove('show');
-    slats.forEach(s=> s.classList.remove('anim-close'));
-  }, totalClose + 200);
+    slats.forEach(s=> s.classList.remove('anim-close','anim-open'));
+    cord.classList.remove('anim-open');
+  }, closeDone + 120 + 550);
 }
 function switchMainView(v){
   ui.mainView = v;
@@ -2909,9 +2927,12 @@ function quickNoteCardHtml(n, entering){
   </div>`;
 }
 let leafTimer = null;
+let draggingLeaf = null;
+let dragOffsetX = 0, dragOffsetY = 0;
 function spawnLeaf(){
   const layer = document.getElementById('quickNoteLeafLayer');
   if(!layer) return;
+  if(layer.children.length >= 3) return;
   const leaf = document.createElement('div');
   leaf.className = 'quicknote-leaf';
   const topPct = 5 + Math.random()*70;
@@ -2926,28 +2947,60 @@ function spawnLeaf(){
   leaf.style.animationDuration = dur+'s';
   leaf.innerHTML = `<svg viewBox="0 0 30 20" width="26" height="18"><path d="M2 10 Q8 0 28 2 Q22 12 15 18 Q6 18 2 10Z" fill="#8FAE7A"/><path d="M3 10 Q14 8 27 3" stroke="#6E8F5C" stroke-width="1" fill="none" opacity="0.6"/></svg>`;
   leaf.addEventListener('animationend', ()=> leaf.remove());
-  leaf.addEventListener('click', ()=> catchLeaf(leaf));
+  leaf.addEventListener('mousedown', (e)=> startDragLeaf(e, leaf));
+  leaf.addEventListener('touchstart', (e)=> startDragLeaf(e, leaf), {passive:false});
   layer.appendChild(leaf);
 }
-function catchLeaf(leaf){
+function startDragLeaf(e, leaf){
   if(leaf.__caught) return;
+  e.preventDefault();
   leaf.__caught = true;
+  leaf.style.animation = 'none';
   const layer = document.getElementById('quickNoteLeafLayer');
   const layerRect = layer.getBoundingClientRect();
   const rect = leaf.getBoundingClientRect();
-  leaf.style.animation = 'none';
   leaf.style.right = 'auto';
   leaf.style.left = (rect.left - layerRect.left) + 'px';
   leaf.style.top = (rect.top - layerRect.top) + 'px';
   leaf.style.transform = 'none';
   leaf.style.opacity = '1';
-
-  let x = rect.left - layerRect.left;
-  let y = rect.top - layerRect.top;
-  let vx = -30;
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  dragOffsetX = clientX - rect.left;
+  dragOffsetY = clientY - rect.top;
+  draggingLeaf = leaf;
+}
+document.addEventListener('mousemove', onLeafDragMove);
+document.addEventListener('touchmove', onLeafDragMove, {passive:false});
+document.addEventListener('mouseup', onLeafDragRelease);
+document.addEventListener('touchend', onLeafDragRelease);
+function onLeafDragMove(e){
+  if(!draggingLeaf) return;
+  e.preventDefault();
+  const layer = document.getElementById('quickNoteLeafLayer');
+  const layerRect = layer.getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  const x = clientX - dragOffsetX - layerRect.left;
+  const y = clientY - dragOffsetY - layerRect.top;
+  draggingLeaf.style.left = x + 'px';
+  draggingLeaf.style.top = y + 'px';
+}
+function onLeafDragRelease(){
+  if(!draggingLeaf) return;
+  const leaf = draggingLeaf;
+  draggingLeaf = null;
+  releaseLeaf(leaf);
+}
+function releaseLeaf(leaf){
+  const layer = document.getElementById('quickNoteLeafLayer');
+  const layerRect = layer.getBoundingClientRect();
+  let x = parseFloat(leaf.style.left) || 0;
+  let y = parseFloat(leaf.style.top) || 0;
+  let vx = 0;
   let vy = 0;
-  const gravity = 900;
-  const windAccel = -160;
+  const gravity = 280;
+  const windAccel = -150;
   let bounced = false;
   const leafH = leaf.offsetHeight || 18;
   const groundY = layerRect.height - leafH - 2;
@@ -2983,6 +3036,8 @@ function scheduleNextLeaf(){
 function stopLeafSchedule(){
   clearTimeout(leafTimer);
   leafTimer = null;
+  const layer = document.getElementById('quickNoteLeafLayer');
+  if(layer) layer.innerHTML = '';
 }
 function renderQuickNoteWall(){
   const wall = document.getElementById('quickNoteWall');
