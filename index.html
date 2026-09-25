@@ -258,8 +258,6 @@
   .rate-label{width:52px;font-size:11.5px;color:var(--ink-soft);flex-shrink:0;}
   .rate-bar-track{flex:1;height:8px;background:var(--border);border-radius:999px;overflow:hidden;}
   .rate-bar-fill{height:100%;background:var(--accent);border-radius:999px;transition:width .8s cubic-bezier(.22,1,.36,1);}
-  @keyframes viewFadeIn{from{opacity:0;} to{opacity:1;}}
-  .view-enter{animation:viewFadeIn 1s ease-out;}
   .chart-line-draw{stroke-dasharray:1000;stroke-dashoffset:1000;animation:drawLine 1.1s ease-out forwards;}
   @keyframes drawLine{to{stroke-dashoffset:0;}}
   .chart-dot{opacity:0;animation:dotAppear .3s ease forwards;}
@@ -1626,10 +1624,6 @@ function switchMainView(v){
   ['list','cal','week','settings','habits','quicknotes'].forEach(k=>{
     const el = document.getElementById('view-'+k);
     el.style.display = (k===v)?'block':'none';
-    if(k===v){
-      el.classList.remove('view-enter');
-      requestAnimationFrame(()=> requestAnimationFrame(()=> el.classList.add('view-enter')));
-    }
   });
 
   document.querySelectorAll('.bottom-nav-item').forEach(b=> b.classList.toggle('active', b.dataset.view===v));
