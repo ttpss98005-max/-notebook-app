@@ -1261,10 +1261,8 @@ function getDayInfo(y,m,d){
 }
 
 async function loadData(storageKey){
-  try{
-    const res = await storageGet(storageKey);
-    data = res ? JSON.parse(res.value) : defaultData();
-  }catch(e){ data = defaultData(); }
+  const res = await storageGet(storageKey);
+  data = res ? JSON.parse(res.value) : defaultData();
   delete data.theme;
   if(!data.globalPaletteId) data.globalPaletteId = 'p01';
   if(!data.customPalettes) data.customPalettes = [];
@@ -1304,7 +1302,7 @@ function persist(){
   const keyAtScheduleTime = currentStorageKey;
   const dataAtScheduleTime = data;
   saveTimer = setTimeout(async ()=>{
-    if(!keyAtScheduleTime) return;
+    if(!keyAtScheduleTime || !dataAtScheduleTime) return;
     const json = JSON.stringify(dataAtScheduleTime);
     lastWrittenValue = json;
     const ok = await storageSet(keyAtScheduleTime, json);
@@ -1452,13 +1450,11 @@ async function writeHabitReminderDoc(habit){
 
 async function storageGet(key){
   if(fbDb){
-    try{
-      const snap = await fbDb.collection('userdata').doc(key).get();
-      return snap.exists ? { key, value: snap.data().value } : null;
-    }catch(e){ console.error('Firestore 讀取失敗', e); return null; }
+    const snap = await fbDb.collection('userdata').doc(key).get();
+    return snap.exists ? { key, value: snap.data().value } : null;
   }
   if(window.storage){
-    try{ return await window.storage.get(key); }catch(e){ return null; }
+    return await window.storage.get(key);
   }
   return null;
 }
@@ -1481,6 +1477,7 @@ async function storageSet(key, value){
 ============================================================ */
 const GOOGLE_CLIENT_ID = '826476371547-f1omvto42ta1s5t7knkph573a74cm89i.apps.googleusercontent.com';
 
+let gsiInitialized = false;
 function initGoogleSignIn(){
   if(!window.google || !google.accounts || !google.accounts.id){
     const anim = document.getElementById('gsiLoadingAnim'); if(anim) anim.remove();
@@ -1488,7 +1485,10 @@ function initGoogleSignIn(){
     return;
   }
   try{
-    google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: handleGoogleCredentialResponse });
+    if(!gsiInitialized){
+      google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: handleGoogleCredentialResponse });
+      gsiInitialized = true;
+    }
     const anim = document.getElementById('gsiLoadingAnim'); if(anim) anim.remove();
     google.accounts.id.renderButton(document.getElementById('gsiButtonContainer'), { theme:'outline', size:'large', shape:'pill', width:280 });
   }catch(e){
@@ -1524,7 +1524,16 @@ async function handleGoogleCredentialResponse(response){
 async function proceedLogin(name, email, storageKey){
   currentEmail = email;
   currentStorageKey = storageKey || keyFor(email);
-  await loadData(currentStorageKey);
+  try{
+    await loadData(currentStorageKey);
+  }catch(e){
+    console.error('讀取雲端資料失敗,為避免覆蓋資料已中止登入', e);
+    currentEmail = null;
+    currentStorageKey = null;
+    data = null;
+    notify('讀取資料失敗，請檢查網路連線後重新登入，避免資料被覆蓋。');
+    throw e;
+  }
   startRealtimeSync(currentStorageKey);
   document.getElementById('accName').textContent = name;
   document.getElementById('accEmail').textContent = email;
@@ -1591,8 +1600,12 @@ window.addEventListener('DOMContentLoaded', async ()=>{
     firebase.auth().onAuthStateChanged(async (user)=>{
       if(isLoggingOut) return;
       if(user && !currentStorageKey){
-        await proceedLogin(user.displayName || user.email, user.email, user.uid);
-        enterAppDirectly();
+        try{
+          await proceedLogin(user.displayName || user.email, user.email, user.uid);
+          enterAppDirectly();
+        }catch(e){
+          try{ await firebase.auth().signOut(); }catch(e2){}
+        }
       }
     });
   }
