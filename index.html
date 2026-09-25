@@ -1620,10 +1620,22 @@ window.addEventListener('DOMContentLoaded', async ()=>{
    右側可開關側邊欄
 ============================================================ */
 function switchMainView(v){
+  const prevView = ui.mainView;
   ui.mainView = v;
   ['list','cal','week','settings','habits','quicknotes'].forEach(k=>{
     const el = document.getElementById('view-'+k);
-    el.style.display = (k===v)?'block':'none';
+    el.style.transition = 'opacity 1s ease';
+    if(k===v){
+      el.style.display = 'block';
+      el.style.opacity = '0';
+      requestAnimationFrame(()=> requestAnimationFrame(()=> { el.style.opacity = '1'; }));
+    }else if(k===prevView){
+      el.style.opacity = '0';
+      setTimeout(()=>{ if(ui.mainView!==k) el.style.display = 'none'; }, 1000);
+    }else{
+      el.style.display = 'none';
+      el.style.opacity = '0';
+    }
   });
 
   document.querySelectorAll('.bottom-nav-item').forEach(b=> b.classList.toggle('active', b.dataset.view===v));
