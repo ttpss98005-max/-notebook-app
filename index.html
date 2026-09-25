@@ -111,7 +111,7 @@
   #blindsOverlay{position:fixed;inset:0;z-index:300;pointer-events:none;display:none;perspective:700px;overflow:hidden;}
   #blindsOverlay.show{display:block;}
   .blind-slat{position:absolute;left:0;width:100%;height:10%;background:#F1E9D8;z-index:1;
-    border-bottom:1px solid rgba(0,0,0,.15);box-shadow:0 8px 16px rgba(0,0,0,.45),0 2px 4px rgba(0,0,0,.3);
+    border-bottom:1px solid rgba(0,0,0,.2);box-shadow:0 3px 3px rgba(0,0,0,.6);
     transform-origin:top center;transform:rotateX(62deg);opacity:0;}
   .blind-slat.anim-close{animation:slatClose .5s cubic-bezier(.4,0,.2,1) forwards;
     animation-delay:calc(var(--i) * 0.045s);}
@@ -125,10 +125,12 @@
     0%{transform:rotateX(0deg) translateY(0);opacity:1;}
     100%{transform:rotateX(0deg) translateY(-115vh);opacity:1;}
   }
-  .blinds-cord{position:absolute;right:26px;top:0;width:2px;height:42px;z-index:2;}
-  .blinds-cord-line{width:2px;height:100%;background:#B8AE99;margin:0 auto;}
-  .blinds-cord-handle{width:14px;height:14px;border-radius:50%;background:#B8AE99;margin:-2px auto 0;
-    box-shadow:0 2px 4px rgba(0,0,0,.25);}
+  .blinds-cord{position:absolute;right:26px;top:0;width:4px;height:75vh;z-index:2;}
+  .blinds-cord-line{width:2px;height:calc(100% - 26px);background:linear-gradient(90deg,#A89A7C,#C9BC9C,#A89A7C);margin:0 auto;
+    box-shadow:1px 0 1px rgba(0,0,0,.2);}
+  .blinds-cord-handle{width:16px;height:26px;border-radius:8px;
+    background:linear-gradient(135deg,#D4C7A5,#B8A67E 55%,#96835A);
+    margin:0 auto;box-shadow:0 3px 6px rgba(0,0,0,.4),inset -2px -2px 3px rgba(0,0,0,.25),inset 2px 2px 3px rgba(255,255,255,.4);}
   .blinds-cord.anim-pull{animation:cordPull .35s ease-out;}
   .blinds-cord.anim-open{animation:cordPullUp .5s ease-in forwards;}
   @keyframes cordPull{
@@ -2946,7 +2948,7 @@ function spawnLeaf(){
   leaf.style.setProperty('--drot', drot+'deg');
   leaf.style.animationDuration = dur+'s';
   leaf.innerHTML = `<svg viewBox="0 0 30 20" width="26" height="18"><path d="M2 10 Q8 0 28 2 Q22 12 15 18 Q6 18 2 10Z" fill="#8FAE7A"/><path d="M3 10 Q14 8 27 3" stroke="#6E8F5C" stroke-width="1" fill="none" opacity="0.6"/></svg>`;
-  leaf.addEventListener('animationend', ()=> leaf.remove());
+  leaf.addEventListener('animationend', ()=>{ if(!leaf.__caught) leaf.remove(); });
   leaf.addEventListener('mousedown', (e)=> startDragLeaf(e, leaf));
   leaf.addEventListener('touchstart', (e)=> startDragLeaf(e, leaf), {passive:false});
   layer.appendChild(leaf);
@@ -2999,8 +3001,8 @@ function releaseLeaf(leaf){
   let y = parseFloat(leaf.style.top) || 0;
   let vx = 0;
   let vy = 0;
-  const gravity = 280;
-  const windAccel = -150;
+  const gravity = 130;
+  const windAccel = -260;
   let bounced = false;
   const leafH = leaf.offsetHeight || 18;
   const groundY = layerRect.height - leafH - 2;
