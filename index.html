@@ -499,7 +499,7 @@
   .quicknote-flying.landed{transform:scale(0.85) rotate(-4deg) translateY(140px);opacity:.9;}
   @keyframes quicknoteAppear{from{opacity:0;} to{opacity:1;}}
   #quickNoteLeafLayer{position:fixed;inset:0;pointer-events:none;z-index:50;overflow:hidden;}
-  .quicknote-leaf{position:absolute;left:-30px;animation:leafDrift linear forwards;}
+  .quicknote-leaf{position:absolute;right:-30px;animation:leafDrift linear forwards;}
   @keyframes leafDrift{
     0%{transform:translate(0,0) rotate(0deg);opacity:0;}
     8%{opacity:.85;}
@@ -1312,7 +1312,10 @@ function persist(){
     const json = JSON.stringify(dataAtScheduleTime);
     lastWrittenValue = json;
     const ok = await storageSet(keyAtScheduleTime, json);
-    if(ok) lastPersistedCount = currentCount;
+    if(ok){
+      lastPersistedCount = currentCount;
+      maybeBackupHistory(keyAtScheduleTime, json);
+    }
     else console.error('儲存失敗');
   }, 250);
 }
@@ -1474,6 +1477,21 @@ async function storageSet(key, value){
     try{ await window.storage.set(key, value); return true; }catch(e){ return false; }
   }
   return false;
+}
+
+async function maybeBackupHistory(key, jsonValue){
+  if(!fbDb) return;
+  const today = todayStr();
+  const flagKey = 'lastHistoryBackup_' + key;
+  let lastBackup = null;
+  try{ lastBackup = localStorage.getItem(flagKey); }catch(e){}
+  if(lastBackup === today) return;
+  try{
+    await fbDb.collection('userdata').doc(key).collection('history').doc(today).set({
+      value: jsonValue, backedUpAt: Date.now()
+    });
+    try{ localStorage.setItem(flagKey, today); }catch(e){}
+  }catch(e){ console.error('每日雲端備份失敗(不影響主要存檔)', e); }
 }
 
 /* ============================================================
@@ -2571,6 +2589,12 @@ function renderHabitCheckin(){
   }).join('') + `</div>`;
   box.innerHTML = html;
 }
+function habitEarliestDate(h){
+  const logDates = Object.keys(data.habitLogs[h.id]||{}).filter(d=> habitHasLog(h,d));
+  let earliest = h.createdAt || todayStr();
+  logDates.forEach(d=>{ if(d < earliest) earliest = d; });
+  return earliest;
+}
 function habitRate(h, days){
   let count = 0;
   for(let i=0;i<days;i++){
@@ -2579,7 +2603,7 @@ function habitRate(h, days){
   return Math.round((count/days)*100);
 }
 function habitRateAllTime(h){
-  const created = new Date(h.createdAt+'T00:00');
+  const created = new Date(habitEarliestDate(h)+'T00:00');
   const today = new Date(todayStr()+'T00:00');
   const totalDays = Math.max(1, Math.round((today-created)/86400000)+1);
   const count = Object.keys(data.habitLogs[h.id]||{}).filter(d=> habitHasLog(h,d)).length;
@@ -2589,7 +2613,7 @@ function timeToMinutes(t){ const parts=t.split(':'); return Number(parts[0])*60+
 function minutesToTimeLabel(m){ const h=Math.floor(m/60), mm=Math.round(m%60); return String(((h%24)+24)%24).padStart(2,'0')+':'+String(mm).padStart(2,'0'); }
 function buildHabitLineChart(h){
   const days = [];
-  const start = new Date(h.createdAt || dateStrOffset(-13));
+  const start = new Date(habitEarliestDate(h));
   const end = new Date(todayStr());
   const cursor = new Date(start);
   while(cursor <= end){
@@ -2737,7 +2761,7 @@ function spawnLeaf(){
   leaf.className = 'quicknote-leaf';
   const topPct = 5 + Math.random()*70;
   const dur = 6 + Math.random()*4;
-  const dx = 110 + Math.random()*15;
+  const dx = -(110 + Math.random()*15);
   const dy = 60 + Math.random()*120;
   const drot = 250 + Math.random()*260;
   leaf.style.top = topPct + '%';
