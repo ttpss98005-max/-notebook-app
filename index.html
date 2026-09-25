@@ -114,7 +114,7 @@
     border-bottom:1px solid rgba(0,0,0,.2);
     transform-origin:top center;transform:rotateX(62deg);opacity:0;}
   .blind-slat::after{content:'';position:absolute;left:0;top:100%;width:100%;height:50%;
-    background:linear-gradient(to bottom, rgba(0,0,0,.55), rgba(0,0,0,0));pointer-events:none;}
+    background:linear-gradient(to bottom, rgba(0,0,0,.3), rgba(0,0,0,0));pointer-events:none;}
   .blind-slat.anim-close{animation:slatClose .5s cubic-bezier(.4,0,.2,1) forwards;
     animation-delay:calc(var(--i) * 0.045s);}
   .blind-slat.anim-open{animation:slatOpen .5s cubic-bezier(.4,0,.2,1) forwards;}
@@ -3008,16 +3008,23 @@ function releaseLeaf(leaf){
   let vy = 0;
   const gravity = 130;
   const windAccel = -260;
+  const maxVx = -150;
+  const windStartDelay = 0.5;
   let bounced = false;
   const leafH = leaf.offsetHeight || 18;
   const groundY = layerRect.height - leafH - 2;
   let lastT = performance.now();
+  let elapsed = 0;
 
   function step(now){
     const dt = Math.min((now - lastT) / 1000, 0.05);
     lastT = now;
+    elapsed += dt;
     vy += gravity * dt;
-    vx += windAccel * dt;
+    if(elapsed >= windStartDelay){
+      vx += windAccel * dt;
+      if(vx < maxVx) vx = maxVx;
+    }
     x += vx * dt;
     y += vy * dt;
     if(y >= groundY){
