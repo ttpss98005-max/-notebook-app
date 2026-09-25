@@ -590,16 +590,26 @@
   #dailyBriefOverlay.show{display:flex;opacity:1;}
   #dailyBriefOverlay.fading-out{opacity:0;}
   #dailyBriefOverlay.plain-mode{background:rgba(0,0,0,.35);}
+  #dailyBriefOverlay.sky-cycle{animation:skyDayTransition 15s ease forwards;}
+  @keyframes skyDayTransition{
+    0%{background:linear-gradient(180deg,#FBE3B8,#F3A768);}
+    33%{background:linear-gradient(180deg,#FBE3B8,#F3A768);}
+    66%{background:linear-gradient(180deg,#FFFFFF,#FFFFFF);}
+    100%{background:linear-gradient(180deg,#E3F2FD,#90CAF9);}
+  }
 
   #morningGreetingScreen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
     text-align:center;padding:0 30px;cursor:pointer;transition:opacity .5s ease;}
   #morningGreetingScreen.fade-out{opacity:0;}
   .sunrise-mountains{position:absolute;inset:0;width:100%;height:100%;z-index:0;}
   .morning-sun{fill:#FFD873;filter:drop-shadow(0 0 30px rgba(255,216,115,.9));transform-box:fill-box;transform-origin:50% 50%;
-    animation:sunRise 2.6s cubic-bezier(.22,1,.36,1) both, recapFloat 6s ease-in-out 2.6s infinite;}
-  @keyframes sunRise{from{transform:translateY(60px);opacity:0;} to{transform:translateY(0);opacity:1;}}
+    animation:sunRise 3.5s cubic-bezier(.22,1,.36,1) both, recapFloat 6s ease-in-out 3.5s infinite;}
+  @keyframes sunRise{from{transform:translateY(130px);opacity:0;} to{transform:translateY(0);opacity:1;}}
   .morning-text{position:relative;z-index:2;color:#fff;font-size:22px;font-weight:700;line-height:1.8;
     text-shadow:0 2px 14px rgba(0,0,0,.35);animation:recapFloat 5.5s ease-in-out .3s infinite;}
+  #morningRoadLayer{position:absolute;left:0;bottom:2%;width:100%;height:20px;z-index:2;overflow:hidden;pointer-events:none;}
+  .morning-car{position:absolute;left:-44px;bottom:0;animation:carDrive linear forwards;}
+  @keyframes carDrive{from{transform:translateX(0);} to{transform:translateX(calc(100vw + 60px));}}
 
   .daily-brief-modal{max-width:340px;opacity:0;transition:opacity .5s ease;}
   .daily-brief-modal.show-card{opacity:1;}
@@ -859,10 +869,11 @@
 <div id="dailyBriefOverlay" onclick="closeDailyBrief()">
   <div id="morningGreetingScreen" onclick="event.stopPropagation(); advanceFromMorningGreeting()">
     <svg class="sunrise-mountains" viewBox="0 0 400 300" preserveAspectRatio="xMidYMax meet">
-      <circle class="morning-sun" cx="195" cy="95" r="48"/>
-      <path d="M0 300 C40 230,90 165,150 180 C185 189,165 25,195 45 C225 63,235 170,290 178 C335 184,365 165,400 172 L400 300 Z" fill="#E8956B" opacity=".85"/>
-      <path d="M0 300 C60 255,110 230,170 240 C210 247,225 195,270 208 C315 220,355 232,400 225 L400 300 Z" fill="#C9714F"/>
+      <circle class="morning-sun" cx="195" cy="75" r="48"/>
+      <path d="M0 300 C40 235,90 195,150 205 C185 210,175 118,205 123 C235 128,240 175,290 182 C335 188,365 168,400 175 L400 300 Z" fill="#E8956B" opacity=".85"/>
+      <path d="M0 300 C60 258,110 235,170 245 C210 252,225 200,270 213 C315 225,355 235,400 228 L400 300 Z" fill="#C9714F"/>
     </svg>
+    <div id="morningRoadLayer"></div>
     <div class="morning-text">早安！<br>今天也加油</div>
   </div>
   <div class="modal daily-brief-modal" id="dailyBriefContentCard" style="display:none" onclick="event.stopPropagation()">
@@ -2897,6 +2908,38 @@ function maybeShowDailyBrief(){
   showDailyBrief(showGreeting);
   return true;
 }
+const MORNING_CAR_COLORS = ['#E74C3C','#3498DB','#2ECC71','#F1C40F','#9B59B6','#1ABC9C','#E67E22','#34495E'];
+let morningCarTimer = null;
+let morningCarStage = 0;
+function spawnMorningCar(){
+  const layer = document.getElementById('morningRoadLayer');
+  if(!layer) return;
+  const car = document.createElement('div');
+  car.className = 'morning-car';
+  const poolSize = Math.min(MORNING_CAR_COLORS.length, 2+morningCarStage);
+  const color = MORNING_CAR_COLORS[Math.floor(Math.random()*poolSize)];
+  const dur = 3.5 + Math.random()*2;
+  car.style.animationDuration = dur+'s';
+  car.innerHTML = `<svg viewBox="0 0 40 18" width="40" height="18"><rect x="2" y="6" width="36" height="9" rx="3" fill="${color}"/><rect x="10" y="1" width="18" height="7" rx="2" fill="${color}"/><circle cx="11" cy="16" r="2.5" fill="#2B2B2B"/><circle cx="29" cy="16" r="2.5" fill="#2B2B2B"/></svg>`;
+  car.addEventListener('animationend', ()=> car.remove());
+  layer.appendChild(car);
+}
+function scheduleMorningCars(){
+  clearTimeout(morningCarTimer);
+  const gap = Math.max(1200, 4200 - morningCarStage*350);
+  morningCarTimer = setTimeout(()=>{
+    spawnMorningCar();
+    morningCarStage++;
+    scheduleMorningCars();
+  }, gap);
+}
+function stopMorningCars(){
+  clearTimeout(morningCarTimer);
+  morningCarTimer = null;
+  morningCarStage = 0;
+  const layer = document.getElementById('morningRoadLayer');
+  if(layer) layer.innerHTML = '';
+}
 function showDailyBrief(withGreeting){
   const day = todayStr();
   const dueTasks = data.tasks.filter(t=> t.status!=='done' && t.dueDate && t.dueDate<=day);
@@ -2924,9 +2967,13 @@ function showDailyBrief(withGreeting){
   greetScreen.classList.remove('fade-out');
   contentCard.classList.remove('show-card');
   overlay.classList.toggle('plain-mode', !withGreeting);
+  overlay.classList.remove('sky-cycle');
+  stopMorningCars();
   if(withGreeting){
     greetScreen.style.display = 'flex';
     contentCard.style.display = 'none';
+    requestAnimationFrame(()=> requestAnimationFrame(()=> overlay.classList.add('sky-cycle')));
+    scheduleMorningCars();
   }else{
     greetScreen.style.display = 'none';
     contentCard.style.display = 'block';
@@ -2940,7 +2987,10 @@ function viewDailyBriefNow(){
 function advanceFromMorningGreeting(){
   const greetScreen = document.getElementById('morningGreetingScreen');
   const contentCard = document.getElementById('dailyBriefContentCard');
+  const overlay = document.getElementById('dailyBriefOverlay');
   greetScreen.classList.add('fade-out');
+  stopMorningCars();
+  overlay.classList.remove('sky-cycle');
   setTimeout(()=>{
     greetScreen.style.display = 'none';
     contentCard.style.display = 'block';
@@ -2950,6 +3000,8 @@ function advanceFromMorningGreeting(){
 function closeDailyBrief(){
   const overlay = document.getElementById('dailyBriefOverlay');
   overlay.classList.add('fading-out');
+  stopMorningCars();
+  overlay.classList.remove('sky-cycle');
   setTimeout(()=>{
     overlay.classList.remove('show','fading-out');
   }, 500);
