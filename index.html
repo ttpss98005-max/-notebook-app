@@ -2921,12 +2921,23 @@ let piledDandelionsOrder = [];
 let dandelionTimer = null;
 let dandelionRAFRunning = false;
 let dandelionMouseX = -9999, dandelionMouseY = -9999;
+let dandelionMouseVX = 0, dandelionMouseVY = 0;
+let dandelionLastMouseX = -9999, dandelionLastMouseY = -9999, dandelionLastMouseT = 0;
 document.addEventListener('mousemove', (e)=>{
   const layer = document.getElementById('habitDandelionLayer');
   if(!layer) return;
   const rect = layer.getBoundingClientRect();
-  dandelionMouseX = e.clientX - rect.left;
-  dandelionMouseY = e.clientY - rect.top;
+  const nx = e.clientX - rect.left;
+  const ny = e.clientY - rect.top;
+  const now = performance.now();
+  if(dandelionLastMouseT > 0){
+    const dt = Math.max((now - dandelionLastMouseT)/1000, 0.001);
+    dandelionMouseVX = (nx - dandelionLastMouseX) / dt;
+    dandelionMouseVY = (ny - dandelionLastMouseY) / dt;
+  }
+  dandelionLastMouseX = nx; dandelionLastMouseY = ny; dandelionLastMouseT = now;
+  dandelionMouseX = nx;
+  dandelionMouseY = ny;
 });
 function dandelionSvg(seed){
   const cx = 20, cy = 20;
@@ -3011,11 +3022,16 @@ function ensureDandelionLoop(){
         const dx = d.x - dandelionMouseX, dy = d.y - dandelionMouseY;
         const dist = Math.sqrt(dx*dx+dy*dy);
         if(dist < 42){
-          const ang = Math.atan2(dy,dx);
-          const pushDist = (42-dist)*1.6;
-          d.baseX = d.x + Math.cos(ang)*pushDist;
-          if(d.mode==='piled') d.y -= 10;
-          d.mode = 'falling';
+          const speed = Math.sqrt(dandelionMouseVX*dandelionMouseVX + dandelionMouseVY*dandelionMouseVY);
+          if(speed > 8){
+            const dirX = -dandelionMouseVX / speed;
+            const dirY = -dandelionMouseVY / speed;
+            const pushDist = Math.min(speed * 0.18, 140);
+            d.baseX = d.x + dirX*pushDist;
+            d.y = d.y + dirY*pushDist*0.5;
+            if(d.mode==='piled') d.y -= 6;
+            d.mode = 'falling';
+          }
         }
       }
 
