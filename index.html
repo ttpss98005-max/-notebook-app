@@ -504,6 +504,8 @@
   .quicknote-flying.landed{transform:scale(0.85) rotate(-4deg) translateY(140px);opacity:.9;}
   @keyframes quicknoteAppear{from{opacity:0;} to{opacity:1;}}
   #quickNoteLeafLayer{position:fixed;inset:0;pointer-events:none;z-index:50;overflow:hidden;}
+  #habitDandelionLayer{position:fixed;inset:0;pointer-events:none;z-index:5;overflow:hidden;}
+  .dandelion-particle{position:absolute;left:0;top:0;pointer-events:none;will-change:transform;}
   .quicknote-leaf{position:absolute;right:-30px;animation:leafDrift linear forwards;pointer-events:auto;cursor:grab;}
   @keyframes leafDrift{
     0%{transform:translate(0,0) rotate(0deg);opacity:0;}
@@ -707,6 +709,7 @@
 
     <!-- 習慣（總覽專屬） -->
     <div id="view-habits" style="display:none">
+      <div id="habitDandelionLayer"></div>
       <div class="habit-week-strip" id="habitWeekStrip"></div>
       <div class="toolbar" style="margin-bottom:16px;">
         <div class="pill-tabs" id="habitTabSeg">
@@ -1685,6 +1688,7 @@ function switchMainView(v){
     const el = document.getElementById('view-'+k);
     el.style.display = (k===v)?'block':'none';
   });
+  if(v==='habits') scheduleNextDandelion(); else stopDandelionSchedule();
 
   document.querySelectorAll('.bottom-nav-item').forEach(b=> b.classList.toggle('active', b.dataset.view===v));
   requestAnimationFrame(updateBottomNavIndicator);
@@ -2910,6 +2914,139 @@ function releaseLeaf(leaf){
   }
   requestAnimationFrame(step);
 }
+
+/* ============ 習慣頁:蒲公英飄落 ============ */
+let dandelions = [];
+let piledDandelionsOrder = [];
+let dandelionTimer = null;
+let dandelionRAFRunning = false;
+let dandelionMouseX = -9999, dandelionMouseY = -9999;
+document.addEventListener('mousemove', (e)=>{
+  const layer = document.getElementById('habitDandelionLayer');
+  if(!layer) return;
+  const rect = layer.getBoundingClientRect();
+  dandelionMouseX = e.clientX - rect.left;
+  dandelionMouseY = e.clientY - rect.top;
+});
+function dandelionSvg(seed){
+  let lines = '';
+  const n = 9;
+  for(let i=0;i<n;i++){
+    const angle = (i/n)*Math.PI*2 + seed;
+    const x2 = (9 + Math.cos(angle)*7).toFixed(1);
+    const y2 = (9 + Math.sin(angle)*7).toFixed(1);
+    lines += `<line x1="9" y1="9" x2="${x2}" y2="${y2}" stroke="#D9D4C6" stroke-width="0.6"/>`;
+  }
+  return `<svg viewBox="0 0 18 18" width="16" height="16" style="overflow:visible">${lines}<circle cx="9" cy="9" r="1.3" fill="#BEB79E"/></svg>`;
+}
+function spawnDandelion(){
+  const layer = document.getElementById('habitDandelionLayer');
+  if(!layer) return;
+  const el = document.createElement('div');
+  el.className = 'dandelion-particle';
+  el.innerHTML = dandelionSvg(Math.random()*Math.PI);
+  layer.appendChild(el);
+  const rect = layer.getBoundingClientRect();
+  const startX = 10 + Math.random()*Math.max(rect.width-20,10);
+  const d = {
+    el, x:startX, y:-20, vx:0, vy:16+Math.random()*8,
+    mode:'falling', swayPhase:Math.random()*Math.PI*2, swayAmp:12+Math.random()*14,
+    baseX:startX, restX:0, restY:0, rot:Math.random()*360, rotSpeed:(Math.random()-0.5)*30,
+    restOffset:Math.random()*16,
+  };
+  dandelions.push(d);
+  ensureDandelionLoop();
+}
+function ensureDandelionLoop(){
+  if(dandelionRAFRunning) return;
+  dandelionRAFRunning = true;
+  let lastT = performance.now();
+  function loop(now){
+    if(!dandelionRAFRunning) return;
+    const layer = document.getElementById('habitDandelionLayer');
+    if(!layer || dandelions.length===0){ dandelionRAFRunning = false; return; }
+    const rect = layer.getBoundingClientRect();
+    const dt = Math.min((now-lastT)/1000, 0.05);
+    lastT = now;
+    const groundY = rect.height - 16;
+
+    dandelions.forEach(d=>{
+      if(d.mode==='falling'){
+        d.swayPhase += dt*1.1;
+        d.x = d.baseX + Math.sin(d.swayPhase)*d.swayAmp;
+        d.y += d.vy*dt;
+        d.rot += d.rotSpeed*dt;
+        const targetY = groundY - d.restOffset;
+        if(d.y >= targetY){
+          d.y = targetY;
+          d.mode = 'piled';
+          d.vx = 0; d.vy = 0;
+          d.restX = d.x; d.restY = d.y;
+          piledDandelionsOrder.push(d);
+          if(piledDandelionsOrder.length > 30){
+            const oldest = piledDandelionsOrder.shift();
+            oldest.mode = 'evicted';
+            oldest.vy = 40;
+          }
+        }
+      }else if(d.mode==='disturbed'){
+        d.vy += 240*dt;
+        d.x += d.vx*dt;
+        d.y += d.vy*dt;
+        d.vx *= Math.max(0, 1-3*dt);
+        d.rot += d.rotSpeed*dt;
+        if(d.y >= d.restY){
+          d.y = d.restY; d.x = d.restX; d.vx=0; d.vy=0; d.mode='piled';
+        }
+      }else if(d.mode==='evicted'){
+        d.vy += 500*dt;
+        d.y += d.vy*dt;
+        d.rot += d.rotSpeed*dt*2;
+      }
+
+      if(d.mode==='falling' || d.mode==='piled'){
+        const dx = d.x - dandelionMouseX, dy = d.y - dandelionMouseY;
+        const dist = Math.sqrt(dx*dx+dy*dy);
+        if(dist < 42){
+          const ang = Math.atan2(dy,dx);
+          const force = (42-dist)*3.5;
+          d.vx = Math.cos(ang)*force;
+          d.vy = -Math.abs(Math.sin(ang))*force - 70;
+          if(d.mode==='piled'){ d.restX = d.x; d.restY = d.y; }
+          d.mode = 'disturbed';
+        }
+      }
+
+      d.el.style.transform = `translate(${d.x.toFixed(1)}px, ${d.y.toFixed(1)}px) rotate(${d.rot.toFixed(0)}deg)`;
+    });
+
+    dandelions = dandelions.filter(d=>{
+      if(d.mode==='evicted' && d.y > rect.height + 30){
+        d.el.remove();
+        return false;
+      }
+      return true;
+    });
+
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+}
+function scheduleNextDandelion(){
+  clearTimeout(dandelionTimer);
+  const delay = (3 + Math.random()*4) * 1000;
+  dandelionTimer = setTimeout(()=>{ spawnDandelion(); scheduleNextDandelion(); }, delay);
+}
+function stopDandelionSchedule(){
+  clearTimeout(dandelionTimer);
+  dandelionTimer = null;
+  dandelionRAFRunning = false;
+  const layer = document.getElementById('habitDandelionLayer');
+  if(layer) layer.innerHTML = '';
+  dandelions = [];
+  piledDandelionsOrder = [];
+}
+
 function scheduleNextLeaf(){
   clearTimeout(leafTimer);
   const delay = (5 + Math.random()*5) * 1000;
