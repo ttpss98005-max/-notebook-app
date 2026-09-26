@@ -2865,6 +2865,7 @@ function onLeafDragRelease(){
   releaseLeaf(leaf);
 }
 function releaseLeaf(leaf){
+  leaf.__caught = false;
   const layer = document.getElementById('quickNoteLeafLayer');
   const layerRect = layer.getBoundingClientRect();
   let x = parseFloat(leaf.style.left) || 0;
@@ -2883,6 +2884,7 @@ function releaseLeaf(leaf){
   let elapsed = 0;
 
   function step(now){
+    if(leaf.__caught) return;
     const dt = Math.min((now - lastT) / 1000, 0.05);
     lastT = now;
     elapsed += dt;
