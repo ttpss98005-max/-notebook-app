@@ -1084,7 +1084,7 @@
 let currentEmail = null;
 let currentStorageKey = null;
 let data = null;
-let ui = { catId:'overview', mainView:'list', filter:'all', calDate:new Date(), weekDate:new Date(), selectedDate:null, expanded:{}, habitDate:null };
+let ui = { catId:'overview', mainView:'list', filter:'pending', calDate:new Date(), weekDate:new Date(), selectedDate:null, expanded:{}, habitDate:null };
 
 const PRESET_PALETTES = [
   {id:'p01', name:'簡約白',   bg:'#FAFAFA', ink:'#1A1A1A', accent:'#3A6B5E'},
@@ -3516,7 +3516,7 @@ function clearAllDataConfirm(){
     data = defaultData();
     lastPersistedCount = 0;
     lastPersistedCounts = {tasks:0, habits:0, quickNotes:0, dayRecaps:0};
-    ui.expanded = {}; ui.selectedDate = null; ui.habitDate = null; ui.habitWeekOffset = 0; ui.catId = 'overview'; ui.filter = 'all';
+    ui.expanded = {}; ui.selectedDate = null; ui.habitDate = null; ui.habitWeekOffset = 0; ui.catId = 'overview'; ui.filter = 'pending';
     applyTheme();
     persist();
     renderTabs();
