@@ -504,8 +504,6 @@
   .quicknote-flying.landed{transform:scale(0.85) rotate(-4deg) translateY(140px);opacity:.9;}
   @keyframes quicknoteAppear{from{opacity:0;} to{opacity:1;}}
   #quickNoteLeafLayer{position:fixed;inset:0;pointer-events:none;z-index:50;overflow:hidden;}
-  #habitDandelionLayer{position:fixed;inset:0;pointer-events:none;z-index:5;overflow:hidden;}
-  .dandelion-particle{position:absolute;left:0;top:0;pointer-events:none;will-change:transform;}
   .quicknote-leaf{position:absolute;right:-30px;animation:leafDrift linear forwards;pointer-events:auto;cursor:grab;}
   @keyframes leafDrift{
     0%{transform:translate(0,0) rotate(0deg);opacity:0;}
@@ -709,7 +707,6 @@
 
     <!-- 習慣（總覽專屬） -->
     <div id="view-habits" style="display:none">
-      <div id="habitDandelionLayer"></div>
       <div class="habit-week-strip" id="habitWeekStrip"></div>
       <div class="toolbar" style="margin-bottom:16px;">
         <div class="pill-tabs" id="habitTabSeg">
@@ -1688,7 +1685,6 @@ function switchMainView(v){
     const el = document.getElementById('view-'+k);
     el.style.display = (k===v)?'block':'none';
   });
-  if(v==='habits') scheduleNextDandelion(); else stopDandelionSchedule();
 
   document.querySelectorAll('.bottom-nav-item').forEach(b=> b.classList.toggle('active', b.dataset.view===v));
   requestAnimationFrame(updateBottomNavIndicator);
@@ -2913,156 +2909,6 @@ function releaseLeaf(leaf){
     requestAnimationFrame(step);
   }
   requestAnimationFrame(step);
-}
-
-/* ============ 習慣頁:蒲公英飄落 ============ */
-let dandelions = [];
-let piledDandelionsOrder = [];
-let dandelionTimer = null;
-let dandelionRAFRunning = false;
-let dandelionMouseX = -9999, dandelionMouseY = -9999;
-let dandelionMouseVX = 0, dandelionMouseVY = 0;
-let dandelionLastMouseX = -9999, dandelionLastMouseY = -9999, dandelionLastMouseT = 0;
-document.addEventListener('mousemove', (e)=>{
-  const layer = document.getElementById('habitDandelionLayer');
-  if(!layer) return;
-  const rect = layer.getBoundingClientRect();
-  const nx = e.clientX - rect.left;
-  const ny = e.clientY - rect.top;
-  const now = performance.now();
-  if(dandelionLastMouseT > 0){
-    const dt = Math.max((now - dandelionLastMouseT)/1000, 0.001);
-    dandelionMouseVX = (nx - dandelionLastMouseX) / dt;
-    dandelionMouseVY = (ny - dandelionLastMouseY) / dt;
-  }
-  dandelionLastMouseX = nx; dandelionLastMouseY = ny; dandelionLastMouseT = now;
-  dandelionMouseX = nx;
-  dandelionMouseY = ny;
-});
-function dandelionSvg(seed){
-  const cx = 20, cy = 20;
-  let rays = '';
-  const n = 11;
-  for(let i=0;i<n;i++){
-    const frac = i/(n-1);
-    const angle = (200 + frac*160 + (seed%1)*8) * Math.PI/180;
-    const len = 15 + (i%3)*1.3;
-    const x2 = cx + Math.cos(angle)*len;
-    const y2 = cy + Math.sin(angle)*len;
-    const midx = cx + Math.cos(angle)*len*0.55;
-    const midy = cy + Math.sin(angle)*len*0.55 - 1.5;
-    const tipRot = (angle*180/Math.PI) + 90;
-    rays += `<path d="M${cx},${cy} Q${midx.toFixed(1)},${midy.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}" stroke="#FFFFFF" stroke-width="0.8" fill="none"/>`;
-    rays += `<ellipse cx="${x2.toFixed(1)}" cy="${y2.toFixed(1)}" rx="1.3" ry="2.2" fill="#FFFFFF" transform="rotate(${tipRot.toFixed(0)} ${x2.toFixed(1)} ${y2.toFixed(1)})"/>`;
-  }
-  const stem = `<path d="M${cx},${cy+1} Q${cx-1.2},${cy+13} ${cx},${cy+20}" stroke="#D9C7A8" stroke-width="1" fill="none"/>`;
-  const pod = `<ellipse cx="${cx}" cy="${cy+23}" rx="1.8" ry="3.3" fill="#C9A876"/>`;
-  return `<svg viewBox="0 0 40 48" width="32" height="38" style="overflow:visible">${rays}${stem}${pod}</svg>`;
-}
-function spawnDandelion(){
-  const layer = document.getElementById('habitDandelionLayer');
-  if(!layer) return;
-  const el = document.createElement('div');
-  el.className = 'dandelion-particle';
-  el.innerHTML = dandelionSvg(Math.random()*Math.PI);
-  layer.appendChild(el);
-  const rect = layer.getBoundingClientRect();
-  const startX = 10 + Math.random()*Math.max(rect.width-20,10);
-  const d = {
-    el, x:startX, y:-20, vx:0, vy:16+Math.random()*8,
-    mode:'falling', swayPhase:Math.random()*Math.PI*2, swayAmp:12+Math.random()*14,
-    baseX:startX, rot:Math.random()*360, rotSpeed:(Math.random()-0.5)*30,
-    restOffset:Math.random()*16, everPiled:false,
-  };
-  dandelions.push(d);
-  ensureDandelionLoop();
-}
-function addToPile(d){
-  if(d.everPiled) return;
-  d.everPiled = true;
-  piledDandelionsOrder.push(d);
-  if(piledDandelionsOrder.length > 30){
-    const oldest = piledDandelionsOrder.shift();
-    oldest.mode = 'evicted';
-    oldest.vy = 40;
-  }
-}
-function ensureDandelionLoop(){
-  if(dandelionRAFRunning) return;
-  dandelionRAFRunning = true;
-  let lastT = performance.now();
-  function loop(now){
-    if(!dandelionRAFRunning) return;
-    const layer = document.getElementById('habitDandelionLayer');
-    if(!layer || dandelions.length===0){ dandelionRAFRunning = false; return; }
-    const rect = layer.getBoundingClientRect();
-    const dt = Math.min((now-lastT)/1000, 0.05);
-    lastT = now;
-    const groundY = rect.height - 74;
-
-    dandelions.forEach(d=>{
-      if(d.mode==='falling'){
-        d.swayPhase += dt*1.1;
-        d.x = d.baseX + Math.sin(d.swayPhase)*d.swayAmp;
-        d.y += d.vy*dt;
-        d.rot += d.rotSpeed*dt;
-        const targetY = groundY - d.restOffset;
-        if(d.y >= targetY){
-          d.y = targetY;
-          d.mode = 'piled';
-          addToPile(d);
-        }
-      }else if(d.mode==='evicted'){
-        d.vy += 500*dt;
-        d.y += d.vy*dt;
-        d.rot += d.rotSpeed*dt*2;
-      }
-
-      if(d.mode==='falling' || d.mode==='piled'){
-        const dx = d.x - dandelionMouseX, dy = d.y - dandelionMouseY;
-        const dist = Math.sqrt(dx*dx+dy*dy);
-        if(dist < 42){
-          const speed = Math.sqrt(dandelionMouseVX*dandelionMouseVX + dandelionMouseVY*dandelionMouseVY);
-          if(speed > 8){
-            const dirX = -dandelionMouseVX / speed;
-            const dirY = -dandelionMouseVY / speed;
-            const pushDist = Math.min(speed * 0.18, 140);
-            d.baseX = d.x + dirX*pushDist;
-            d.y = d.y + dirY*pushDist*0.5;
-            if(d.mode==='piled') d.y -= 6;
-            d.mode = 'falling';
-          }
-        }
-      }
-
-      d.el.style.transform = `translate(${d.x.toFixed(1)}px, ${d.y.toFixed(1)}px) rotate(${d.rot.toFixed(0)}deg)`;
-    });
-
-    dandelions = dandelions.filter(d=>{
-      if(d.mode==='evicted' && d.y > rect.height + 30){
-        d.el.remove();
-        return false;
-      }
-      return true;
-    });
-
-    requestAnimationFrame(loop);
-  }
-  requestAnimationFrame(loop);
-}
-function scheduleNextDandelion(){
-  clearTimeout(dandelionTimer);
-  const delay = (3 + Math.random()*4) * 1000;
-  dandelionTimer = setTimeout(()=>{ spawnDandelion(); scheduleNextDandelion(); }, delay);
-}
-function stopDandelionSchedule(){
-  clearTimeout(dandelionTimer);
-  dandelionTimer = null;
-  dandelionRAFRunning = false;
-  const layer = document.getElementById('habitDandelionLayer');
-  if(layer) layer.innerHTML = '';
-  dandelions = [];
-  piledDandelionsOrder = [];
 }
 
 function scheduleNextLeaf(){
