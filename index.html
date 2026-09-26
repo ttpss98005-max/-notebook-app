@@ -341,16 +341,15 @@
     padding:7px 14px;border-radius:999px;}
 
   /* ============ 隨手記 ============ */
-  #quickNoteWindowLight{position:fixed;inset:0;pointer-events:none;z-index:-1;overflow:hidden;
-    background:repeating-linear-gradient(
-      -38deg,
-      rgba(0,0,0,0) 0px,
-      rgba(0,0,0,0) 30px,
-      rgba(70,60,45,.09) 42px,
-      rgba(70,60,45,.09) 54px,
-      rgba(0,0,0,0) 66px,
-      rgba(0,0,0,0) 100px
-    );}
+  #quickNoteWindowLight{position:fixed;inset:0;pointer-events:none;z-index:-1;overflow:hidden;background:rgba(20,18,15,.05);}
+  .window-light-shape{position:absolute;top:-8%;left:-6%;width:78%;height:58%;
+    background:rgba(255,255,255,.55);
+    clip-path:polygon(6% 6%, 96% 0%, 84% 94%, 0% 84%);
+    filter:blur(20px);}
+  .window-light-shape::before{content:'';position:absolute;left:47%;top:-10%;width:4%;height:120%;
+    background:rgba(0,0,0,.16);}
+  .window-light-shape::after{content:'';position:absolute;left:-10%;top:20%;width:120%;height:4%;
+    background:rgba(0,0,0,.16);}
   #quickNoteWall{column-width:150px;column-gap:16px;padding:4px 4px 110px;min-height:120px;}
   .quicknote-card{position:relative;display:inline-block;width:100%;box-sizing:border-box;margin-bottom:16px;
     break-inside:avoid;transition:transform .25s ease;}
@@ -795,7 +794,7 @@
 
     <!-- 隨手記 -->
     <div id="view-quicknotes" style="display:none">
-      <div id="quickNoteWindowLight"></div>
+      <div id="quickNoteWindowLight"><div class="window-light-shape"></div></div>
       <div id="quickNoteWall"></div>
       <div id="quickNoteInputBar">
         <textarea id="quickNoteInput" placeholder="隨手記點什麼..." rows="1"></textarea>
