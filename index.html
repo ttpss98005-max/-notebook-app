@@ -73,7 +73,8 @@
   .top-bar{position:sticky;top:0;background:var(--surface);border-bottom:1px solid var(--border);
     padding:14px 26px;z-index:10;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
   .brand{font-size:16px;font-weight:700;letter-spacing:1px;flex-shrink:0;}
-  .search-trigger-btn{margin-left:auto;background:#F1F0EA;border:none;width:34px;height:34px;border-radius:50%;
+  .top-bar-actions{margin-left:auto;display:flex;gap:8px;}
+  .search-trigger-btn{background:#F1F0EA;border:none;width:34px;height:34px;border-radius:50%;
     color:var(--ink-soft);display:flex;align-items:center;justify-content:center;}
   .search-result-group{margin-bottom:16px;}
   .search-result-label{font-size:11px;color:var(--ink-soft);font-weight:700;margin-bottom:6px;}
@@ -187,6 +188,37 @@
   .day-detail{margin-top:20px;border-top:1.5px solid var(--border);padding-top:16px;}
   .day-detail h3{font-size:13.5px;margin:0 0 10px;}
   .item-line{font-size:12.5px;padding:9px 12px;border-radius:12px;background:#FDFDFB;border:1.5px solid var(--border);border-left:4px solid var(--border);margin-bottom:6px;color:#1A1A1A;}
+
+  /* ============ 記帳 ============ */
+  .expense-month-nav{display:flex;align-items:center;gap:10px;margin-bottom:16px;font-weight:700;font-size:15px;}
+  .expense-summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;}
+  .expense-summary-card{background:#FDFDFB;border:1.5px solid var(--border);border-radius:14px;padding:12px 10px;text-align:center;box-shadow:var(--shadow-sm);color:#1A1A1A;}
+  .es-label{font-size:11px;color:var(--ink-soft);margin-bottom:4px;}
+  .es-amount{font-size:16px;font-weight:800;}
+  .es-amount.income{color:#3A8A5E;}
+  .es-amount.expense{color:#C0504D;}
+  .expense-cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:6px;}
+  .expense-cat-btn{border:1.5px solid var(--border);border-radius:12px;padding:8px 4px;font-size:11px;background:#fff;color:#1A1A1A;
+    display:flex;flex-direction:column;align-items:center;gap:4px;transition:.15s;}
+  .expense-cat-btn.selected{border-color:var(--accent);background:var(--accent-soft);}
+  .expense-cat-btn .cat-icon{font-size:17px;}
+  .expense-day-group{margin-bottom:14px;}
+  .expense-day-label{font-size:11.5px;color:var(--ink-soft);font-weight:700;margin-bottom:6px;padding-left:2px;}
+  .expense-item{display:flex;align-items:center;gap:10px;background:#FDFDFB;border:1.5px solid var(--border);border-radius:14px;
+    padding:10px 12px;margin-bottom:8px;box-shadow:var(--shadow-sm);color:#1A1A1A;transition:.15s;}
+  .expense-item:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);}
+  .expense-item .ex-icon{font-size:18px;width:32px;height:32px;border-radius:50%;background:var(--accent-soft);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .expense-item .ex-info{flex:1;min-width:0;}
+  .expense-item .ex-cat-name{font-size:13px;font-weight:700;}
+  .expense-item .ex-note{font-size:11px;color:var(--ink-soft);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .expense-item .ex-amt{font-weight:800;font-size:14px;flex-shrink:0;}
+  .expense-item .ex-amt.income{color:#3A8A5E;}
+  .expense-item .ex-amt.expense{color:#C0504D;}
+  .expense-item .ex-del{background:none;border:none;color:var(--ink-soft);font-size:15px;padding:4px;flex-shrink:0;}
+  .payroll-deduction-item{display:flex;align-items:center;justify-content:space-between;background:#FDFDFB;
+    border:1.5px solid var(--border);border-radius:10px;padding:8px 12px;margin-bottom:6px;font-size:12.5px;color:#1A1A1A;}
+  .payroll-deduction-item button{background:none;border:none;color:var(--danger);font-size:12px;}
   .item-line .t{color:var(--ink-soft);margin-right:8px;}
 
   .week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;}
@@ -671,9 +703,14 @@
 <div id="appShell">
   <div class="top-bar">
     <div class="brand">記事簿</div>
-    <button class="search-trigger-btn" onclick="openSearch()" title="搜尋">
-      <svg viewBox="0 0 24 24" width="19" height="19"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><line x1="15.5" y1="15.5" x2="21" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-    </button>
+    <div class="top-bar-actions">
+      <button class="search-trigger-btn" onclick="openSearch()" title="搜尋">
+        <svg viewBox="0 0 24 24" width="19" height="19"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><line x1="15.5" y1="15.5" x2="21" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <button class="search-trigger-btn" onclick="switchMainView('settings')" title="設定">
+        <svg viewBox="0 0 24 24" width="19" height="19"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/><line x1="12" y1="2.5" x2="12" y2="5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="18.5" x2="12" y2="21.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="2.5" y1="12" x2="5.5" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="18.5" y1="12" x2="21.5" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="5.1" y1="5.1" x2="7.2" y2="7.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="16.8" y1="16.8" x2="18.9" y2="18.9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="5.1" y1="18.9" x2="7.2" y2="16.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="16.8" y1="7.2" x2="18.9" y2="5.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
   </div>
 
   <div class="main">
@@ -688,6 +725,10 @@
         <div id="categorySheetList"></div>
         <button class="cat-add" onclick="closeCategorySheet(); openCatModal();">＋新增分類</button>
       </div>
+    </div>
+    <div class="pill-tabs" id="calModeSeg" style="display:none;margin-bottom:14px;">
+      <button id="calModeMonthBtn" onclick="setCalMode('cal')">月曆</button>
+      <button id="calModeWeekBtn" onclick="setCalMode('week')">週曆</button>
     </div>
     <div class="toolbar" id="sharedToolbar">
       <div class="seg" id="filterSeg">
@@ -786,6 +827,44 @@
       <button class="btn-ghost" onclick="resetTheme()">重設為預設外觀</button>
       <button class="btn-ghost" style="margin-left:8px;color:var(--danger);border-color:var(--danger)" onclick="clearAllDataConfirm()">清除所有資料</button>
     </div>
+
+    <div id="view-expense" style="display:none">
+      <div class="expense-month-nav">
+        <button class="cal-nav-btn" onclick="expenseMonthNav(-1)">‹</button>
+        <span id="expenseMonthLabel">-</span>
+        <button class="cal-nav-btn" onclick="expenseMonthNav(1)">›</button>
+        <button class="btn-ghost" style="margin-left:auto;" onclick="openPayrollModal()">薪資設定</button>
+      </div>
+      <div class="expense-summary-grid">
+        <div class="expense-summary-card">
+          <div class="es-label">本月收入</div>
+          <div class="es-amount income" id="expenseIncomeTotal">$0</div>
+        </div>
+        <div class="expense-summary-card">
+          <div class="es-label">本月支出</div>
+          <div class="es-amount expense" id="expenseExpenseTotal">$0</div>
+        </div>
+        <div class="expense-summary-card">
+          <div class="es-label">本月結餘</div>
+          <div class="es-amount" id="expenseNetTotal">$0</div>
+        </div>
+      </div>
+      <div class="setting-block" id="salaryPreviewBlock">
+        <h3>本月薪資試算</h3>
+        <div class="row-inline" style="max-width:100%;">
+          <label style="margin:0;font-size:13px;">事假天數</label>
+          <input type="number" id="leavePersonalDays" min="0" step="0.5" style="width:70px;" onchange="updateSalaryPreview()">
+        </div>
+        <div class="row-inline" style="max-width:100%;margin-top:8px;">
+          <label style="margin:0;font-size:13px;">病假天數</label>
+          <input type="number" id="leaveSickDays" min="0" step="0.5" style="width:70px;" onchange="updateSalaryPreview()">
+        </div>
+        <div id="salaryBreakdown" style="margin-top:12px;font-size:12.5px;color:var(--ink-soft);"></div>
+        <button class="btn-ghost" style="margin-top:10px;" onclick="recordMonthSalary()">記入本月薪資</button>
+      </div>
+      <button class="btn-primary" style="width:100%;margin:6px 0 14px;" onclick="openExpenseModal()">＋ 記一筆</button>
+      <div id="expenseList"></div>
+    </div>
   </div>
 </div>
 
@@ -798,17 +877,14 @@
   <button class="bottom-nav-item" data-view="list" title="清單" onclick="switchMainView('list')">
     <svg viewBox="0 0 24 24" width="21" height="21"><rect x="3" y="5" width="3.2" height="3.2" rx="0.6" fill="currentColor"/><rect x="3" y="10.4" width="3.2" height="3.2" rx="0.6" fill="currentColor"/><rect x="3" y="15.8" width="3.2" height="3.2" rx="0.6" fill="currentColor"/><line x1="9" y1="6.6" x2="21" y2="6.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="9" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="9" y1="17.4" x2="21" y2="17.4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
   </button>
-  <button class="bottom-nav-item" data-view="week" title="週曆" onclick="switchMainView('week')">
-    <svg viewBox="0 0 24 24" width="21" height="21"><rect x="3" y="4.5" width="18" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" stroke-width="1.8"/><rect x="6" y="12.5" width="12" height="4" rx="1" fill="currentColor"/></svg>
-  </button>
-  <button class="bottom-nav-item" data-view="cal" title="月曆" onclick="switchMainView('cal')">
+  <button class="bottom-nav-item" data-view="cal" data-view-alt="week" title="行事曆" onclick="openCalendarTab()">
     <svg viewBox="0 0 24 24" width="21" height="21"><rect x="3" y="4.5" width="18" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" stroke-width="1.8"/><circle cx="7.5" cy="13" r="1.3" fill="currentColor"/><circle cx="12" cy="13" r="1.3" fill="currentColor"/><circle cx="16.5" cy="13" r="1.3" fill="currentColor"/><circle cx="7.5" cy="17" r="1.3" fill="currentColor"/><circle cx="12" cy="17" r="1.3" fill="currentColor"/></svg>
   </button>
   <button class="bottom-nav-item" data-view="quicknotes" title="隨手記" onclick="switchMainView('quicknotes')">
     <svg viewBox="0 0 24 24" width="21" height="21"><path d="M4 20l1-4 10-10 3 3-10 10z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/><line x1="15" y1="6" x2="18" y2="9" stroke="currentColor" stroke-width="1.8"/></svg>
   </button>
-  <button class="bottom-nav-item" data-view="settings" title="設定" onclick="switchMainView('settings')">
-    <svg viewBox="0 0 24 24" width="21" height="21"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/><line x1="12" y1="2.5" x2="12" y2="5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="18.5" x2="12" y2="21.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="2.5" y1="12" x2="5.5" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="18.5" y1="12" x2="21.5" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="5.1" y1="5.1" x2="7.2" y2="7.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="16.8" y1="16.8" x2="18.9" y2="18.9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="5.1" y1="18.9" x2="7.2" y2="16.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="16.8" y1="7.2" x2="18.9" y2="5.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+  <button class="bottom-nav-item" data-view="expense" title="記帳" onclick="switchMainView('expense')">
+    <svg viewBox="0 0 24 24" width="21" height="21"><rect x="3.5" y="6" width="17" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 10h17" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="14.2" r="2.3" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
   </button>
 </div>
 
@@ -1052,6 +1128,72 @@
   </div>
 </div>
 
+<div class="overlay" id="expenseModal">
+  <div class="modal">
+    <h3 id="expenseModalTitle">記一筆</h3>
+    <input type="hidden" id="expenseEditId" value="">
+    <div class="pill-tabs" id="expenseTypeSeg" style="margin-bottom:14px;">
+      <button id="expenseTypeExpenseBtn" onclick="setExpenseType('expense')">支出</button>
+      <button id="expenseTypeIncomeBtn" onclick="setExpenseType('income')">收入</button>
+    </div>
+    <div class="field"><label>金額</label><input type="number" id="expenseAmountInput" inputmode="decimal" placeholder="0"></div>
+    <div class="field"><label>分類</label><div class="expense-cat-grid" id="expenseCatGrid"></div></div>
+    <div class="field"><label>日期</label><input type="date" id="expenseDateInput"></div>
+    <div class="field"><label>備註</label><input type="text" id="expenseNoteInput" placeholder="備註（選填）"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal('expenseModal')">取消</button>
+      <button class="btn-primary" onclick="saveExpense()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="payrollModal">
+  <div class="modal" style="max-width:400px;">
+    <h3>薪資試算設定</h3>
+    <div class="field"><label>底薪</label><input type="number" id="payrollBaseSalary" placeholder="0"></div>
+    <div class="field"><label>每月發薪日</label><input type="number" id="payrollSalaryDay" min="1" max="31" placeholder="例如：5"></div>
+    <div class="field"><label>勞保費率（%，員工自付部分）</label><input type="number" id="payrollLaborRate" step="0.01" placeholder="0"></div>
+    <div class="field"><label>健保費率（%，員工自付部分）</label><input type="number" id="payrollHealthRate" step="0.01" placeholder="0"></div>
+    <div class="field"><label>國民年金費率（%）</label><input type="number" id="payrollPensionRate" step="0.01" placeholder="0"></div>
+    <div class="field">
+      <label>請假扣薪計算基準（每日薪資 = 底薪 ÷ 此基準）</label>
+      <div class="pill-tabs" id="payrollDivisorSeg">
+        <button id="payrollDivisorWorkBtn" onclick="setPayrollDivisor('workdays')">工作天</button>
+        <button id="payrollDivisorMonthBtn" onclick="setPayrollDivisor('monthdays')">當月天數</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>事假扣薪方式</label>
+      <div class="pill-tabs" id="payrollPersonalRuleSeg">
+        <button id="payrollPersonalHalfBtn" onclick="setPayrollRule('personal','halfpay')">半薪</button>
+        <button id="payrollPersonalFixedBtn" onclick="setPayrollRule('personal','fixed')">固定金額/天</button>
+      </div>
+      <input type="number" id="payrollPersonalFixedAmount" placeholder="固定扣款金額（每天）" style="margin-top:8px;display:none;">
+    </div>
+    <div class="field">
+      <label>病假扣薪方式</label>
+      <div class="pill-tabs" id="payrollSickRuleSeg">
+        <button id="payrollSickHalfBtn" onclick="setPayrollRule('sick','halfpay')">半薪</button>
+        <button id="payrollSickFixedBtn" onclick="setPayrollRule('sick','fixed')">固定金額/天</button>
+      </div>
+      <input type="number" id="payrollSickFixedAmount" placeholder="固定扣款金額（每天）" style="margin-top:8px;display:none;">
+    </div>
+    <div class="field">
+      <label>自訂扣款項目（每月固定扣除）</label>
+      <div id="payrollDeductionList"></div>
+      <div class="row-inline" style="max-width:100%;margin-top:8px;gap:8px;">
+        <input type="text" id="newDeductionName" placeholder="項目名稱" style="flex:1;">
+        <input type="number" id="newDeductionAmount" placeholder="金額" style="width:80px;">
+        <button class="btn-ghost" onclick="addPayrollDeduction()">新增</button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal('payrollModal')">關閉</button>
+      <button class="btn-primary" onclick="savePayrollSettings()">儲存</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="subModal">
   <div class="modal">
     <h3 id="subModalTitle">新增細項</h3>
@@ -1088,7 +1230,7 @@
 let currentEmail = null;
 let currentStorageKey = null;
 let data = null;
-let ui = { catId:'overview', mainView:'list', filter:'pending', calDate:new Date(), weekDate:new Date(), selectedDate:null, expanded:{}, habitDate:null };
+let ui = { catId:'overview', mainView:'list', filter:'pending', calDate:new Date(), weekDate:new Date(), selectedDate:null, expanded:{}, habitDate:null, calMode:'cal' };
 
 const PRESET_PALETTES = [
   {id:'p01', name:'簡約白',   bg:'#FAFAFA', ink:'#1A1A1A', accent:'#3A6B5E'},
@@ -1130,7 +1272,18 @@ function defaultData(){
     dayRecaps: {},
     lastAutoRecapDate: null,
     globalPaletteId:'p01',
-    customPalettes:[]
+    customPalettes:[],
+    expenses: [],
+    payroll: {
+      baseSalary: 0, salaryDay: 5,
+      laborRate: 0, healthRate: 0, pensionRate: 0,
+      leaveDivisor: 'workdays',
+      personalRule: {type:'halfpay', fixedAmount:0},
+      sickRule: {type:'halfpay', fixedAmount:0},
+      deductions: []
+    },
+    leaveByMonth: {},
+    salaryRecorded: {}
   };
 }
 
@@ -1274,6 +1427,13 @@ async function loadData(storageKey){
   if(data.lastAutoRecapDate===undefined) data.lastAutoRecapDate = null;
   if(data.morningGreetingAlwaysOn===undefined) data.morningGreetingAlwaysOn = false;
   if(data.morningGreetingShownDate===undefined) data.morningGreetingShownDate = null;
+  if(!data.expenses) data.expenses = [];
+  if(!data.payroll) data.payroll = {baseSalary:0, salaryDay:5, laborRate:0, healthRate:0, pensionRate:0, leaveDivisor:'workdays', personalRule:{type:'halfpay',fixedAmount:0}, sickRule:{type:'halfpay',fixedAmount:0}, deductions:[]};
+  if(!data.payroll.personalRule) data.payroll.personalRule = {type:'halfpay', fixedAmount:0};
+  if(!data.payroll.sickRule) data.payroll.sickRule = {type:'halfpay', fixedAmount:0};
+  if(!data.payroll.deductions) data.payroll.deductions = [];
+  if(!data.leaveByMonth) data.leaveByMonth = {};
+  if(!data.salaryRecorded) data.salaryRecorded = {};
   data.categories.forEach(c=>{ if(c.paletteId===undefined) c.paletteId = null; });
   if(!data.categories.find(c=>c.id==='work')) data.categories.unshift({id:'work', name:'工作', color:'#2E4057', deletable:false, paletteId:null});
   if(!data.categories.find(c=>c.id==='personal')) data.categories.unshift({id:'personal', name:'私人', color:'#7A5C82', deletable:false, paletteId:null});
@@ -1299,15 +1459,16 @@ async function loadData(storageKey){
 
 function totalContentCount(d){
   if(!d) return 0;
-  return (d.tasks?d.tasks.length:0) + (d.habits?d.habits.length:0) + (d.quickNotes?d.quickNotes.length:0) + (d.dayRecaps?Object.keys(d.dayRecaps).length:0);
+  return (d.tasks?d.tasks.length:0) + (d.habits?d.habits.length:0) + (d.quickNotes?d.quickNotes.length:0) + (d.dayRecaps?Object.keys(d.dayRecaps).length:0) + (d.expenses?d.expenses.length:0);
 }
 function categoryCounts(d){
-  if(!d) return {tasks:0, habits:0, quickNotes:0, dayRecaps:0};
+  if(!d) return {tasks:0, habits:0, quickNotes:0, dayRecaps:0, expenses:0};
   return {
     tasks: d.tasks ? d.tasks.length : 0,
     habits: d.habits ? d.habits.length : 0,
     quickNotes: d.quickNotes ? d.quickNotes.length : 0,
-    dayRecaps: d.dayRecaps ? Object.keys(d.dayRecaps).length : 0
+    dayRecaps: d.dayRecaps ? Object.keys(d.dayRecaps).length : 0,
+    expenses: d.expenses ? d.expenses.length : 0
   };
 }
 
@@ -1685,17 +1846,23 @@ function revealLoginButton(){
 ============================================================ */
 function switchMainView(v){
   ui.mainView = v;
-  ['list','cal','week','settings','habits','quicknotes'].forEach(k=>{
+  if(v==='cal' || v==='week') ui.calMode = v;
+  ['list','cal','week','settings','habits','quicknotes','expense'].forEach(k=>{
     const el = document.getElementById('view-'+k);
     el.style.display = (k===v)?'block':'none';
   });
 
-  document.querySelectorAll('.bottom-nav-item').forEach(b=> b.classList.toggle('active', b.dataset.view===v));
+  document.querySelectorAll('.bottom-nav-item').forEach(b=> b.classList.toggle('active', b.dataset.view===v || b.dataset.viewAlt===v));
   requestAnimationFrame(updateBottomNavIndicator);
 
   const showCatTabs = (v==='list'||v==='cal'||v==='week');
   document.getElementById('catIndicatorRow').style.display = showCatTabs?'block':'none';
   updateCatIndicator();
+
+  const showCalModeSeg = (v==='cal'||v==='week');
+  document.getElementById('calModeSeg').style.display = showCalModeSeg?'inline-flex':'none';
+  document.getElementById('calModeMonthBtn').classList.toggle('active', v==='cal');
+  document.getElementById('calModeWeekBtn').classList.toggle('active', v==='week');
 
   const showToolbar = (v==='list');
   document.getElementById('sharedToolbar').style.display = showToolbar?'flex':'none';
@@ -1707,6 +1874,7 @@ function switchMainView(v){
   if(v==='week') renderWeek();
   if(v==='settings'){ renderBookmarks(); renderSettings(); updateDailyBriefSwitch(); updateMorningGreetingSwitch(); updatePushSwitch('Notification' in window && Notification.permission==='granted' && isPushConfigured()); }
   if(v==='habits') setHabitTab('checkin');
+  if(v==='expense') renderExpensePage();
   if(v==='quicknotes'){
     renderQuickNoteWall();
     scheduleNextLeaf();
@@ -1715,6 +1883,12 @@ function switchMainView(v){
   }else{
     stopLeafSchedule();
   }
+}
+function openCalendarTab(){
+  switchMainView(ui.calMode==='week' ? 'week' : 'cal');
+}
+function setCalMode(mode){
+  switchMainView(mode);
 }
 function updateBottomNavIndicator(){
   const nav = document.getElementById('bottomNav');
@@ -2913,6 +3087,248 @@ function releaseLeaf(leaf){
     requestAnimationFrame(step);
   }
   requestAnimationFrame(step);
+}
+
+/* ============================================================
+   記帳
+============================================================ */
+const EXPENSE_CATEGORIES = [
+  {id:'food', name:'餐飲', icon:'🍚'},
+  {id:'transport', name:'交通', icon:'🚗'},
+  {id:'shopping', name:'購物', icon:'🛍'},
+  {id:'entertainment', name:'娛樂', icon:'🎮'},
+  {id:'home', name:'居家', icon:'🏠'},
+  {id:'medical', name:'醫療', icon:'💊'},
+  {id:'other', name:'其他', icon:'📦'}
+];
+const INCOME_CATEGORIES = [
+  {id:'salary', name:'薪資', icon:'💰'},
+  {id:'bonus', name:'獎金', icon:'🎁'},
+  {id:'other_income', name:'其他', icon:'➕'}
+];
+let expenseUi = { monthDate: new Date(), editType: 'expense', editCatId: EXPENSE_CATEGORIES[0].id };
+
+function expenseMonthKeyOf(d){
+  const pad=n=>String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}`;
+}
+function expenseMonthNav(delta){
+  expenseUi.monthDate.setMonth(expenseUi.monthDate.getMonth()+delta);
+  renderExpensePage();
+}
+function getExpensesForMonth(monthKey){
+  return data.expenses.filter(e=> e.date.slice(0,7)===monthKey);
+}
+function workDaysInMonth(year, monthIdx){
+  const days = new Date(year, monthIdx+1, 0).getDate();
+  let count=0;
+  for(let d=1; d<=days; d++){
+    const dow = new Date(year, monthIdx, d).getDay();
+    if(dow!==0 && dow!==6) count++;
+  }
+  return count;
+}
+function daysInMonth(year, monthIdx){
+  return new Date(year, monthIdx+1, 0).getDate();
+}
+function computeSalaryBreakdown(year, monthIdx, personalDays, sickDays){
+  const p = data.payroll;
+  const divisor = p.leaveDivisor==='workdays' ? workDaysInMonth(year, monthIdx) : daysInMonth(year, monthIdx);
+  const dailyRate = divisor>0 ? p.baseSalary/divisor : 0;
+  const personalDeduct = p.personalRule.type==='halfpay' ? dailyRate*0.5*personalDays : (p.personalRule.fixedAmount||0)*personalDays;
+  const sickDeduct = p.sickRule.type==='halfpay' ? dailyRate*0.5*sickDays : (p.sickRule.fixedAmount||0)*sickDays;
+  const labor = p.baseSalary * (p.laborRate||0)/100;
+  const health = p.baseSalary * (p.healthRate||0)/100;
+  const pension = p.baseSalary * (p.pensionRate||0)/100;
+  const customTotal = (p.deductions||[]).reduce((s,d)=>s+(Number(d.amount)||0),0);
+  const net = p.baseSalary - personalDeduct - sickDeduct - labor - health - pension - customTotal;
+  return { dailyRate, personalDeduct, sickDeduct, labor, health, pension, customTotal, net, base:p.baseSalary };
+}
+function updateSalaryPreview(){
+  const monthKey = expenseMonthKeyOf(expenseUi.monthDate);
+  const personalDays = Number(document.getElementById('leavePersonalDays').value)||0;
+  const sickDays = Number(document.getElementById('leaveSickDays').value)||0;
+  data.leaveByMonth[monthKey] = {personal:personalDays, sick:sickDays};
+  persist();
+  const b = computeSalaryBreakdown(expenseUi.monthDate.getFullYear(), expenseUi.monthDate.getMonth(), personalDays, sickDays);
+  const box = document.getElementById('salaryBreakdown');
+  box.innerHTML = `
+    底薪 $${b.base.toLocaleString()}<br>
+    事假扣款 -$${Math.round(b.personalDeduct).toLocaleString()}<br>
+    病假扣款 -$${Math.round(b.sickDeduct).toLocaleString()}<br>
+    勞保 -$${Math.round(b.labor).toLocaleString()}　健保 -$${Math.round(b.health).toLocaleString()}　國民年金 -$${Math.round(b.pension).toLocaleString()}<br>
+    自訂扣款 -$${Math.round(b.customTotal).toLocaleString()}<br>
+    <b style="color:var(--ink);font-size:13.5px;">預估實領 $${Math.round(b.net).toLocaleString()}</b>
+    ${data.salaryRecorded[monthKey] ? '<div style="color:var(--accent);margin-top:4px;">✓ 本月薪資已記入</div>' : ''}
+  `;
+}
+function recordMonthSalary(){
+  const monthKey = expenseMonthKeyOf(expenseUi.monthDate);
+  const personalDays = Number(document.getElementById('leavePersonalDays').value)||0;
+  const sickDays = Number(document.getElementById('leaveSickDays').value)||0;
+  const b = computeSalaryBreakdown(expenseUi.monthDate.getFullYear(), expenseUi.monthDate.getMonth(), personalDays, sickDays);
+  const salaryDay = Math.min(Math.max(data.payroll.salaryDay||1,1), daysInMonth(expenseUi.monthDate.getFullYear(), expenseUi.monthDate.getMonth()));
+  const pad=n=>String(n).padStart(2,'0');
+  const dateStr = `${monthKey}-${pad(salaryDay)}`;
+  data.expenses.push({id:uid(), type:'income', amount:Math.round(b.net), category:'salary', note:'月薪', date:dateStr, createdAt:Date.now()});
+  data.salaryRecorded[monthKey] = true;
+  persist();
+  renderExpensePage();
+  notify('已記入本月薪資');
+}
+function renderExpensePage(){
+  const monthKey = expenseMonthKeyOf(expenseUi.monthDate);
+  document.getElementById('expenseMonthLabel').textContent = `${expenseUi.monthDate.getFullYear()}年${expenseUi.monthDate.getMonth()+1}月`;
+  const list = getExpensesForMonth(monthKey);
+  const income = list.filter(e=>e.type==='income').reduce((s,e)=>s+e.amount,0);
+  const expense = list.filter(e=>e.type==='expense').reduce((s,e)=>s+e.amount,0);
+  document.getElementById('expenseIncomeTotal').textContent = '$'+income.toLocaleString();
+  document.getElementById('expenseExpenseTotal').textContent = '$'+expense.toLocaleString();
+  document.getElementById('expenseNetTotal').textContent = '$'+(income-expense).toLocaleString();
+
+  const leave = data.leaveByMonth[monthKey] || {personal:0, sick:0};
+  document.getElementById('leavePersonalDays').value = leave.personal || '';
+  document.getElementById('leaveSickDays').value = leave.sick || '';
+  updateSalaryPreview();
+
+  const byDay = {};
+  list.forEach(e=>{ (byDay[e.date] = byDay[e.date]||[]).push(e); });
+  const days = Object.keys(byDay).sort().reverse();
+  let html = '';
+  if(days.length===0){
+    html = `<div class="empty-state" style="padding:24px">本月還沒有記帳紀錄</div>`;
+  }
+  days.forEach(day=>{
+    const items = byDay[day];
+    html += `<div class="expense-day-group"><div class="expense-day-label">${day}</div>`;
+    items.forEach(e=>{
+      const cat = (e.type==='income'?INCOME_CATEGORIES:EXPENSE_CATEGORIES).find(c=>c.id===e.category) || {name:e.category, icon:'📦'};
+      html += `<div class="expense-item">
+        <div class="ex-icon">${cat.icon}</div>
+        <div class="ex-info">
+          <div class="ex-cat-name">${escapeHtml(cat.name)}</div>
+          ${e.note ? `<div class="ex-note">${escapeHtml(e.note)}</div>` : ''}
+        </div>
+        <div class="ex-amt ${e.type}">${e.type==='income'?'+':'-'}$${e.amount.toLocaleString()}</div>
+        <button class="ex-del" onclick="deleteExpense('${e.id}')">×</button>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+  document.getElementById('expenseList').innerHTML = html;
+}
+function openExpenseModal(){
+  document.getElementById('expenseEditId').value = '';
+  document.getElementById('expenseModalTitle').textContent = '記一筆';
+  document.getElementById('expenseAmountInput').value = '';
+  document.getElementById('expenseNoteInput').value = '';
+  document.getElementById('expenseDateInput').value = todayStr();
+  setExpenseType('expense');
+  document.getElementById('expenseModal').classList.add('show');
+}
+function setExpenseType(type){
+  expenseUi.editType = type;
+  document.getElementById('expenseTypeExpenseBtn').classList.toggle('active', type==='expense');
+  document.getElementById('expenseTypeIncomeBtn').classList.toggle('active', type==='income');
+  const cats = type==='income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+  expenseUi.editCatId = cats[0].id;
+  renderExpenseCatGrid();
+}
+function renderExpenseCatGrid(){
+  const cats = expenseUi.editType==='income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+  document.getElementById('expenseCatGrid').innerHTML = cats.map(c=>
+    `<button type="button" class="expense-cat-btn ${expenseUi.editCatId===c.id?'selected':''}" onclick="selectExpenseCat('${c.id}')">
+      <span class="cat-icon">${c.icon}</span>${escapeHtml(c.name)}
+    </button>`
+  ).join('');
+}
+function selectExpenseCat(id){
+  expenseUi.editCatId = id;
+  renderExpenseCatGrid();
+}
+function saveExpense(){
+  const amount = Number(document.getElementById('expenseAmountInput').value);
+  if(!amount || amount<=0){ notify('請輸入金額'); return; }
+  const date = document.getElementById('expenseDateInput').value || todayStr();
+  const note = document.getElementById('expenseNoteInput').value.trim();
+  const editId = document.getElementById('expenseEditId').value;
+  if(editId){
+    const item = data.expenses.find(e=>e.id===editId);
+    if(item){ item.amount=amount; item.date=date; item.note=note; item.category=expenseUi.editCatId; item.type=expenseUi.editType; }
+  }else{
+    data.expenses.push({id:uid(), type:expenseUi.editType, amount, category:expenseUi.editCatId, note, date, createdAt:Date.now()});
+  }
+  persist();
+  closeModal('expenseModal');
+  renderExpensePage();
+}
+function deleteExpense(id){
+  data.expenses = data.expenses.filter(e=>e.id!==id);
+  persist();
+  renderExpensePage();
+}
+
+function openPayrollModal(){
+  const p = data.payroll;
+  document.getElementById('payrollBaseSalary').value = p.baseSalary || '';
+  document.getElementById('payrollSalaryDay').value = p.salaryDay || '';
+  document.getElementById('payrollLaborRate').value = p.laborRate || '';
+  document.getElementById('payrollHealthRate').value = p.healthRate || '';
+  document.getElementById('payrollPensionRate').value = p.pensionRate || '';
+  setPayrollDivisor(p.leaveDivisor||'workdays', true);
+  setPayrollRule('personal', p.personalRule.type||'halfpay', true);
+  setPayrollRule('sick', p.sickRule.type||'halfpay', true);
+  document.getElementById('payrollPersonalFixedAmount').value = p.personalRule.fixedAmount || '';
+  document.getElementById('payrollSickFixedAmount').value = p.sickRule.fixedAmount || '';
+  renderPayrollDeductionList();
+  document.getElementById('payrollModal').classList.add('show');
+}
+function setPayrollDivisor(mode, skipStore){
+  if(!skipStore){ data.payroll.leaveDivisor = mode; persist(); updateSalaryPreview(); }
+  document.getElementById('payrollDivisorWorkBtn').classList.toggle('active', mode==='workdays');
+  document.getElementById('payrollDivisorMonthBtn').classList.toggle('active', mode==='monthdays');
+}
+function setPayrollRule(kind, type, skipStore){
+  if(!skipStore){ data.payroll[kind+'Rule'].type = type; persist(); updateSalaryPreview(); }
+  const suffix = kind==='personal' ? 'Personal' : 'Sick';
+  document.getElementById('payroll'+suffix+'HalfBtn').classList.toggle('active', type==='halfpay');
+  document.getElementById('payroll'+suffix+'FixedBtn').classList.toggle('active', type==='fixed');
+  document.getElementById('payroll'+suffix+'FixedAmount').style.display = type==='fixed' ? 'block' : 'none';
+}
+function renderPayrollDeductionList(){
+  const box = document.getElementById('payrollDeductionList');
+  const list = data.payroll.deductions||[];
+  box.innerHTML = list.map(d=>`<div class="payroll-deduction-item"><span>${escapeHtml(d.name)}　$${Number(d.amount).toLocaleString()}</span><button onclick="removePayrollDeduction('${d.id}')">刪除</button></div>`).join('');
+}
+function addPayrollDeduction(){
+  const name = document.getElementById('newDeductionName').value.trim();
+  const amount = Number(document.getElementById('newDeductionAmount').value);
+  if(!name || !amount){ notify('請輸入項目名稱與金額'); return; }
+  data.payroll.deductions.push({id:uid(), name, amount});
+  document.getElementById('newDeductionName').value='';
+  document.getElementById('newDeductionAmount').value='';
+  persist();
+  renderPayrollDeductionList();
+  updateSalaryPreview();
+}
+function removePayrollDeduction(id){
+  data.payroll.deductions = data.payroll.deductions.filter(d=>d.id!==id);
+  persist();
+  renderPayrollDeductionList();
+  updateSalaryPreview();
+}
+function savePayrollSettings(){
+  const p = data.payroll;
+  p.baseSalary = Number(document.getElementById('payrollBaseSalary').value)||0;
+  p.salaryDay = Math.min(Math.max(Number(document.getElementById('payrollSalaryDay').value)||1,1),31);
+  p.laborRate = Number(document.getElementById('payrollLaborRate').value)||0;
+  p.healthRate = Number(document.getElementById('payrollHealthRate').value)||0;
+  p.pensionRate = Number(document.getElementById('payrollPensionRate').value)||0;
+  p.personalRule.fixedAmount = Number(document.getElementById('payrollPersonalFixedAmount').value)||0;
+  p.sickRule.fixedAmount = Number(document.getElementById('payrollSickFixedAmount').value)||0;
+  persist();
+  closeModal('payrollModal');
+  renderExpensePage();
 }
 
 function scheduleNextLeaf(){
