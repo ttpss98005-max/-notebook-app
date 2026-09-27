@@ -191,7 +191,7 @@
 
   /* ============ 記帳 ============ */
   .expense-month-nav{display:flex;align-items:center;gap:10px;margin-bottom:16px;font-weight:700;font-size:15px;}
-  .expense-summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;}
+  .expense-summary-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:18px;}
   .expense-summary-card{background:#FDFDFB;border:1.5px solid var(--border);border-radius:14px;padding:12px 10px;text-align:center;box-shadow:var(--shadow-sm);color:#1A1A1A;}
   .es-label{font-size:11px;color:var(--ink-soft);margin-bottom:4px;}
   .es-amount{font-size:16px;font-weight:800;}
@@ -848,16 +848,32 @@
           <div class="es-label">本月結餘</div>
           <div class="es-amount" id="expenseNetTotal">$0</div>
         </div>
+        <div class="expense-summary-card" onclick="openBankBalanceModal()" style="cursor:pointer;">
+          <div class="es-label">目前存款 ✎</div>
+          <div class="es-amount" id="expenseBankBalance">$0</div>
+        </div>
       </div>
       <div class="setting-block" id="salaryPreviewBlock">
         <h3>本月薪資試算</h3>
         <div class="row-inline" style="max-width:100%;">
-          <label style="margin:0;font-size:13px;">事假天數</label>
-          <input type="number" id="leavePersonalDays" min="0" step="0.5" style="width:70px;" onchange="updateSalaryPreview()">
+          <label style="margin:0;font-size:13px;">事假</label>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input type="number" id="leavePersonalAmount" min="0" step="0.5" style="width:60px;" onchange="updateSalaryPreview()">
+            <div class="pill-tabs" id="leavePersonalUnitSeg" style="padding:3px;">
+              <button id="leavePersonalUnitDayBtn" onclick="setLeaveUnit('personal','days')" style="padding:4px 9px;font-size:11px;">天</button>
+              <button id="leavePersonalUnitHourBtn" onclick="setLeaveUnit('personal','hours')" style="padding:4px 9px;font-size:11px;">小時</button>
+            </div>
+          </div>
         </div>
         <div class="row-inline" style="max-width:100%;margin-top:8px;">
-          <label style="margin:0;font-size:13px;">病假天數</label>
-          <input type="number" id="leaveSickDays" min="0" step="0.5" style="width:70px;" onchange="updateSalaryPreview()">
+          <label style="margin:0;font-size:13px;">病假</label>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input type="number" id="leaveSickAmount" min="0" step="0.5" style="width:60px;" onchange="updateSalaryPreview()">
+            <div class="pill-tabs" id="leaveSickUnitSeg" style="padding:3px;">
+              <button id="leaveSickUnitDayBtn" onclick="setLeaveUnit('sick','days')" style="padding:4px 9px;font-size:11px;">天</button>
+              <button id="leaveSickUnitHourBtn" onclick="setLeaveUnit('sick','hours')" style="padding:4px 9px;font-size:11px;">小時</button>
+            </div>
+          </div>
         </div>
         <div id="salaryBreakdown" style="margin-top:12px;font-size:12.5px;color:var(--ink-soft);"></div>
         <button class="btn-ghost" style="margin-top:10px;" onclick="recordMonthSalary()">記入本月薪資</button>
@@ -1128,6 +1144,17 @@
   </div>
 </div>
 
+<div class="overlay" id="bankBalanceModal">
+  <div class="modal">
+    <h3>設定目前銀行存款</h3>
+    <div class="field"><label>目前存款餘額</label><input type="number" id="bankBalanceInput" placeholder="0"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal('bankBalanceModal')">取消</button>
+      <button class="btn-primary" onclick="saveBankBalance()">儲存</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="expenseModal">
   <div class="modal">
     <h3 id="expenseModalTitle">記一筆</h3>
@@ -1274,6 +1301,8 @@ function defaultData(){
     globalPaletteId:'p01',
     customPalettes:[],
     expenses: [],
+    bankBalance: 0,
+    bankBalanceDate: null,
     payroll: {
       baseSalary: 0, salaryDay: 5,
       laborRate: 0, healthRate: 0, pensionRate: 0,
@@ -1428,6 +1457,8 @@ async function loadData(storageKey){
   if(data.morningGreetingAlwaysOn===undefined) data.morningGreetingAlwaysOn = false;
   if(data.morningGreetingShownDate===undefined) data.morningGreetingShownDate = null;
   if(!data.expenses) data.expenses = [];
+  if(data.bankBalance===undefined) data.bankBalance = 0;
+  if(data.bankBalanceDate===undefined) data.bankBalanceDate = null;
   if(!data.payroll) data.payroll = {baseSalary:0, salaryDay:5, laborRate:0, healthRate:0, pensionRate:0, leaveDivisor:'workdays', personalRule:{type:'halfpay',fixedAmount:0}, sickRule:{type:'halfpay',fixedAmount:0}, deductions:[]};
   if(!data.payroll.personalRule) data.payroll.personalRule = {type:'halfpay', fixedAmount:0};
   if(!data.payroll.sickRule) data.payroll.sickRule = {type:'halfpay', fixedAmount:0};
@@ -3106,7 +3137,22 @@ const INCOME_CATEGORIES = [
   {id:'bonus', name:'獎金', icon:'🎁'},
   {id:'other_income', name:'其他', icon:'➕'}
 ];
-let expenseUi = { monthDate: new Date(), editType: 'expense', editCatId: EXPENSE_CATEGORIES[0].id };
+let expenseUi = { monthDate: new Date(), editType: 'expense', editCatId: EXPENSE_CATEGORIES[0].id, personalLeaveUnit: 'days', sickLeaveUnit: 'days' };
+function leaveAmountToDays(amount, unit){
+  return unit==='hours' ? amount/8 : amount;
+}
+function setLeaveUnit(kind, unit){
+  if(kind==='personal'){
+    expenseUi.personalLeaveUnit = unit;
+    document.getElementById('leavePersonalUnitDayBtn').classList.toggle('active', unit==='days');
+    document.getElementById('leavePersonalUnitHourBtn').classList.toggle('active', unit==='hours');
+  }else{
+    expenseUi.sickLeaveUnit = unit;
+    document.getElementById('leaveSickUnitDayBtn').classList.toggle('active', unit==='days');
+    document.getElementById('leaveSickUnitHourBtn').classList.toggle('active', unit==='hours');
+  }
+  updateSalaryPreview();
+}
 
 function expenseMonthKeyOf(d){
   const pad=n=>String(n).padStart(2,'0');
@@ -3146,9 +3192,11 @@ function computeSalaryBreakdown(year, monthIdx, personalDays, sickDays){
 }
 function updateSalaryPreview(){
   const monthKey = expenseMonthKeyOf(expenseUi.monthDate);
-  const personalDays = Number(document.getElementById('leavePersonalDays').value)||0;
-  const sickDays = Number(document.getElementById('leaveSickDays').value)||0;
-  data.leaveByMonth[monthKey] = {personal:personalDays, sick:sickDays};
+  const personalAmount = Number(document.getElementById('leavePersonalAmount').value)||0;
+  const sickAmount = Number(document.getElementById('leaveSickAmount').value)||0;
+  const personalDays = leaveAmountToDays(personalAmount, expenseUi.personalLeaveUnit);
+  const sickDays = leaveAmountToDays(sickAmount, expenseUi.sickLeaveUnit);
+  data.leaveByMonth[monthKey] = {personalAmount, personalUnit:expenseUi.personalLeaveUnit, sickAmount, sickUnit:expenseUi.sickLeaveUnit};
   persist();
   const b = computeSalaryBreakdown(expenseUi.monthDate.getFullYear(), expenseUi.monthDate.getMonth(), personalDays, sickDays);
   const box = document.getElementById('salaryBreakdown');
@@ -3164,8 +3212,10 @@ function updateSalaryPreview(){
 }
 function recordMonthSalary(){
   const monthKey = expenseMonthKeyOf(expenseUi.monthDate);
-  const personalDays = Number(document.getElementById('leavePersonalDays').value)||0;
-  const sickDays = Number(document.getElementById('leaveSickDays').value)||0;
+  const personalAmount = Number(document.getElementById('leavePersonalAmount').value)||0;
+  const sickAmount = Number(document.getElementById('leaveSickAmount').value)||0;
+  const personalDays = leaveAmountToDays(personalAmount, expenseUi.personalLeaveUnit);
+  const sickDays = leaveAmountToDays(sickAmount, expenseUi.sickLeaveUnit);
   const b = computeSalaryBreakdown(expenseUi.monthDate.getFullYear(), expenseUi.monthDate.getMonth(), personalDays, sickDays);
   const salaryDay = Math.min(Math.max(data.payroll.salaryDay||1,1), daysInMonth(expenseUi.monthDate.getFullYear(), expenseUi.monthDate.getMonth()));
   const pad=n=>String(n).padStart(2,'0');
@@ -3176,6 +3226,29 @@ function recordMonthSalary(){
   renderExpensePage();
   notify('已記入本月薪資');
 }
+function currentBankBalance(){
+  const baseline = data.bankBalance || 0;
+  const baselineDate = data.bankBalanceDate || '0000-00-00';
+  let income = 0, expense = 0;
+  data.expenses.forEach(e=>{
+    if(e.date > baselineDate){
+      if(e.type==='income') income += e.amount; else expense += e.amount;
+    }
+  });
+  return baseline + income - expense;
+}
+function openBankBalanceModal(){
+  document.getElementById('bankBalanceInput').value = data.bankBalance || '';
+  document.getElementById('bankBalanceModal').classList.add('show');
+}
+function saveBankBalance(){
+  data.bankBalance = Number(document.getElementById('bankBalanceInput').value)||0;
+  data.bankBalanceDate = todayStr();
+  persist();
+  closeModal('bankBalanceModal');
+  renderExpensePage();
+  notify('已更新目前存款');
+}
 function renderExpensePage(){
   const monthKey = expenseMonthKeyOf(expenseUi.monthDate);
   document.getElementById('expenseMonthLabel').textContent = `${expenseUi.monthDate.getFullYear()}年${expenseUi.monthDate.getMonth()+1}月`;
@@ -3185,10 +3258,17 @@ function renderExpensePage(){
   document.getElementById('expenseIncomeTotal').textContent = '$'+income.toLocaleString();
   document.getElementById('expenseExpenseTotal').textContent = '$'+expense.toLocaleString();
   document.getElementById('expenseNetTotal').textContent = '$'+(income-expense).toLocaleString();
+  document.getElementById('expenseBankBalance').textContent = '$'+currentBankBalance().toLocaleString();
 
-  const leave = data.leaveByMonth[monthKey] || {personal:0, sick:0};
-  document.getElementById('leavePersonalDays').value = leave.personal || '';
-  document.getElementById('leaveSickDays').value = leave.sick || '';
+  const leave = data.leaveByMonth[monthKey] || {personalAmount:0, personalUnit:'days', sickAmount:0, sickUnit:'days'};
+  document.getElementById('leavePersonalAmount').value = leave.personalAmount || '';
+  document.getElementById('leaveSickAmount').value = leave.sickAmount || '';
+  expenseUi.personalLeaveUnit = leave.personalUnit || 'days';
+  expenseUi.sickLeaveUnit = leave.sickUnit || 'days';
+  document.getElementById('leavePersonalUnitDayBtn').classList.toggle('active', expenseUi.personalLeaveUnit==='days');
+  document.getElementById('leavePersonalUnitHourBtn').classList.toggle('active', expenseUi.personalLeaveUnit==='hours');
+  document.getElementById('leaveSickUnitDayBtn').classList.toggle('active', expenseUi.sickLeaveUnit==='days');
+  document.getElementById('leaveSickUnitHourBtn').classList.toggle('active', expenseUi.sickLeaveUnit==='hours');
   updateSalaryPreview();
 
   const byDay = {};
@@ -3252,15 +3332,16 @@ function saveExpense(){
   const date = document.getElementById('expenseDateInput').value || todayStr();
   const note = document.getElementById('expenseNoteInput').value.trim();
   const editId = document.getElementById('expenseEditId').value;
-  if(editId){
-    const item = data.expenses.find(e=>e.id===editId);
-    if(item){ item.amount=amount; item.date=date; item.note=note; item.category=expenseUi.editCatId; item.type=expenseUi.editType; }
+  const item = editId ? data.expenses.find(e=>e.id===editId) : null;
+  if(item){
+    item.amount=amount; item.date=date; item.note=note; item.category=expenseUi.editCatId; item.type=expenseUi.editType;
   }else{
     data.expenses.push({id:uid(), type:expenseUi.editType, amount, category:expenseUi.editCatId, note, date, createdAt:Date.now()});
   }
   persist();
   closeModal('expenseModal');
   renderExpensePage();
+  notify(item ? '已更新這筆紀錄' : '已記一筆');
 }
 function deleteExpense(id){
   data.expenses = data.expenses.filter(e=>e.id!==id);
@@ -3329,6 +3410,7 @@ function savePayrollSettings(){
   persist();
   closeModal('payrollModal');
   renderExpensePage();
+  notify('薪資設定已儲存');
 }
 
 function scheduleNextLeaf(){
