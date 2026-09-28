@@ -655,7 +655,8 @@
   /* ============ MODAL ============ */
   .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:150;align-items:center;justify-content:center;padding:20px;}
   .overlay.show{display:flex;}
-  .modal{background:#fff;border-radius:24px;padding:28px;max-width:360px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25);color:#1A1A1A;}
+  .modal{background:#fff;border-radius:24px;padding:28px;max-width:360px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25);color:#1A1A1A;max-height:calc(100vh - 40px);overflow-y:auto;}
+  .fee-hint{font-size:11px;color:var(--ink-soft);margin-top:4px;}
   .modal h3{margin:0 0 18px;font-size:16px;}
   .field{margin-bottom:15px;}
   .field label{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:6px;font-weight:700;}
@@ -1182,11 +1183,12 @@
 <div class="overlay" id="payrollModal">
   <div class="modal" style="max-width:400px;max-height:88vh;overflow-y:auto;">
     <h3>薪資試算設定</h3>
-    <div class="field"><label>底薪</label><input type="number" id="payrollBaseSalary" placeholder="0"></div>
+    <div class="field"><label>底薪</label><input type="number" id="payrollBaseSalary" placeholder="0" oninput="autoFillInsurance()"></div>
     <div class="field"><label>每月發薪日</label><input type="number" id="payrollSalaryDay" min="1" max="31" placeholder="例如：5"></div>
-    <div class="field"><label>勞保費率（%，員工自付部分）</label><input type="number" id="payrollLaborRate" step="0.01" placeholder="0"></div>
-    <div class="field"><label>健保費率（%，員工自付部分）</label><input type="number" id="payrollHealthRate" step="0.01" placeholder="0"></div>
-    <div class="field"><label>國民年金費率（%）</label><input type="number" id="payrollPensionRate" step="0.01" placeholder="0"></div>
+    <div class="field"><label>健保眷屬人數（0~3，超過 3 人以 3 人計）</label><input type="number" id="payrollHealthDependents" min="0" max="3" step="1" placeholder="0" oninput="autoFillInsurance()"></div>
+    <div class="field"><label>勞保每月自付金額（依底薪級距自動帶入，可自行修改）</label><input type="number" id="payrollLaborFee" placeholder="0"><div class="fee-hint" id="payrollLaborHint"></div></div>
+    <div class="field"><label>健保每月自付金額（依底薪級距自動帶入，可自行修改）</label><input type="number" id="payrollHealthFee" placeholder="0"><div class="fee-hint" id="payrollHealthHint"></div></div>
+    <div class="field"><label>勞退自提（%，0 代表不自提，可填 1~6）</label><input type="number" id="payrollPensionSelfRate" min="0" max="6" step="1" placeholder="0"></div>
     <div class="field">
       <label>請假扣薪計算基準（每日薪資 = 底薪 ÷ 此基準）</label>
       <div class="pill-tabs" id="payrollDivisorSeg">
@@ -1197,6 +1199,7 @@
     <div class="field">
       <label>事假扣薪方式</label>
       <div class="pill-tabs" id="payrollPersonalRuleSeg">
+        <button class="pill-tab" id="payrollPersonalFullBtn" onclick="setPayrollRule('personal','fullpay')">全薪</button>
         <button class="pill-tab" id="payrollPersonalHalfBtn" onclick="setPayrollRule('personal','halfpay')">半薪</button>
         <button class="pill-tab" id="payrollPersonalFixedBtn" onclick="setPayrollRule('personal','fixed')">固定金額/天</button>
       </div>
@@ -1205,6 +1208,7 @@
     <div class="field">
       <label>病假扣薪方式</label>
       <div class="pill-tabs" id="payrollSickRuleSeg">
+        <button class="pill-tab" id="payrollSickFullBtn" onclick="setPayrollRule('sick','fullpay')">全薪</button>
         <button class="pill-tab" id="payrollSickHalfBtn" onclick="setPayrollRule('sick','halfpay')">半薪</button>
         <button class="pill-tab" id="payrollSickFixedBtn" onclick="setPayrollRule('sick','fixed')">固定金額/天</button>
       </div>
@@ -1310,7 +1314,7 @@ function defaultData(){
     bankBalanceDate: null,
     payroll: {
       baseSalary: 0, salaryDay: 5,
-      laborRate: 0, healthRate: 0, pensionRate: 0,
+      laborFee: 0, healthFee: 0, healthDependents: 0, pensionSelfRate: 0,
       leaveDivisor: 'workdays',
       personalRule: {type:'halfpay', fixedAmount:0},
       sickRule: {type:'halfpay', fixedAmount:0},
@@ -1470,10 +1474,15 @@ function normalizeData(){
   if(!data.expenses) data.expenses = [];
   if(data.bankBalance===undefined) data.bankBalance = 0;
   if(data.bankBalanceDate===undefined) data.bankBalanceDate = null;
-  if(!data.payroll) data.payroll = {baseSalary:0, salaryDay:5, laborRate:0, healthRate:0, pensionRate:0, leaveDivisor:'workdays', personalRule:{type:'halfpay',fixedAmount:0}, sickRule:{type:'halfpay',fixedAmount:0}, deductions:[]};
+  if(!data.payroll) data.payroll = {baseSalary:0, salaryDay:5, laborFee:0, healthFee:0, healthDependents:0, pensionSelfRate:0, leaveDivisor:'workdays', personalRule:{type:'halfpay',fixedAmount:0}, sickRule:{type:'halfpay',fixedAmount:0}, deductions:[]};
   if(!data.payroll.personalRule) data.payroll.personalRule = {type:'halfpay', fixedAmount:0};
   if(!data.payroll.sickRule) data.payroll.sickRule = {type:'halfpay', fixedAmount:0};
   if(!data.payroll.deductions) data.payroll.deductions = [];
+  { const pr = data.payroll;
+    if(pr.laborFee===undefined) pr.laborFee = Math.round((pr.baseSalary||0)*(pr.laborRate||0)/100);
+    if(pr.healthFee===undefined) pr.healthFee = Math.round((pr.baseSalary||0)*(pr.healthRate||0)/100);
+    if(pr.healthDependents===undefined) pr.healthDependents = 0;
+    if(pr.pensionSelfRate===undefined) pr.pensionSelfRate = 0; }
   if(!data.leaveByMonth) data.leaveByMonth = {};
   if(!data.salaryRecorded) data.salaryRecorded = {};
   data.categories.forEach(c=>{ if(c.paletteId===undefined) c.paletteId = null; });
@@ -3195,15 +3204,51 @@ function workDaysInMonth(year, monthIdx){
 function daysInMonth(year, monthIdx){
   return new Date(year, monthIdx+1, 0).getDate();
 }
+const LABOR_INS_LEVELS = [29500,30300,31800,33300,34800,36300,38200,40100,42000,43900,45800];
+const HEALTH_INS_LEVELS = [29500,30300,31800,33300,34800,36300,38200,40100,42000,43900,45800,48200,50600,53000,55400,57800,60800,63800,66800,69800,72800,76500,80200,83900,87600,92100,96600,101100,105600,110100,115500,120900,126300,131700,137100,142500,147900,150000,156400,162800,169200,175600,182000,189500,197000,204500,212000,219500,228200,236900,245600,254300,263000,273000,283000,293000,303000,313000];
+function insuranceLevelFor(salary, levels){
+  if(!(salary>0)) return 0;
+  for(const lv of levels){ if(salary<=lv) return lv; }
+  return levels[levels.length-1];
+}
+/* 勞保：勞工自付 = 投保薪資 ×（普通事故 11.5% + 就業保險 1%）× 20% */
+function laborInsuranceFee(salary){
+  const lv = insuranceLevelFor(salary, LABOR_INS_LEVELS);
+  if(!lv) return {level:0, fee:0};
+  return { level:lv, fee: Math.round(lv*23/1000) + Math.round(lv*2/1000) };
+}
+/* 健保：自付 = 投保金額 × 5.17% × 30% ×（本人 + 眷屬，眷屬最多計 3 人） */
+function healthInsuranceFee(salary, dependents){
+  const lv = insuranceLevelFor(salary, HEALTH_INS_LEVELS);
+  if(!lv) return {level:0, each:0, people:1, fee:0};
+  const each = Math.round(lv*0.0517*0.3);
+  const people = 1 + Math.min(Math.max(Math.floor(dependents||0),0),3);
+  return { level:lv, each, people, fee: each*people };
+}
+function refreshInsuranceHints(){
+  const salary = Number(document.getElementById('payrollBaseSalary').value)||0;
+  const dep = Number(document.getElementById('payrollHealthDependents').value)||0;
+  const lab = laborInsuranceFee(salary), hea = healthInsuranceFee(salary, dep);
+  document.getElementById('payrollLaborHint').textContent = lab.level ? '勞保投保薪資級距 '+lab.level.toLocaleString()+' 元' : '';
+  document.getElementById('payrollHealthHint').textContent = hea.level ? '健保投保金額級距 '+hea.level.toLocaleString()+' 元，每人 '+hea.each.toLocaleString()+' 元 × '+hea.people+' 人' : '';
+}
+function autoFillInsurance(){
+  const salary = Number(document.getElementById('payrollBaseSalary').value)||0;
+  const dep = Number(document.getElementById('payrollHealthDependents').value)||0;
+  document.getElementById('payrollLaborFee').value = laborInsuranceFee(salary).fee || '';
+  document.getElementById('payrollHealthFee').value = healthInsuranceFee(salary, dep).fee || '';
+  refreshInsuranceHints();
+}
 function computeSalaryBreakdown(year, monthIdx, personalDays, sickDays){
   const p = data.payroll;
   const divisor = p.leaveDivisor==='workdays' ? workDaysInMonth(year, monthIdx) : daysInMonth(year, monthIdx);
   const dailyRate = divisor>0 ? p.baseSalary/divisor : 0;
-  const personalDeduct = p.personalRule.type==='halfpay' ? dailyRate*0.5*personalDays : (p.personalRule.fixedAmount||0)*personalDays;
-  const sickDeduct = p.sickRule.type==='halfpay' ? dailyRate*0.5*sickDays : (p.sickRule.fixedAmount||0)*sickDays;
-  const labor = p.baseSalary * (p.laborRate||0)/100;
-  const health = p.baseSalary * (p.healthRate||0)/100;
-  const pension = p.baseSalary * (p.pensionRate||0)/100;
+  const leaveDeduct = (rule, days)=> rule.type==='fullpay' ? 0 : rule.type==='halfpay' ? dailyRate*0.5*days : (rule.fixedAmount||0)*days;
+  const personalDeduct = leaveDeduct(p.personalRule, personalDays);
+  const sickDeduct = leaveDeduct(p.sickRule, sickDays);
+  const labor = Number(p.laborFee)||0;
+  const health = Number(p.healthFee)||0;
+  const pension = Math.round(p.baseSalary * (p.pensionSelfRate||0)/100);
   const customTotal = (p.deductions||[]).reduce((s,d)=>s+(Number(d.amount)||0),0);
   const net = p.baseSalary - personalDeduct - sickDeduct - labor - health - pension - customTotal;
   return { dailyRate, personalDeduct, sickDeduct, labor, health, pension, customTotal, net, base:p.baseSalary };
@@ -3222,7 +3267,7 @@ function updateSalaryPreview(){
     底薪 $${b.base.toLocaleString()}<br>
     事假扣款 -$${Math.round(b.personalDeduct).toLocaleString()}<br>
     病假扣款 -$${Math.round(b.sickDeduct).toLocaleString()}<br>
-    勞保 -$${Math.round(b.labor).toLocaleString()}　健保 -$${Math.round(b.health).toLocaleString()}　國民年金 -$${Math.round(b.pension).toLocaleString()}<br>
+    勞保 -$${Math.round(b.labor).toLocaleString()}　健保 -$${Math.round(b.health).toLocaleString()}　勞退自提 -$${Math.round(b.pension).toLocaleString()}<br>
     自訂扣款 -$${Math.round(b.customTotal).toLocaleString()}<br>
     <b style="color:var(--ink);font-size:13.5px;">預估實領 $${Math.round(b.net).toLocaleString()}</b>
     ${data.salaryRecorded[monthKey] ? '<div style="color:var(--accent);margin-top:4px;">✓ 本月薪資已記入</div>' : ''}
@@ -3371,9 +3416,11 @@ function openPayrollModal(){
   const p = data.payroll;
   document.getElementById('payrollBaseSalary').value = p.baseSalary || '';
   document.getElementById('payrollSalaryDay').value = p.salaryDay || '';
-  document.getElementById('payrollLaborRate').value = p.laborRate || '';
-  document.getElementById('payrollHealthRate').value = p.healthRate || '';
-  document.getElementById('payrollPensionRate').value = p.pensionRate || '';
+  document.getElementById('payrollHealthDependents').value = p.healthDependents || '';
+  document.getElementById('payrollLaborFee').value = p.laborFee || '';
+  document.getElementById('payrollHealthFee').value = p.healthFee || '';
+  document.getElementById('payrollPensionSelfRate').value = p.pensionSelfRate || '';
+  refreshInsuranceHints();
   setPayrollDivisor(p.leaveDivisor||'workdays', true);
   setPayrollRule('personal', p.personalRule.type||'halfpay', true);
   setPayrollRule('sick', p.sickRule.type||'halfpay', true);
@@ -3390,6 +3437,7 @@ function setPayrollDivisor(mode, skipStore){
 function setPayrollRule(kind, type, skipStore){
   if(!skipStore){ data.payroll[kind+'Rule'].type = type; persist(); updateSalaryPreview(); }
   const suffix = kind==='personal' ? 'Personal' : 'Sick';
+  document.getElementById('payroll'+suffix+'FullBtn').classList.toggle('active', type==='fullpay');
   document.getElementById('payroll'+suffix+'HalfBtn').classList.toggle('active', type==='halfpay');
   document.getElementById('payroll'+suffix+'FixedBtn').classList.toggle('active', type==='fixed');
   document.getElementById('payroll'+suffix+'FixedAmount').style.display = type==='fixed' ? 'block' : 'none';
@@ -3420,9 +3468,10 @@ function savePayrollSettings(){
   const p = data.payroll;
   p.baseSalary = Number(document.getElementById('payrollBaseSalary').value)||0;
   p.salaryDay = Math.min(Math.max(Number(document.getElementById('payrollSalaryDay').value)||1,1),31);
-  p.laborRate = Number(document.getElementById('payrollLaborRate').value)||0;
-  p.healthRate = Number(document.getElementById('payrollHealthRate').value)||0;
-  p.pensionRate = Number(document.getElementById('payrollPensionRate').value)||0;
+  p.laborFee = Number(document.getElementById('payrollLaborFee').value)||0;
+  p.healthFee = Number(document.getElementById('payrollHealthFee').value)||0;
+  p.healthDependents = Math.min(Math.max(Math.floor(Number(document.getElementById('payrollHealthDependents').value)||0),0),3);
+  p.pensionSelfRate = Math.min(Math.max(Number(document.getElementById('payrollPensionSelfRate').value)||0,0),6);
   p.personalRule.fixedAmount = Number(document.getElementById('payrollPersonalFixedAmount').value)||0;
   p.sickRule.fixedAmount = Number(document.getElementById('payrollSickFixedAmount').value)||0;
   persist();
@@ -3430,6 +3479,15 @@ function savePayrollSettings(){
   renderExpensePage();
   flashToast('薪資設定已儲存');
 }
+
+/* 記帳相關入口出錯時直接顯示原因，避免按了沒反應卻不知道為什麼 */
+['renderExpensePage','openExpenseModal','saveExpense','deleteExpense','openPayrollModal','savePayrollSettings','recordMonthSalary','openBankBalanceModal','saveBankBalance'].forEach(name=>{
+  const fn = globalThis[name];
+  globalThis[name] = function(...args){
+    try{ return fn.apply(this, args); }
+    catch(e){ console.error(name, e); notify('發生錯誤（'+name+'）：'+e.message); }
+  };
+});
 
 function scheduleNextLeaf(){
   clearTimeout(leafTimer);
