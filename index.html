@@ -897,7 +897,6 @@
             </div>
           </div>
         </div>
-        <button class="btn-ghost" style="margin-top:10px;" onclick="recordMonthSalary()">記入本月薪資</button>
       </div>
       <div class="setting-block" id="recurringBlock">
         <h3>固定扣款</h3>
@@ -1393,6 +1392,7 @@ function defaultData(){
     payroll: {
       baseSalary: 0, salaryDay: 5,
       payMonthOffset: 0, laborFee: 0, healthFee: 0, healthDependents: 0, pensionSelfRate: 0,
+      autoFrom: null,
       leaveDivisor: 'workdays',
       personalRule: {type:'halfpay', fixedAmount:0},
       sickRule: {type:'halfpay', fixedAmount:0},
@@ -1535,6 +1535,13 @@ async function loadData(storageKey){
   normalizeData();
   lastPersistedCount = totalContentCount(data);
   lastPersistedCounts = categoryCounts(data);
+  if(!data.payroll.autoFrom){
+    /* 第一次啟用：只自動處理「最近一筆薪水」之後的發薪日（沒有薪水紀錄就從今天起），不補記過去 */
+    const today = todayStr(), floor = dateStrOffset(-40);
+    const last = data.expenses.filter(e=>e.type==='income' && e.category==='salary' && e.date<=today).map(e=>e.date).sort().pop();
+    data.payroll.autoFrom = last ? (last>floor ? last : floor) : today;
+    persist();
+  }
 }
 /* 所有「資料進入記憶體」的入口(載入、雲端即時同步)都必須經過這裡,確保舊格式資料補齊新欄位 */
 function normalizeData(){
@@ -1562,6 +1569,7 @@ function normalizeData(){
     if(pr.healthDependents===undefined) pr.healthDependents = 0;
     if(pr.pensionSelfRate===undefined) pr.pensionSelfRate = 0;
     if(pr.payMonthOffset===undefined) pr.payMonthOffset = 0;
+    if(pr.autoFrom===undefined) pr.autoFrom = null;
     delete pr.insuredSalary; }
   if(!data.leaveByMonth) data.leaveByMonth = {};
   if(!data.salaryRecorded) data.salaryRecorded = {};
@@ -3395,33 +3403,56 @@ function setPayMonthOffset(n, skipStore){
   document.getElementById('payrollPayMonthThisBtn').classList.toggle('active', n===0);
   document.getElementById('payrollPayMonthNextBtn').classList.toggle('active', n===1);
 }
+/* ===== 薪水自動入帳：到了發薪日，就依當時的設定與「該薪資月份」輸入的請假天數，自動記一筆收入 ===== */
+function salaryForMonth(monthKey){
+  const [y, m] = monthKey.split('-').map(Number);
+  const leave = data.leaveByMonth[monthKey] || {};
+  return computeSalaryBreakdown(y, m-1,
+    leaveAmountToDays(Number(leave.personalAmount)||0, leave.personalUnit||'days'),
+    leaveAmountToDays(Number(leave.sickAmount)||0, leave.sickUnit||'days'));
+}
+function runSalaryAuto(){
+  const p = data.payroll, made = [];
+  if(!(Number(p.baseSalary)>0) || !p.autoFrom) return made;
+  const today = todayStr(), now = new Date();
+  const [fy, fm] = p.autoFrom.split('-').map(Number);
+  for(const d = new Date(fy, fm-2, 1); d <= new Date(now.getFullYear(), now.getMonth(), 1); d.setMonth(d.getMonth()+1)){
+    const key = expenseMonthKeyOf(d);
+    if(data.salaryRecorded[key]) continue;
+    const pay = salaryPayDate(d.getFullYear(), d.getMonth());
+    if(pay.dateStr <= p.autoFrom || pay.dateStr > today) continue;
+    const b = salaryForMonth(key);
+    const amount = Math.round(b.net);
+    data.expenses.push({id:uid(), type:'income', amount, category:'salary', note:(d.getMonth()+1)+'月薪資', date:pay.dateStr, accountId:salaryAccountId(), salaryMonth:key, createdAt:Date.now()});
+    data.salaryRecorded[key] = true;
+    made.push({month:d.getMonth()+1, amount, pm:pay.pm, day:pay.day});
+  }
+  if(made.length) persist();
+  return made;
+}
+/* 由紀錄反推它屬於哪個薪資月份（舊版紀錄沒有 salaryMonth，依備註「N月薪資」推算） */
+function salaryEntryMonthKey(e){
+  if(e.salaryMonth) return e.salaryMonth;
+  const m = /^(\d{1,2})月薪資$/.exec(e.note||'');
+  if(!m) return null;
+  const mm = Number(m[1]), ey = Number(e.date.slice(0,4));
+  let best = null, bestDiff = Infinity;
+  [ey-1, ey, ey+1].forEach(y=>{
+    const diff = Math.abs(new Date(salaryPayDate(y, mm-1).dateStr+'T00:00:00') - new Date(e.date+'T00:00:00'));
+    if(diff < bestDiff){ bestDiff = diff; best = y+'-'+String(mm).padStart(2,'0'); }
+  });
+  return best;
+}
 function renderSalaryBlockHeader(){
   const y = expenseUi.monthDate.getFullYear(), m = expenseUi.monthDate.getMonth();
+  const key = expenseMonthKeyOf(expenseUi.monthDate);
   const pay = salaryPayDate(y, m);
-  const next = (Number(data.payroll.payMonthOffset)||0) > 0;
-  document.getElementById('salaryBlockTitle').textContent = (m+1)+'月薪資'+(next ? '（'+pay.pm+'/'+pay.day+' 發放）' : '');
-  document.getElementById('salaryBlockHint').textContent = next ? (m+1)+'月的請假，會扣在 '+pay.pm+'月'+pay.day+'日 發放的'+(m+1)+'月薪資裡' : '';
+  document.getElementById('salaryBlockTitle').textContent = (m+1)+'月薪資（'+pay.pm+'/'+pay.day+' 發放）';
+  document.getElementById('salaryBlockHint').textContent =
+    !(Number(data.payroll.baseSalary)>0) ? '先到「薪資設定」填底薪，薪水才會在發薪日自動入帳'
+    : data.salaryRecorded[key] ? '這個月的薪水已入帳，之後再改請假不會變動已入帳的金額'
+    : (m+1)+'月的請假天數，會在 '+pay.pm+'/'+pay.day+' 薪水入帳時一併扣除，不會馬上動到存款';
 }
-function recordMonthSalary(){
-  const monthKey = expenseMonthKeyOf(expenseUi.monthDate);
-  const doRecord = ()=>{
-    const personalAmount = Number(document.getElementById('leavePersonalAmount').value)||0;
-    const sickAmount = Number(document.getElementById('leaveSickAmount').value)||0;
-    const personalDays = leaveAmountToDays(personalAmount, expenseUi.personalLeaveUnit);
-    const sickDays = leaveAmountToDays(sickAmount, expenseUi.sickLeaveUnit);
-    const year = expenseUi.monthDate.getFullYear(), monthIdx = expenseUi.monthDate.getMonth();
-    const b = computeSalaryBreakdown(year, monthIdx, personalDays, sickDays);
-    const pay = salaryPayDate(year, monthIdx);
-    data.expenses.push({id:uid(), type:'income', amount:Math.round(b.net), category:'salary', note:(monthIdx+1)+'月薪資', date:pay.dateStr, accountId:salaryAccountId(), createdAt:Date.now()});
-    data.salaryRecorded[monthKey] = true;
-    persist();
-    renderExpensePage();
-    flashToast('已記入 '+(monthIdx+1)+'月薪資（'+pay.pm+'/'+pay.day+' 發放）'+fmtMoney(Math.round(b.net)));
-  };
-  if(data.salaryRecorded[monthKey]){ showConfirm('這個月的薪資已經記入過了，要再記一筆嗎？', doRecord); return; }
-  doRecord();
-}
-
 
 /* ===== 帳戶（銀行／現金）===== */
 function fmtMoney(n){ return (n<0?'-':'')+'$'+Math.abs(n).toLocaleString(); }
@@ -3631,6 +3662,8 @@ function deleteRecurring(id){
 function renderExpensePage(){
   const auto = runRecurring();
   if(auto) flashToast('已自動記入 '+auto+' 筆固定扣款');
+  const sal = runSalaryAuto();
+  if(sal.length) flashToast(sal.length===1 ? '已自動記入 '+sal[0].month+'月薪資 '+fmtMoney(sal[0].amount)+'（'+sal[0].pm+'/'+sal[0].day+' 發放）' : '已自動記入 '+sal.length+' 筆薪資');
   const monthKey = expenseMonthKeyOf(expenseUi.monthDate);
   document.getElementById('expenseMonthLabel').textContent = `${expenseUi.monthDate.getFullYear()}年${expenseUi.monthDate.getMonth()+1}月`;
   renderSalaryBlockHeader();
@@ -3735,7 +3768,15 @@ function saveExpense(){
   flashToast(item ? '已更新這筆紀錄' : '已記一筆');
 }
 function deleteExpense(id){
-  data.expenses = data.expenses.filter(e=>e.id!==id);
+  const e = data.expenses.find(x=>x.id===id);
+  data.expenses = data.expenses.filter(x=>x.id!==id);
+  if(e && e.type==='income' && e.category==='salary'){
+    const key = salaryEntryMonthKey(e);
+    if(key && data.salaryRecorded[key]){
+      const [y, mo] = key.split('-').map(Number);
+      if(salaryPayDate(y, mo-1).dateStr > todayStr()) delete data.salaryRecorded[key];
+    }
+  }
   persist();
   renderExpensePage();
 }
@@ -3812,7 +3853,7 @@ function savePayrollSettings(){
 }
 
 /* 記帳相關入口出錯時直接顯示原因，避免按了沒反應卻不知道為什麼 */
-['renderExpensePage','openExpenseModal','saveExpense','deleteExpense','openPayrollModal','savePayrollSettings','recordMonthSalary','openAccountsModal','addAccount','deleteAccount','renameAccount','openAdjustModal','saveAdjust','openRecurringModal','saveRecurring','deleteRecurring'].forEach(name=>{
+['renderExpensePage','openExpenseModal','saveExpense','deleteExpense','openPayrollModal','savePayrollSettings','openAccountsModal','addAccount','deleteAccount','renameAccount','openAdjustModal','saveAdjust','openRecurringModal','saveRecurring','deleteRecurring'].forEach(name=>{
   const fn = globalThis[name];
   globalThis[name] = function(...args){
     try{ return fn.apply(this, args); }
