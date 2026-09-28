@@ -875,7 +875,8 @@
       </div>
       <div id="expenseAdjustLine" class="fee-hint" style="margin:-8px 0 14px;"></div>
       <div class="setting-block" id="salaryPreviewBlock">
-        <h3>本月薪資</h3>
+        <h3 id="salaryBlockTitle">本月薪資</h3>
+        <div class="fee-hint" id="salaryBlockHint" style="margin:-4px 0 10px;"></div>
         <div class="row-inline" style="max-width:100%;">
           <label style="margin:0;font-size:13px;">事假</label>
           <div style="display:flex;gap:6px;align-items:center;">
@@ -1254,6 +1255,13 @@
     <h3>薪資試算設定</h3>
     <div class="field"><label>底薪</label><input type="number" id="payrollBaseSalary" placeholder="0" oninput="autoFillInsurance()"></div>
     <div class="field"><label>每月發薪日</label><input type="number" id="payrollSalaryDay" min="1" max="31" placeholder="例如：5"></div>
+    <div class="field">
+      <label>薪資發放月份（這個月的薪水在哪個月發）</label>
+      <div class="pill-tabs" id="payrollPayMonthSeg">
+        <button class="pill-tab" id="payrollPayMonthThisBtn" onclick="setPayMonthOffset(0)">當月發</button>
+        <button class="pill-tab" id="payrollPayMonthNextBtn" onclick="setPayMonthOffset(1)">次月發</button>
+      </div>
+    </div>
     <div class="field"><label>薪資入帳帳戶</label><select id="payrollAccountSelect"></select></div>
     <div class="field"><label>健保眷屬人數（0~3，超過 3 人以 3 人計）</label><input type="number" id="payrollHealthDependents" min="0" max="3" step="1" placeholder="0" oninput="autoFillInsurance()"></div>
     <div class="field"><label>勞保每月自付金額（依底薪級距自動帶入，可自行修改）</label><input type="number" id="payrollLaborFee" placeholder="0"><div class="fee-hint" id="payrollLaborHint"></div></div>
@@ -1384,7 +1392,7 @@ function defaultData(){
     recurring: [],
     payroll: {
       baseSalary: 0, salaryDay: 5,
-      laborFee: 0, healthFee: 0, healthDependents: 0, pensionSelfRate: 0,
+      payMonthOffset: 0, laborFee: 0, healthFee: 0, healthDependents: 0, pensionSelfRate: 0,
       leaveDivisor: 'workdays',
       personalRule: {type:'halfpay', fixedAmount:0},
       sickRule: {type:'halfpay', fixedAmount:0},
@@ -1552,7 +1560,9 @@ function normalizeData(){
     if(pr.laborFee===undefined) pr.laborFee = Math.round((pr.baseSalary||0)*(pr.laborRate||0)/100);
     if(pr.healthFee===undefined) pr.healthFee = Math.round((pr.baseSalary||0)*(pr.healthRate||0)/100);
     if(pr.healthDependents===undefined) pr.healthDependents = 0;
-    if(pr.pensionSelfRate===undefined) pr.pensionSelfRate = 0; }
+    if(pr.pensionSelfRate===undefined) pr.pensionSelfRate = 0;
+    if(pr.payMonthOffset===undefined) pr.payMonthOffset = 0;
+    delete pr.insuredSalary; }
   if(!data.leaveByMonth) data.leaveByMonth = {};
   if(!data.salaryRecorded) data.salaryRecorded = {};
   if(!data.recurring) data.recurring = [];
@@ -3372,6 +3382,26 @@ function updateSalaryPreview(){
     persist();
   }
 }
+/* ===== 薪資發放時間：可選「當月發」或「次月發」 ===== */
+function salaryPayDate(year, monthIdx){
+  const p = data.payroll, off = Number(p.payMonthOffset)||0;
+  const d = new Date(year, monthIdx+off, 1);
+  const py = d.getFullYear(), pm = d.getMonth();
+  const day = Math.min(Math.max(p.salaryDay||1,1), daysInMonth(py, pm));
+  return { py, pm: pm+1, day, dateStr: `${py}-${String(pm+1).padStart(2,'0')}-${String(day).padStart(2,'0')}` };
+}
+function setPayMonthOffset(n, skipStore){
+  if(!skipStore){ data.payroll.payMonthOffset = n; persist(); renderExpensePage(); }
+  document.getElementById('payrollPayMonthThisBtn').classList.toggle('active', n===0);
+  document.getElementById('payrollPayMonthNextBtn').classList.toggle('active', n===1);
+}
+function renderSalaryBlockHeader(){
+  const y = expenseUi.monthDate.getFullYear(), m = expenseUi.monthDate.getMonth();
+  const pay = salaryPayDate(y, m);
+  const next = (Number(data.payroll.payMonthOffset)||0) > 0;
+  document.getElementById('salaryBlockTitle').textContent = (m+1)+'月薪資'+(next ? '（'+pay.pm+'/'+pay.day+' 發放）' : '');
+  document.getElementById('salaryBlockHint').textContent = next ? (m+1)+'月的請假，會扣在 '+pay.pm+'月'+pay.day+'日 發放的'+(m+1)+'月薪資裡' : '';
+}
 function recordMonthSalary(){
   const monthKey = expenseMonthKeyOf(expenseUi.monthDate);
   const doRecord = ()=>{
@@ -3381,13 +3411,12 @@ function recordMonthSalary(){
     const sickDays = leaveAmountToDays(sickAmount, expenseUi.sickLeaveUnit);
     const year = expenseUi.monthDate.getFullYear(), monthIdx = expenseUi.monthDate.getMonth();
     const b = computeSalaryBreakdown(year, monthIdx, personalDays, sickDays);
-    const salaryDay = Math.min(Math.max(data.payroll.salaryDay||1,1), daysInMonth(year, monthIdx));
-    const dateStr = `${monthKey}-${String(salaryDay).padStart(2,'0')}`;
-    data.expenses.push({id:uid(), type:'income', amount:Math.round(b.net), category:'salary', note:'月薪', date:dateStr, accountId:salaryAccountId(), createdAt:Date.now()});
+    const pay = salaryPayDate(year, monthIdx);
+    data.expenses.push({id:uid(), type:'income', amount:Math.round(b.net), category:'salary', note:(monthIdx+1)+'月薪資', date:pay.dateStr, accountId:salaryAccountId(), createdAt:Date.now()});
     data.salaryRecorded[monthKey] = true;
     persist();
     renderExpensePage();
-    flashToast('已記入本月薪資 '+fmtMoney(Math.round(b.net)));
+    flashToast('已記入 '+(monthIdx+1)+'月薪資（'+pay.pm+'/'+pay.day+' 發放）'+fmtMoney(Math.round(b.net)));
   };
   if(data.salaryRecorded[monthKey]){ showConfirm('這個月的薪資已經記入過了，要再記一筆嗎？', doRecord); return; }
   doRecord();
@@ -3398,8 +3427,9 @@ function recordMonthSalary(){
 function fmtMoney(n){ return (n<0?'-':'')+'$'+Math.abs(n).toLocaleString(); }
 function accountBalance(acc){
   let b = acc.opening||0;
+  const today = todayStr();
   data.expenses.forEach(e=>{
-    if(e.accountId!==acc.id) return;
+    if(e.accountId!==acc.id || e.date>today) return;
     b += e.type==='income' ? e.amount : e.type==='expense' ? -e.amount : (e.amount||0);
   });
   return b;
@@ -3603,6 +3633,7 @@ function renderExpensePage(){
   if(auto) flashToast('已自動記入 '+auto+' 筆固定扣款');
   const monthKey = expenseMonthKeyOf(expenseUi.monthDate);
   document.getElementById('expenseMonthLabel').textContent = `${expenseUi.monthDate.getFullYear()}年${expenseUi.monthDate.getMonth()+1}月`;
+  renderSalaryBlockHeader();
   const list = getExpensesForMonth(monthKey);
   const income = list.filter(e=>e.type==='income').reduce((s,e)=>s+e.amount,0);
   const expense = list.filter(e=>e.type==='expense').reduce((s,e)=>s+e.amount,0);
@@ -3714,6 +3745,7 @@ function openPayrollModal(){
   document.getElementById('payrollBaseSalary').value = p.baseSalary || '';
   document.getElementById('payrollSalaryDay').value = p.salaryDay || '';
   fillAccountSelect('payrollAccountSelect', salaryAccountId());
+  setPayMonthOffset(p.payMonthOffset||0, true);
   document.getElementById('payrollHealthDependents').value = p.healthDependents || '';
   document.getElementById('payrollLaborFee').value = p.laborFee || '';
   document.getElementById('payrollHealthFee').value = p.healthFee || '';
