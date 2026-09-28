@@ -222,6 +222,17 @@
   .payroll-deduction-item{display:flex;align-items:center;justify-content:space-between;background:#FDFDFB;
     border:1.5px solid var(--border);border-radius:10px;padding:8px 12px;margin-bottom:6px;font-size:12.5px;color:#1A1A1A;}
   .payroll-deduction-item button{background:none;border:none;color:var(--danger);font-size:12px;}
+  .payroll-deduction-item small{color:var(--ink-soft);}
+  .expense-item .ex-amt.adjust{color:var(--ink-soft);}
+  .acc-total{font-size:14px;margin-bottom:10px;}
+  .acc-total b{font-size:18px;}
+  .account-item{display:flex;align-items:center;gap:8px;background:#FDFDFB;border:1.5px solid var(--border);border-radius:12px;padding:8px 10px;margin-bottom:8px;color:#1A1A1A;}
+  .account-item .acc-icon{font-size:17px;}
+  .account-item .acc-name{flex:1;min-width:0;border:1.5px solid var(--border);border-radius:10px;padding:6px 8px;font-size:13px;font-family:inherit;background:#fff;color:#1A1A1A;}
+  .account-item .acc-bal{font-weight:800;font-size:13px;white-space:nowrap;}
+  .account-item .acc-bal.neg{color:#C0504D;}
+  .account-item .acc-btn{background:#F1F0EA;border:none;border-radius:999px;padding:5px 9px;font-size:11px;color:#1A1A1A;white-space:nowrap;}
+  .account-item .acc-btn.del{color:var(--danger);padding:5px 8px;}
   .item-line .t{color:var(--ink-soft);margin-right:8px;}
 
   .week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;}
@@ -852,11 +863,12 @@
           <div class="es-label">本月結餘</div>
           <div class="es-amount" id="expenseNetTotal">$0</div>
         </div>
-        <div class="expense-summary-card" onclick="openBankBalanceModal()" style="cursor:pointer;">
-          <div class="es-label">目前存款 ✎</div>
+        <div class="expense-summary-card" onclick="openAccountsModal()" style="cursor:pointer;">
+          <div class="es-label">目前存款（合計）✎</div>
           <div class="es-amount" id="expenseBankBalance">$0</div>
         </div>
       </div>
+      <div id="expenseAdjustLine" class="fee-hint" style="margin:-8px 0 14px;"></div>
       <div class="setting-block" id="salaryPreviewBlock">
         <h3>本月薪資試算</h3>
         <div class="row-inline" style="max-width:100%;">
@@ -881,6 +893,11 @@
         </div>
         <div id="salaryBreakdown" style="margin-top:12px;font-size:12.5px;color:var(--ink-soft);"></div>
         <button class="btn-ghost" style="margin-top:10px;" onclick="recordMonthSalary()">記入本月薪資</button>
+      </div>
+      <div class="setting-block" id="recurringBlock">
+        <h3>固定扣款</h3>
+        <div id="recurringList"></div>
+        <button class="btn-ghost" onclick="openRecurringModal()">＋ 新增固定扣款</button>
       </div>
       <button class="btn-primary" style="width:100%;margin:6px 0 14px;" onclick="openExpenseModal()">＋ 記一筆</button>
       <div id="expenseList"></div>
@@ -1150,13 +1167,60 @@
   </div>
 </div>
 
-<div class="overlay" id="bankBalanceModal">
+<div class="overlay" id="accountsModal">
   <div class="modal">
-    <h3>設定目前銀行存款</h3>
-    <div class="field"><label>目前存款餘額</label><input type="number" id="bankBalanceInput" placeholder="0"></div>
+    <h3>我的存款</h3>
+    <div class="acc-total">合計　<b id="accountsTotal">$0</b></div>
+    <div id="accountsList"></div>
+    <div class="field" style="margin-top:14px;">
+      <label>新增帳戶</label>
+      <div class="row-inline" style="max-width:100%;gap:8px;">
+        <input type="text" id="newAccountName" placeholder="名稱，例如：郵局" style="flex:1;">
+        <select id="newAccountType" style="width:90px;"><option value="bank">銀行</option><option value="cash">現金</option></select>
+      </div>
+      <input type="number" id="newAccountBalance" placeholder="目前餘額" style="margin-top:8px;">
+      <button class="btn-ghost" style="margin-top:8px;" onclick="addAccount()">新增帳戶</button>
+    </div>
+    <div class="modal-actions"><button class="btn-primary" onclick="closeModal('accountsModal')">完成</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="adjustModal">
+  <div class="modal">
+    <h3>調整誤差</h3>
+    <input type="hidden" id="adjustAccountId" value="">
+    <div class="fee-hint" id="adjustAccountInfo" style="margin-bottom:10px;"></div>
+    <div class="field"><label>實際餘額（以銀行 App 或口袋裡實際的錢為準）</label><input type="number" id="adjustActualInput" oninput="updateAdjustPreview()" placeholder="0"><div class="fee-hint" id="adjustDiffPreview"></div></div>
+    <div class="field"><label>備註（選填）</label><input type="text" id="adjustNoteInput" placeholder="例如：不明支出、找零"></div>
     <div class="modal-actions">
-      <button class="btn-ghost" onclick="closeModal('bankBalanceModal')">取消</button>
-      <button class="btn-primary" onclick="saveBankBalance()">儲存</button>
+      <button class="btn-ghost" onclick="closeModal('adjustModal')">取消</button>
+      <button class="btn-primary" onclick="saveAdjust()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="recurringModal">
+  <div class="modal">
+    <h3>新增固定扣款</h3>
+    <div class="field"><label>名稱</label><input type="text" id="recurringName" placeholder="例如：房租、手機費"></div>
+    <div class="field"><label>金額</label><input type="number" id="recurringAmount" placeholder="0"></div>
+    <div class="field">
+      <label>週期</label>
+      <div class="pill-tabs" id="recurringFreqSeg">
+        <button class="pill-tab" id="recurringFreqMonthBtn" onclick="setRecurringFreq('monthly')">每月</button>
+        <button class="pill-tab" id="recurringFreqWeekBtn" onclick="setRecurringFreq('weekly')">每週</button>
+      </div>
+    </div>
+    <div class="field" id="recurringMonthField"><label>每月幾號（超過當月天數時扣在月底）</label><input type="number" id="recurringDayOfMonth" min="1" max="31" placeholder="例如：5"></div>
+    <div class="field" id="recurringWeekField" style="display:none;"><label>每週星期幾</label>
+      <select id="recurringWeekday"><option value="0">週日</option><option value="1">週一</option><option value="2">週二</option><option value="3">週三</option><option value="4">週四</option><option value="5">週五</option><option value="6">週六</option></select>
+    </div>
+    <div class="field"><label>分類</label><select id="recurringCategory"></select></div>
+    <div class="field"><label>扣款帳戶</label><select id="recurringAccount"></select></div>
+    <div class="field"><label>開始日期（之前的日期不會補記）</label><input type="date" id="recurringStart"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal('recurringModal')">取消</button>
+      <button class="btn-primary" onclick="saveRecurring()">儲存</button>
     </div>
   </div>
 </div>
@@ -1170,6 +1234,7 @@
       <button class="pill-tab" id="expenseTypeIncomeBtn" onclick="setExpenseType('income')">收入</button>
     </div>
     <div class="field"><label>金額</label><input type="number" id="expenseAmountInput" inputmode="decimal" placeholder="0"></div>
+    <div class="field"><label>帳戶</label><select id="expenseAccountSelect"></select></div>
     <div class="field"><label>分類</label><div class="expense-cat-grid" id="expenseCatGrid"></div></div>
     <div class="field"><label>日期</label><input type="date" id="expenseDateInput"></div>
     <div class="field"><label>備註</label><input type="text" id="expenseNoteInput" placeholder="備註（選填）"></div>
@@ -1185,6 +1250,7 @@
     <h3>薪資試算設定</h3>
     <div class="field"><label>底薪</label><input type="number" id="payrollBaseSalary" placeholder="0" oninput="autoFillInsurance()"></div>
     <div class="field"><label>每月發薪日</label><input type="number" id="payrollSalaryDay" min="1" max="31" placeholder="例如：5"></div>
+    <div class="field"><label>薪資入帳帳戶</label><select id="payrollAccountSelect"></select></div>
     <div class="field"><label>健保眷屬人數（0~3，超過 3 人以 3 人計）</label><input type="number" id="payrollHealthDependents" min="0" max="3" step="1" placeholder="0" oninput="autoFillInsurance()"></div>
     <div class="field"><label>勞保每月自付金額（依底薪級距自動帶入，可自行修改）</label><input type="number" id="payrollLaborFee" placeholder="0"><div class="fee-hint" id="payrollLaborHint"></div></div>
     <div class="field"><label>健保每月自付金額（依底薪級距自動帶入，可自行修改）</label><input type="number" id="payrollHealthFee" placeholder="0"><div class="fee-hint" id="payrollHealthHint"></div></div>
@@ -1310,8 +1376,8 @@ function defaultData(){
     globalPaletteId:'p01',
     customPalettes:[],
     expenses: [],
-    bankBalance: 0,
-    bankBalanceDate: null,
+    accounts: [{id:'acc_bank', name:'銀行', type:'bank', opening:0}, {id:'acc_cash', name:'現金', type:'cash', opening:0}],
+    recurring: [],
     payroll: {
       baseSalary: 0, salaryDay: 5,
       laborFee: 0, healthFee: 0, healthDependents: 0, pensionSelfRate: 0,
@@ -1485,6 +1551,20 @@ function normalizeData(){
     if(pr.pensionSelfRate===undefined) pr.pensionSelfRate = 0; }
   if(!data.leaveByMonth) data.leaveByMonth = {};
   if(!data.salaryRecorded) data.salaryRecorded = {};
+  if(!data.recurring) data.recurring = [];
+  if(!Array.isArray(data.accounts) || !data.accounts.length){
+    /* 舊版只有單一「目前存款」：轉成「銀行」帳戶，讓合計金額與原本顯示的一致 */
+    const net = e=> e.type==='income' ? e.amount : e.type==='expense' ? -e.amount : (e.amount||0);
+    const base = data.bankBalanceDate || '0000-00-00';
+    const netAfter = data.expenses.filter(e=>e.date>base).reduce((t,e)=>t+net(e),0);
+    const netAll = data.expenses.reduce((t,e)=>t+net(e),0);
+    data.accounts = [
+      {id:'acc_bank', name:'銀行', type:'bank', opening:(data.bankBalance||0)+netAfter-netAll},
+      {id:'acc_cash', name:'現金', type:'cash', opening:0}
+    ];
+  }
+  data.expenses.forEach(e=>{ if(!e.accountId || !data.accounts.find(a=>a.id===e.accountId)) e.accountId = data.accounts[0].id; });
+  if(data.payroll.accountId===undefined) data.payroll.accountId = null;
   data.categories.forEach(c=>{ if(c.paletteId===undefined) c.paletteId = null; });
   if(!data.categories.find(c=>c.id==='work')) data.categories.unshift({id:'work', name:'工作', color:'#2E4057', deletable:false, paletteId:null});
   if(!data.categories.find(c=>c.id==='personal')) data.categories.unshift({id:'personal', name:'私人', color:'#7A5C82', deletable:false, paletteId:null});
@@ -3283,45 +3363,232 @@ function recordMonthSalary(){
   const salaryDay = Math.min(Math.max(data.payroll.salaryDay||1,1), daysInMonth(expenseUi.monthDate.getFullYear(), expenseUi.monthDate.getMonth()));
   const pad=n=>String(n).padStart(2,'0');
   const dateStr = `${monthKey}-${pad(salaryDay)}`;
-  data.expenses.push({id:uid(), type:'income', amount:Math.round(b.net), category:'salary', note:'月薪', date:dateStr, createdAt:Date.now()});
+  data.expenses.push({id:uid(), type:'income', amount:Math.round(b.net), category:'salary', note:'月薪', date:dateStr, accountId:salaryAccountId(), createdAt:Date.now()});
   data.salaryRecorded[monthKey] = true;
   persist();
   renderExpensePage();
   flashToast('已記入本月薪資');
 }
-function currentBankBalance(){
-  const baseline = data.bankBalance || 0;
-  const baselineDate = data.bankBalanceDate || '0000-00-00';
-  let income = 0, expense = 0;
+
+
+/* ===== 帳戶（銀行／現金）===== */
+function fmtMoney(n){ return (n<0?'-':'')+'$'+Math.abs(n).toLocaleString(); }
+function accountBalance(acc){
+  let b = acc.opening||0;
   data.expenses.forEach(e=>{
-    if(e.date > baselineDate){
-      if(e.type==='income') income += e.amount; else expense += e.amount;
-    }
+    if(e.accountId!==acc.id) return;
+    b += e.type==='income' ? e.amount : e.type==='expense' ? -e.amount : (e.amount||0);
   });
-  return baseline + income - expense;
+  return b;
 }
-function openBankBalanceModal(){
-  document.getElementById('bankBalanceInput').value = data.bankBalance || '';
-  document.getElementById('bankBalanceModal').classList.add('show');
+function totalBalance(){ return data.accounts.reduce((sum,a)=>sum+accountBalance(a),0); }
+function accountName(id){ const a = data.accounts.find(x=>x.id===id); return a ? a.name : '未指定'; }
+function salaryAccountId(){
+  const p = data.payroll;
+  return (data.accounts.find(a=>a.id===p.accountId) || data.accounts.find(a=>a.type==='bank') || data.accounts[0]).id;
 }
-function saveBankBalance(){
-  data.bankBalance = Number(document.getElementById('bankBalanceInput').value)||0;
-  data.bankBalanceDate = todayStr();
+function fillAccountSelect(selectId, selectedId){
+  document.getElementById(selectId).innerHTML = data.accounts.map(a=>
+    `<option value="${escapeAttr(a.id)}"${a.id===selectedId?' selected':''}>${escapeHtml(a.name)}</option>`).join('');
+}
+function openAccountsModal(){
+  renderAccountsList();
+  document.getElementById('accountsModal').classList.add('show');
+}
+function renderAccountsList(){
+  document.getElementById('accountsTotal').textContent = fmtMoney(totalBalance());
+  document.getElementById('accountsList').innerHTML = data.accounts.map(a=>{
+    const bal = accountBalance(a);
+    return `<div class="account-item">
+      <span class="acc-icon">${a.type==='cash'?'💵':'🏦'}</span>
+      <input class="acc-name" value="${escapeAttr(a.name)}" onchange="renameAccount('${a.id}', this.value)">
+      <span class="acc-bal ${bal<0?'neg':''}">${fmtMoney(bal)}</span>
+      <button class="acc-btn" onclick="openAdjustModal('${a.id}')">調整誤差</button>
+      <button class="acc-btn del" onclick="deleteAccount('${a.id}')">×</button>
+    </div>`;
+  }).join('');
+}
+function renameAccount(id, name){
+  const a = data.accounts.find(x=>x.id===id);
+  name = (name||'').trim();
+  if(a && name){ a.name = name; persist(); renderExpensePage(); }
+  renderAccountsList();
+}
+function addAccount(){
+  const name = document.getElementById('newAccountName').value.trim();
+  if(!name){ notify('請輸入帳戶名稱'); return; }
+  const type = document.getElementById('newAccountType').value;
+  const opening = Number(document.getElementById('newAccountBalance').value)||0;
+  data.accounts.push({id:uid(), name, type, opening});
+  document.getElementById('newAccountName').value = '';
+  document.getElementById('newAccountBalance').value = '';
   persist();
-  closeModal('bankBalanceModal');
+  renderAccountsList();
   renderExpensePage();
-  flashToast('已更新目前存款');
+  flashToast('已新增帳戶');
 }
+function deleteAccount(id){
+  if(data.accounts.length<=1){ notify('至少要保留一個帳戶'); return; }
+  if(data.expenses.some(e=>e.accountId===id) || data.recurring.some(r=>r.accountId===id)){
+    notify('這個帳戶已有紀錄或固定扣款，無法刪除（可以直接改名）'); return;
+  }
+  data.accounts = data.accounts.filter(a=>a.id!==id);
+  persist();
+  renderAccountsList();
+  renderExpensePage();
+}
+/* ===== 調整誤差：實際金額與記錄不符時，用一筆「調整」補上差額，不計入收支 ===== */
+function openAdjustModal(id){
+  const a = data.accounts.find(x=>x.id===id);
+  if(!a) return;
+  document.getElementById('adjustAccountId').value = id;
+  document.getElementById('adjustAccountInfo').textContent = a.name+'　系統記錄的餘額：'+fmtMoney(accountBalance(a));
+  document.getElementById('adjustActualInput').value = '';
+  document.getElementById('adjustNoteInput').value = '';
+  updateAdjustPreview();
+  document.getElementById('adjustModal').classList.add('show');
+}
+function updateAdjustPreview(){
+  const a = data.accounts.find(x=>x.id===document.getElementById('adjustAccountId').value);
+  const box = document.getElementById('adjustDiffPreview');
+  const raw = document.getElementById('adjustActualInput').value;
+  if(!a || raw===''){ box.textContent = ''; return; }
+  const diff = Number(raw) - accountBalance(a);
+  box.textContent = diff===0 ? '沒有差額' : diff>0 ? '多出來 '+fmtMoney(diff)+'，會記成一筆正向調整' : '不見了 '+fmtMoney(-diff)+'，會記成一筆負向調整';
+}
+function saveAdjust(){
+  const a = data.accounts.find(x=>x.id===document.getElementById('adjustAccountId').value);
+  const raw = document.getElementById('adjustActualInput').value;
+  if(!a){ return; }
+  if(raw==='' || isNaN(Number(raw))){ notify('請輸入實際餘額'); return; }
+  const diff = Math.round((Number(raw) - accountBalance(a))*100)/100;
+  if(diff===0){ notify('沒有差額，不需要調整'); return; }
+  const note = document.getElementById('adjustNoteInput').value.trim();
+  data.expenses.push({id:uid(), type:'adjust', amount:diff, category:'adjust', note, date:todayStr(), accountId:a.id, createdAt:Date.now()});
+  persist();
+  closeModal('adjustModal');
+  renderAccountsList();
+  renderExpensePage();
+  flashToast('已調整 '+a.name+' 誤差 '+(diff>0?'+':'-')+'$'+Math.abs(diff).toLocaleString());
+}
+/* ===== 固定扣款（每月／每週）：到期自動記成支出 ===== */
+function recurringOccurrences(item, todayS){
+  const pad = n=>String(n).padStart(2,'0');
+  const fmt = d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  const out = [];
+  const last = item.lastRun || '';
+  if(item.freq==='weekly'){
+    const d = new Date(item.startDate+'T00:00:00');
+    if(last && last>=item.startDate){ const l = new Date(last+'T00:00:00'); l.setDate(l.getDate()+1); if(l>d) d.setTime(l.getTime()); }
+    while(fmt(d)<=todayS && out.length<200){
+      const ds = fmt(d);
+      if(d.getDay()===Number(item.day) && ds>last && ds>=item.startDate) out.push(ds);
+      d.setDate(d.getDate()+1);
+    }
+  }else{
+    const s = new Date(item.startDate+'T00:00:00'), t = new Date(todayS+'T00:00:00');
+    let y = s.getFullYear(), m = s.getMonth();
+    while((y<t.getFullYear() || (y===t.getFullYear() && m<=t.getMonth())) && out.length<200){
+      const dim = new Date(y, m+1, 0).getDate();
+      const ds = `${y}-${pad(m+1)}-${pad(Math.min(Number(item.day),dim))}`;
+      if(ds>=item.startDate && ds<=todayS && ds>last) out.push(ds);
+      m++; if(m>11){ m=0; y++; }
+    }
+  }
+  return out;
+}
+function runRecurring(){
+  if(!data.recurring || !data.recurring.length) return 0;
+  const today = todayStr();
+  let created = 0;
+  data.recurring.forEach(item=>{
+    const accId = data.accounts.find(a=>a.id===item.accountId) ? item.accountId : data.accounts[0].id;
+    const occ = recurringOccurrences(item, today);
+    occ.forEach(ds=>{
+      data.expenses.push({id:uid(), type:'expense', amount:item.amount, category:item.category, note:item.name+'（固定扣款）', date:ds, accountId:accId, recurringId:item.id, createdAt:Date.now()});
+      created++;
+    });
+    if(occ.length) item.lastRun = occ[occ.length-1];
+  });
+  if(created) persist();
+  return created;
+}
+function renderRecurringList(){
+  const box = document.getElementById('recurringList');
+  if(!data.recurring.length){
+    box.innerHTML = '<div class="fee-hint" style="margin-bottom:8px;">還沒有固定扣款，例如房租、訂閱費、每週固定花費</div>';
+    return;
+  }
+  const wd = ['日','一','二','三','四','五','六'];
+  box.innerHTML = data.recurring.map(r=>{
+    const when = r.freq==='weekly' ? '每週'+wd[r.day] : '每月'+r.day+'日';
+    return `<div class="payroll-deduction-item"><span>${escapeHtml(r.name)}　${when}　${fmtMoney(Number(r.amount))}　<small>${escapeHtml(accountName(r.accountId))}</small></span><button onclick="deleteRecurring('${r.id}')">刪除</button></div>`;
+  }).join('');
+}
+function openRecurringModal(){
+  document.getElementById('recurringName').value = '';
+  document.getElementById('recurringAmount').value = '';
+  document.getElementById('recurringDayOfMonth').value = '';
+  document.getElementById('recurringWeekday').value = String(new Date().getDay());
+  document.getElementById('recurringStart').value = todayStr();
+  document.getElementById('recurringCategory').innerHTML = EXPENSE_CATEGORIES.map(c=>`<option value="${c.id}">${c.icon} ${escapeHtml(c.name)}</option>`).join('');
+  fillAccountSelect('recurringAccount', data.accounts[0].id);
+  setRecurringFreq('monthly');
+  document.getElementById('recurringModal').classList.add('show');
+}
+function setRecurringFreq(freq){
+  expenseUi.recurringFreq = freq;
+  document.getElementById('recurringFreqMonthBtn').classList.toggle('active', freq==='monthly');
+  document.getElementById('recurringFreqWeekBtn').classList.toggle('active', freq==='weekly');
+  document.getElementById('recurringMonthField').style.display = freq==='monthly' ? 'block' : 'none';
+  document.getElementById('recurringWeekField').style.display = freq==='weekly' ? 'block' : 'none';
+}
+function saveRecurring(){
+  const name = document.getElementById('recurringName').value.trim();
+  const amount = Number(document.getElementById('recurringAmount').value);
+  if(!name){ notify('請輸入名稱'); return; }
+  if(!amount || amount<=0){ notify('請輸入金額'); return; }
+  const freq = expenseUi.recurringFreq || 'monthly';
+  let day;
+  if(freq==='monthly'){
+    day = Math.floor(Number(document.getElementById('recurringDayOfMonth').value));
+    if(!(day>=1 && day<=31)){ notify('請輸入每月幾號（1~31）'); return; }
+  }else{
+    day = Number(document.getElementById('recurringWeekday').value);
+  }
+  data.recurring.push({
+    id:uid(), name, amount, freq, day,
+    category: document.getElementById('recurringCategory').value,
+    accountId: document.getElementById('recurringAccount').value,
+    startDate: document.getElementById('recurringStart').value || todayStr(),
+    lastRun: ''
+  });
+  persist();
+  closeModal('recurringModal');
+  renderExpensePage();
+  flashToast('已新增固定扣款');
+}
+function deleteRecurring(id){
+  data.recurring = data.recurring.filter(r=>r.id!==id);
+  persist();
+  renderExpensePage();
+  flashToast('已刪除固定扣款（過去已記入的紀錄不受影響）');
+}
+
 function renderExpensePage(){
+  const auto = runRecurring();
+  if(auto) flashToast('已自動記入 '+auto+' 筆固定扣款');
   const monthKey = expenseMonthKeyOf(expenseUi.monthDate);
   document.getElementById('expenseMonthLabel').textContent = `${expenseUi.monthDate.getFullYear()}年${expenseUi.monthDate.getMonth()+1}月`;
   const list = getExpensesForMonth(monthKey);
   const income = list.filter(e=>e.type==='income').reduce((s,e)=>s+e.amount,0);
   const expense = list.filter(e=>e.type==='expense').reduce((s,e)=>s+e.amount,0);
-  document.getElementById('expenseIncomeTotal').textContent = '$'+income.toLocaleString();
-  document.getElementById('expenseExpenseTotal').textContent = '$'+expense.toLocaleString();
-  document.getElementById('expenseNetTotal').textContent = '$'+(income-expense).toLocaleString();
-  document.getElementById('expenseBankBalance').textContent = '$'+currentBankBalance().toLocaleString();
+  const adjust = list.filter(e=>e.type==='adjust').reduce((s,e)=>s+e.amount,0);
+  document.getElementById('expenseIncomeTotal').textContent = fmtMoney(income);
+  document.getElementById('expenseExpenseTotal').textContent = fmtMoney(expense);
+  document.getElementById('expenseNetTotal').textContent = fmtMoney(income-expense);
+  document.getElementById('expenseBankBalance').textContent = fmtMoney(totalBalance());
+  document.getElementById('expenseAdjustLine').textContent = adjust ? '本月誤差調整 '+(adjust>0?'+':'-')+'$'+Math.abs(adjust).toLocaleString()+'（不計入收支）' : '';
 
   const leave = data.leaveByMonth[monthKey] || {personalAmount:0, personalUnit:'days', sickAmount:0, sickUnit:'days'};
   document.getElementById('leavePersonalAmount').value = leave.personalAmount || '';
@@ -3333,6 +3600,7 @@ function renderExpensePage(){
   document.getElementById('leaveSickUnitDayBtn').classList.toggle('active', expenseUi.sickLeaveUnit==='days');
   document.getElementById('leaveSickUnitHourBtn').classList.toggle('active', expenseUi.sickLeaveUnit==='hours');
   updateSalaryPreview();
+  renderRecurringList();
 
   const byDay = {};
   list.forEach(e=>{ (byDay[e.date] = byDay[e.date]||[]).push(e); });
@@ -3342,17 +3610,19 @@ function renderExpensePage(){
     html = `<div class="empty-state" style="padding:24px">本月還沒有記帳紀錄</div>`;
   }
   days.forEach(day=>{
-    const items = byDay[day];
     html += `<div class="expense-day-group"><div class="expense-day-label">${day}</div>`;
-    items.forEach(e=>{
-      const cat = (e.type==='income'?INCOME_CATEGORIES:EXPENSE_CATEGORIES).find(c=>c.id===e.category) || {name:e.category, icon:'📦'};
+    byDay[day].forEach(e=>{
+      const cat = e.type==='adjust' ? {name:'調整誤差', icon:'⚖️'}
+        : ((e.type==='income'?INCOME_CATEGORIES:EXPENSE_CATEGORIES).find(c=>c.id===e.category) || {name:e.category, icon:'📦'});
+      const noteText = [accountName(e.accountId), e.note].filter(Boolean).join('・');
+      const amtText = e.type==='income' ? '+'+fmtMoney(e.amount) : e.type==='expense' ? '-'+fmtMoney(e.amount) : (e.amount>0?'+':'-')+fmtMoney(Math.abs(e.amount));
       html += `<div class="expense-item">
         <div class="ex-icon">${cat.icon}</div>
         <div class="ex-info">
           <div class="ex-cat-name">${escapeHtml(cat.name)}</div>
-          ${e.note ? `<div class="ex-note">${escapeHtml(e.note)}</div>` : ''}
+          <div class="ex-note">${escapeHtml(noteText)}</div>
         </div>
-        <div class="ex-amt ${e.type}">${e.type==='income'?'+':'-'}$${e.amount.toLocaleString()}</div>
+        <div class="ex-amt ${e.type}">${amtText}</div>
         <button class="ex-del" onclick="deleteExpense('${e.id}')">×</button>
       </div>`;
     });
@@ -3366,6 +3636,8 @@ function openExpenseModal(){
   document.getElementById('expenseAmountInput').value = '';
   document.getElementById('expenseNoteInput').value = '';
   document.getElementById('expenseDateInput').value = todayStr();
+  const last = data.accounts.find(a=>a.id===expenseUi.lastAccountId);
+  fillAccountSelect('expenseAccountSelect', (last||data.accounts[0]).id);
   setExpenseType('expense');
   document.getElementById('expenseModal').classList.add('show');
 }
@@ -3394,13 +3666,15 @@ function saveExpense(){
   if(!amount || amount<=0){ notify('請輸入金額'); return; }
   const date = document.getElementById('expenseDateInput').value || todayStr();
   const note = document.getElementById('expenseNoteInput').value.trim();
+  const accountId = document.getElementById('expenseAccountSelect').value || data.accounts[0].id;
   const editId = document.getElementById('expenseEditId').value;
   const item = editId ? data.expenses.find(e=>e.id===editId) : null;
   if(item){
-    item.amount=amount; item.date=date; item.note=note; item.category=expenseUi.editCatId; item.type=expenseUi.editType;
+    item.amount=amount; item.date=date; item.note=note; item.category=expenseUi.editCatId; item.type=expenseUi.editType; item.accountId=accountId;
   }else{
-    data.expenses.push({id:uid(), type:expenseUi.editType, amount, category:expenseUi.editCatId, note, date, createdAt:Date.now()});
+    data.expenses.push({id:uid(), type:expenseUi.editType, amount, category:expenseUi.editCatId, note, date, accountId, createdAt:Date.now()});
   }
+  expenseUi.lastAccountId = accountId;
   persist();
   closeModal('expenseModal');
   renderExpensePage();
@@ -3416,6 +3690,7 @@ function openPayrollModal(){
   const p = data.payroll;
   document.getElementById('payrollBaseSalary').value = p.baseSalary || '';
   document.getElementById('payrollSalaryDay').value = p.salaryDay || '';
+  fillAccountSelect('payrollAccountSelect', salaryAccountId());
   document.getElementById('payrollHealthDependents').value = p.healthDependents || '';
   document.getElementById('payrollLaborFee').value = p.laborFee || '';
   document.getElementById('payrollHealthFee').value = p.healthFee || '';
@@ -3472,6 +3747,7 @@ function savePayrollSettings(){
   p.healthFee = Number(document.getElementById('payrollHealthFee').value)||0;
   p.healthDependents = Math.min(Math.max(Math.floor(Number(document.getElementById('payrollHealthDependents').value)||0),0),3);
   p.pensionSelfRate = Math.min(Math.max(Number(document.getElementById('payrollPensionSelfRate').value)||0,0),6);
+  p.accountId = document.getElementById('payrollAccountSelect').value || null;
   p.personalRule.fixedAmount = Number(document.getElementById('payrollPersonalFixedAmount').value)||0;
   p.sickRule.fixedAmount = Number(document.getElementById('payrollSickFixedAmount').value)||0;
   persist();
@@ -3481,7 +3757,7 @@ function savePayrollSettings(){
 }
 
 /* 記帳相關入口出錯時直接顯示原因，避免按了沒反應卻不知道為什麼 */
-['renderExpensePage','openExpenseModal','saveExpense','deleteExpense','openPayrollModal','savePayrollSettings','recordMonthSalary','openBankBalanceModal','saveBankBalance'].forEach(name=>{
+['renderExpensePage','openExpenseModal','saveExpense','deleteExpense','openPayrollModal','savePayrollSettings','recordMonthSalary','openAccountsModal','addAccount','deleteAccount','renameAccount','openAdjustModal','saveAdjust','openRecurringModal','saveRecurring','deleteRecurring'].forEach(name=>{
   const fn = globalThis[name];
   globalThis[name] = function(...args){
     try{ return fn.apply(this, args); }
