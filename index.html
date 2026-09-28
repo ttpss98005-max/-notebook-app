@@ -223,6 +223,11 @@
     border:1.5px solid var(--border);border-radius:10px;padding:8px 12px;margin-bottom:6px;font-size:12.5px;color:#1A1A1A;}
   .payroll-deduction-item button{background:none;border:none;color:var(--danger);font-size:12px;}
   .payroll-deduction-item small{color:var(--ink-soft);}
+  .expense-cat-btn .cat-icon{display:flex;color:var(--ink-soft);}
+  .expense-cat-btn.selected .cat-icon{color:var(--accent);}
+  .expense-item .ex-icon{color:var(--accent);}
+  .account-item .acc-icon{display:flex;color:var(--accent);}
+  #salaryPreviewBlock input[type=number]{padding:7px 10px;border:1.5px solid var(--border);border-radius:12px;font-size:13.5px;font-family:inherit;background:#fff;color:#1A1A1A;}
   .expense-item .ex-amt.adjust{color:var(--ink-soft);}
   .acc-total{font-size:14px;margin-bottom:10px;}
   .acc-total b{font-size:18px;}
@@ -870,7 +875,7 @@
       </div>
       <div id="expenseAdjustLine" class="fee-hint" style="margin:-8px 0 14px;"></div>
       <div class="setting-block" id="salaryPreviewBlock">
-        <h3>本月薪資試算</h3>
+        <h3>本月薪資</h3>
         <div class="row-inline" style="max-width:100%;">
           <label style="margin:0;font-size:13px;">事假</label>
           <div style="display:flex;gap:6px;align-items:center;">
@@ -891,7 +896,6 @@
             </div>
           </div>
         </div>
-        <div id="salaryBreakdown" style="margin-top:12px;font-size:12.5px;color:var(--ink-soft);"></div>
         <button class="btn-ghost" style="margin-top:10px;" onclick="recordMonthSalary()">記入本月薪資</button>
       </div>
       <div class="setting-block" id="recurringBlock">
@@ -3230,19 +3234,39 @@ function releaseLeaf(leaf){
 /* ============================================================
    記帳
 ============================================================ */
+/* 線條圖示（風格同底部選單：1.8 線寬、圓角線頭、跟隨文字顏色） */
+const ICONS = {
+  food:'<path d="M5 3v5a2 2 0 0 0 4 0V3M7 10v11"/><path d="M17 21V3c-2.2 1.2-3.5 3.8-3.5 7 0 1.6 1.4 3 3.5 3"/>',
+  transport:'<rect x="5" y="3.5" width="14" height="13" rx="2.2"/><path d="M5 10.5h14M8 16.5V19M16 16.5V19"/><circle cx="9" cy="13.6" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="13.6" r="1" fill="currentColor" stroke="none"/>',
+  shopping:'<path d="M5 8h14l-1 12H6L5 8z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/>',
+  entertainment:'<rect x="3" y="8" width="18" height="10" rx="4"/><path d="M8 11v4M6 13h4"/><circle cx="15.5" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="17.5" cy="14.3" r="1" fill="currentColor" stroke="none"/>',
+  home:'<path d="M4 11l8-7 8 7"/><path d="M6 10v10h12V10"/><path d="M10 20v-5h4v5"/>',
+  medical:'<rect x="2.5" y="8.5" width="19" height="7" rx="3.5" transform="rotate(-45 12 12)"/><path d="M12 8.5v7" transform="rotate(-45 12 12)"/>',
+  other:'<circle cx="6" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="18" cy="12" r="1.5" fill="currentColor" stroke="none"/>',
+  salary:'<rect x="3" y="6.5" width="18" height="11" rx="2"/><circle cx="12" cy="12" r="2.4"/><circle cx="6.5" cy="9.6" r=".9" fill="currentColor" stroke="none"/><circle cx="17.5" cy="14.4" r=".9" fill="currentColor" stroke="none"/>',
+  bonus:'<rect x="4" y="10.5" width="16" height="9.5" rx="1.5"/><rect x="3" y="7" width="18" height="3.5" rx="1"/><path d="M12 7v13"/><path d="M12 7c-1-3-4.5-3-4.5-1s3 2 4.5 1zM12 7c1-3 4.5-3 4.5-1s-3 2-4.5 1z"/>',
+  other_income:'<circle cx="12" cy="12" r="8.5"/><path d="M12 8v8M8 12h8"/>',
+  scale:'<path d="M12 4v16M7 20h10"/><path d="M5 7.5h14"/><path d="M5 7.5l-2.5 6a3 3 0 0 0 5 0L5 7.5zM19 7.5l-2.5 6a3 3 0 0 0 5 0L19 7.5z"/>',
+  bank:'<path d="M3 9l9-5 9 5"/><path d="M5.5 9v8.5M10 9v8.5M14 9v8.5M18.5 9v8.5"/><path d="M3 20h18"/>',
+  wallet:'<path d="M4 8V6.5A1.5 1.5 0 0 1 5.5 5H17v3"/><rect x="3.5" y="8" width="17" height="11.5" rx="2"/><circle cx="16.5" cy="13.7" r="1" fill="currentColor" stroke="none"/>'
+};
+function iconSvg(key, size){
+  size = size || 20;
+  return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONS[key]||ICONS.other}</svg>`;
+}
 const EXPENSE_CATEGORIES = [
-  {id:'food', name:'餐飲', icon:'🍚'},
-  {id:'transport', name:'交通', icon:'🚗'},
-  {id:'shopping', name:'購物', icon:'🛍'},
-  {id:'entertainment', name:'娛樂', icon:'🎮'},
-  {id:'home', name:'居家', icon:'🏠'},
-  {id:'medical', name:'醫療', icon:'💊'},
-  {id:'other', name:'其他', icon:'📦'}
+  {id:'food', name:'餐飲', icon:'food'},
+  {id:'transport', name:'交通', icon:'transport'},
+  {id:'shopping', name:'購物', icon:'shopping'},
+  {id:'entertainment', name:'娛樂', icon:'entertainment'},
+  {id:'home', name:'居家', icon:'home'},
+  {id:'medical', name:'醫療', icon:'medical'},
+  {id:'other', name:'其他', icon:'other'}
 ];
 const INCOME_CATEGORIES = [
-  {id:'salary', name:'薪資', icon:'💰'},
-  {id:'bonus', name:'獎金', icon:'🎁'},
-  {id:'other_income', name:'其他', icon:'➕'}
+  {id:'salary', name:'薪資', icon:'salary'},
+  {id:'bonus', name:'獎金', icon:'bonus'},
+  {id:'other_income', name:'其他', icon:'other_income'}
 ];
 let expenseUi = { monthDate: new Date(), editType: 'expense', editCatId: EXPENSE_CATEGORIES[0].id, personalLeaveUnit: 'days', sickLeaveUnit: 'days' };
 function leaveAmountToDays(amount, unit){
@@ -3335,39 +3359,38 @@ function computeSalaryBreakdown(year, monthIdx, personalDays, sickDays){
 }
 function updateSalaryPreview(){
   const monthKey = expenseMonthKeyOf(expenseUi.monthDate);
-  const personalAmount = Number(document.getElementById('leavePersonalAmount').value)||0;
-  const sickAmount = Number(document.getElementById('leaveSickAmount').value)||0;
-  const personalDays = leaveAmountToDays(personalAmount, expenseUi.personalLeaveUnit);
-  const sickDays = leaveAmountToDays(sickAmount, expenseUi.sickLeaveUnit);
-  data.leaveByMonth[monthKey] = {personalAmount, personalUnit:expenseUi.personalLeaveUnit, sickAmount, sickUnit:expenseUi.sickLeaveUnit};
-  persist();
-  const b = computeSalaryBreakdown(expenseUi.monthDate.getFullYear(), expenseUi.monthDate.getMonth(), personalDays, sickDays);
-  const box = document.getElementById('salaryBreakdown');
-  box.innerHTML = `
-    底薪 $${b.base.toLocaleString()}<br>
-    事假扣款 -$${Math.round(b.personalDeduct).toLocaleString()}<br>
-    病假扣款 -$${Math.round(b.sickDeduct).toLocaleString()}<br>
-    勞保 -$${Math.round(b.labor).toLocaleString()}　健保 -$${Math.round(b.health).toLocaleString()}　勞退自提 -$${Math.round(b.pension).toLocaleString()}<br>
-    自訂扣款 -$${Math.round(b.customTotal).toLocaleString()}<br>
-    <b style="color:var(--ink);font-size:13.5px;">預估實領 $${Math.round(b.net).toLocaleString()}</b>
-    ${data.salaryRecorded[monthKey] ? '<div style="color:var(--accent);margin-top:4px;">✓ 本月薪資已記入</div>' : ''}
-  `;
+  const next = {
+    personalAmount: Number(document.getElementById('leavePersonalAmount').value)||0,
+    personalUnit: expenseUi.personalLeaveUnit,
+    sickAmount: Number(document.getElementById('leaveSickAmount').value)||0,
+    sickUnit: expenseUi.sickLeaveUnit
+  };
+  const cur = data.leaveByMonth[monthKey];
+  if(!cur && next.personalAmount===0 && next.sickAmount===0) return;
+  if(JSON.stringify(cur||null) !== JSON.stringify(next)){
+    data.leaveByMonth[monthKey] = next;
+    persist();
+  }
 }
 function recordMonthSalary(){
   const monthKey = expenseMonthKeyOf(expenseUi.monthDate);
-  const personalAmount = Number(document.getElementById('leavePersonalAmount').value)||0;
-  const sickAmount = Number(document.getElementById('leaveSickAmount').value)||0;
-  const personalDays = leaveAmountToDays(personalAmount, expenseUi.personalLeaveUnit);
-  const sickDays = leaveAmountToDays(sickAmount, expenseUi.sickLeaveUnit);
-  const b = computeSalaryBreakdown(expenseUi.monthDate.getFullYear(), expenseUi.monthDate.getMonth(), personalDays, sickDays);
-  const salaryDay = Math.min(Math.max(data.payroll.salaryDay||1,1), daysInMonth(expenseUi.monthDate.getFullYear(), expenseUi.monthDate.getMonth()));
-  const pad=n=>String(n).padStart(2,'0');
-  const dateStr = `${monthKey}-${pad(salaryDay)}`;
-  data.expenses.push({id:uid(), type:'income', amount:Math.round(b.net), category:'salary', note:'月薪', date:dateStr, accountId:salaryAccountId(), createdAt:Date.now()});
-  data.salaryRecorded[monthKey] = true;
-  persist();
-  renderExpensePage();
-  flashToast('已記入本月薪資');
+  const doRecord = ()=>{
+    const personalAmount = Number(document.getElementById('leavePersonalAmount').value)||0;
+    const sickAmount = Number(document.getElementById('leaveSickAmount').value)||0;
+    const personalDays = leaveAmountToDays(personalAmount, expenseUi.personalLeaveUnit);
+    const sickDays = leaveAmountToDays(sickAmount, expenseUi.sickLeaveUnit);
+    const year = expenseUi.monthDate.getFullYear(), monthIdx = expenseUi.monthDate.getMonth();
+    const b = computeSalaryBreakdown(year, monthIdx, personalDays, sickDays);
+    const salaryDay = Math.min(Math.max(data.payroll.salaryDay||1,1), daysInMonth(year, monthIdx));
+    const dateStr = `${monthKey}-${String(salaryDay).padStart(2,'0')}`;
+    data.expenses.push({id:uid(), type:'income', amount:Math.round(b.net), category:'salary', note:'月薪', date:dateStr, accountId:salaryAccountId(), createdAt:Date.now()});
+    data.salaryRecorded[monthKey] = true;
+    persist();
+    renderExpensePage();
+    flashToast('已記入本月薪資 '+fmtMoney(Math.round(b.net)));
+  };
+  if(data.salaryRecorded[monthKey]){ showConfirm('這個月的薪資已經記入過了，要再記一筆嗎？', doRecord); return; }
+  doRecord();
 }
 
 
@@ -3400,7 +3423,7 @@ function renderAccountsList(){
   document.getElementById('accountsList').innerHTML = data.accounts.map(a=>{
     const bal = accountBalance(a);
     return `<div class="account-item">
-      <span class="acc-icon">${a.type==='cash'?'💵':'🏦'}</span>
+      <span class="acc-icon">${iconSvg(a.type==='cash'?'wallet':'bank',18)}</span>
       <input class="acc-name" value="${escapeAttr(a.name)}" onchange="renameAccount('${a.id}', this.value)">
       <span class="acc-bal ${bal<0?'neg':''}">${fmtMoney(bal)}</span>
       <button class="acc-btn" onclick="openAdjustModal('${a.id}')">調整誤差</button>
@@ -3531,7 +3554,7 @@ function openRecurringModal(){
   document.getElementById('recurringDayOfMonth').value = '';
   document.getElementById('recurringWeekday').value = String(new Date().getDay());
   document.getElementById('recurringStart').value = todayStr();
-  document.getElementById('recurringCategory').innerHTML = EXPENSE_CATEGORIES.map(c=>`<option value="${c.id}">${c.icon} ${escapeHtml(c.name)}</option>`).join('');
+  document.getElementById('recurringCategory').innerHTML = EXPENSE_CATEGORIES.map(c=>`<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
   fillAccountSelect('recurringAccount', data.accounts[0].id);
   setRecurringFreq('monthly');
   document.getElementById('recurringModal').classList.add('show');
@@ -3612,12 +3635,12 @@ function renderExpensePage(){
   days.forEach(day=>{
     html += `<div class="expense-day-group"><div class="expense-day-label">${day}</div>`;
     byDay[day].forEach(e=>{
-      const cat = e.type==='adjust' ? {name:'調整誤差', icon:'⚖️'}
-        : ((e.type==='income'?INCOME_CATEGORIES:EXPENSE_CATEGORIES).find(c=>c.id===e.category) || {name:e.category, icon:'📦'});
+      const cat = e.type==='adjust' ? {name:'調整誤差', icon:'scale'}
+        : ((e.type==='income'?INCOME_CATEGORIES:EXPENSE_CATEGORIES).find(c=>c.id===e.category) || {name:e.category, icon:'other'});
       const noteText = [accountName(e.accountId), e.note].filter(Boolean).join('・');
       const amtText = e.type==='income' ? '+'+fmtMoney(e.amount) : e.type==='expense' ? '-'+fmtMoney(e.amount) : (e.amount>0?'+':'-')+fmtMoney(Math.abs(e.amount));
       html += `<div class="expense-item">
-        <div class="ex-icon">${cat.icon}</div>
+        <div class="ex-icon">${iconSvg(cat.icon,18)}</div>
         <div class="ex-info">
           <div class="ex-cat-name">${escapeHtml(cat.name)}</div>
           <div class="ex-note">${escapeHtml(noteText)}</div>
@@ -3653,7 +3676,7 @@ function renderExpenseCatGrid(){
   const cats = expenseUi.editType==='income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
   document.getElementById('expenseCatGrid').innerHTML = cats.map(c=>
     `<button type="button" class="expense-cat-btn ${expenseUi.editCatId===c.id?'selected':''}" onclick="selectExpenseCat('${c.id}')">
-      <span class="cat-icon">${c.icon}</span>${escapeHtml(c.name)}
+      <span class="cat-icon">${iconSvg(c.icon,20)}</span>${escapeHtml(c.name)}
     </button>`
   ).join('');
 }
