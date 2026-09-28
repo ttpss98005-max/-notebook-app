@@ -72,7 +72,7 @@
 
   .top-bar{position:sticky;top:0;background:var(--surface);border-bottom:1px solid var(--border);
     padding:14px 26px;z-index:10;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
-  .brand{font-size:16px;font-weight:700;letter-spacing:1px;flex-shrink:0;}
+  .brand{font-size:16px;font-weight:700;letter-spacing:1px;flex-shrink:0;color:#1A1A1A;}
   .top-bar-actions{margin-left:auto;display:flex;gap:8px;}
   .search-trigger-btn{background:#F1F0EA;border:none;width:34px;height:34px;border-radius:50%;
     color:var(--ink-soft);display:flex;align-items:center;justify-content:center;}
@@ -82,6 +82,9 @@
   .search-result-item:hover{background:#F9F8F4;}
   .search-result-item .sub{font-size:11px;color:var(--ink-soft);margin-top:2px;}
 
+  #flashToast{position:fixed;left:50%;bottom:90px;transform:translate(-50%,10px);z-index:96;background:#1A1A1A;color:#fff;
+    font-size:13px;padding:9px 18px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;max-width:80%;text-align:center;}
+  #flashToast.show{opacity:.94;transform:translate(-50%,0);}
   #undoToast{position:fixed;left:16px;right:16px;bottom:80px;z-index:95;max-width:420px;margin:0 auto;
     background:var(--ink);color:#fff;border-radius:14px;padding:12px 16px;display:flex;align-items:center;
     justify-content:space-between;gap:14px;box-shadow:var(--shadow-md);transform:translateY(20px);opacity:0;
@@ -727,8 +730,8 @@
       </div>
     </div>
     <div class="pill-tabs" id="calModeSeg" style="display:none;margin-bottom:14px;">
-      <button id="calModeMonthBtn" onclick="setCalMode('cal')">月曆</button>
-      <button id="calModeWeekBtn" onclick="setCalMode('week')">週曆</button>
+      <button class="pill-tab" id="calModeMonthBtn" onclick="setCalMode('cal')">月曆</button>
+      <button class="pill-tab" id="calModeWeekBtn" onclick="setCalMode('week')">週曆</button>
     </div>
     <div class="toolbar" id="sharedToolbar">
       <div class="seg" id="filterSeg">
@@ -860,8 +863,8 @@
           <div style="display:flex;gap:6px;align-items:center;">
             <input type="number" id="leavePersonalAmount" min="0" step="0.5" style="width:60px;" onchange="updateSalaryPreview()">
             <div class="pill-tabs" id="leavePersonalUnitSeg" style="padding:3px;">
-              <button id="leavePersonalUnitDayBtn" onclick="setLeaveUnit('personal','days')" style="padding:4px 9px;font-size:11px;">天</button>
-              <button id="leavePersonalUnitHourBtn" onclick="setLeaveUnit('personal','hours')" style="padding:4px 9px;font-size:11px;">小時</button>
+              <button class="pill-tab" id="leavePersonalUnitDayBtn" onclick="setLeaveUnit('personal','days')" style="padding:4px 9px;font-size:11px;">天</button>
+              <button class="pill-tab" id="leavePersonalUnitHourBtn" onclick="setLeaveUnit('personal','hours')" style="padding:4px 9px;font-size:11px;">小時</button>
             </div>
           </div>
         </div>
@@ -870,8 +873,8 @@
           <div style="display:flex;gap:6px;align-items:center;">
             <input type="number" id="leaveSickAmount" min="0" step="0.5" style="width:60px;" onchange="updateSalaryPreview()">
             <div class="pill-tabs" id="leaveSickUnitSeg" style="padding:3px;">
-              <button id="leaveSickUnitDayBtn" onclick="setLeaveUnit('sick','days')" style="padding:4px 9px;font-size:11px;">天</button>
-              <button id="leaveSickUnitHourBtn" onclick="setLeaveUnit('sick','hours')" style="padding:4px 9px;font-size:11px;">小時</button>
+              <button class="pill-tab" id="leaveSickUnitDayBtn" onclick="setLeaveUnit('sick','days')" style="padding:4px 9px;font-size:11px;">天</button>
+              <button class="pill-tab" id="leaveSickUnitHourBtn" onclick="setLeaveUnit('sick','hours')" style="padding:4px 9px;font-size:11px;">小時</button>
             </div>
           </div>
         </div>
@@ -1036,6 +1039,8 @@
   </div>
 </div>
 
+<div id="flashToast"></div>
+
 <div id="undoToast">
   <span id="undoToastMsg"></span>
   <button onclick="clickUndo()">復原</button>
@@ -1160,8 +1165,8 @@
     <h3 id="expenseModalTitle">記一筆</h3>
     <input type="hidden" id="expenseEditId" value="">
     <div class="pill-tabs" id="expenseTypeSeg" style="margin-bottom:14px;">
-      <button id="expenseTypeExpenseBtn" onclick="setExpenseType('expense')">支出</button>
-      <button id="expenseTypeIncomeBtn" onclick="setExpenseType('income')">收入</button>
+      <button class="pill-tab" id="expenseTypeExpenseBtn" onclick="setExpenseType('expense')">支出</button>
+      <button class="pill-tab" id="expenseTypeIncomeBtn" onclick="setExpenseType('income')">收入</button>
     </div>
     <div class="field"><label>金額</label><input type="number" id="expenseAmountInput" inputmode="decimal" placeholder="0"></div>
     <div class="field"><label>分類</label><div class="expense-cat-grid" id="expenseCatGrid"></div></div>
@@ -1175,7 +1180,7 @@
 </div>
 
 <div class="overlay" id="payrollModal">
-  <div class="modal" style="max-width:400px;">
+  <div class="modal" style="max-width:400px;max-height:88vh;overflow-y:auto;">
     <h3>薪資試算設定</h3>
     <div class="field"><label>底薪</label><input type="number" id="payrollBaseSalary" placeholder="0"></div>
     <div class="field"><label>每月發薪日</label><input type="number" id="payrollSalaryDay" min="1" max="31" placeholder="例如：5"></div>
@@ -1185,23 +1190,23 @@
     <div class="field">
       <label>請假扣薪計算基準（每日薪資 = 底薪 ÷ 此基準）</label>
       <div class="pill-tabs" id="payrollDivisorSeg">
-        <button id="payrollDivisorWorkBtn" onclick="setPayrollDivisor('workdays')">工作天</button>
-        <button id="payrollDivisorMonthBtn" onclick="setPayrollDivisor('monthdays')">當月天數</button>
+        <button class="pill-tab" id="payrollDivisorWorkBtn" onclick="setPayrollDivisor('workdays')">工作天</button>
+        <button class="pill-tab" id="payrollDivisorMonthBtn" onclick="setPayrollDivisor('monthdays')">當月天數</button>
       </div>
     </div>
     <div class="field">
       <label>事假扣薪方式</label>
       <div class="pill-tabs" id="payrollPersonalRuleSeg">
-        <button id="payrollPersonalHalfBtn" onclick="setPayrollRule('personal','halfpay')">半薪</button>
-        <button id="payrollPersonalFixedBtn" onclick="setPayrollRule('personal','fixed')">固定金額/天</button>
+        <button class="pill-tab" id="payrollPersonalHalfBtn" onclick="setPayrollRule('personal','halfpay')">半薪</button>
+        <button class="pill-tab" id="payrollPersonalFixedBtn" onclick="setPayrollRule('personal','fixed')">固定金額/天</button>
       </div>
       <input type="number" id="payrollPersonalFixedAmount" placeholder="固定扣款金額（每天）" style="margin-top:8px;display:none;">
     </div>
     <div class="field">
       <label>病假扣薪方式</label>
       <div class="pill-tabs" id="payrollSickRuleSeg">
-        <button id="payrollSickHalfBtn" onclick="setPayrollRule('sick','halfpay')">半薪</button>
-        <button id="payrollSickFixedBtn" onclick="setPayrollRule('sick','fixed')">固定金額/天</button>
+        <button class="pill-tab" id="payrollSickHalfBtn" onclick="setPayrollRule('sick','halfpay')">半薪</button>
+        <button class="pill-tab" id="payrollSickFixedBtn" onclick="setPayrollRule('sick','fixed')">固定金額/天</button>
       </div>
       <input type="number" id="payrollSickFixedAmount" placeholder="固定扣款金額（每天）" style="margin-top:8px;display:none;">
     </div>
@@ -1445,6 +1450,12 @@ function getDayInfo(y,m,d){
 async function loadData(storageKey){
   const res = await storageGet(storageKey);
   data = res ? JSON.parse(res.value) : defaultData();
+  normalizeData();
+  lastPersistedCount = totalContentCount(data);
+  lastPersistedCounts = categoryCounts(data);
+}
+/* 所有「資料進入記憶體」的入口(載入、雲端即時同步)都必須經過這裡,確保舊格式資料補齊新欄位 */
+function normalizeData(){
   delete data.theme;
   if(!data.globalPaletteId) data.globalPaletteId = 'p01';
   if(!data.customPalettes) data.customPalettes = [];
@@ -1484,8 +1495,6 @@ async function loadData(storageKey){
       });
     }
   });
-  lastPersistedCount = totalContentCount(data);
-  lastPersistedCounts = categoryCounts(data);
 }
 
 function totalContentCount(d){
@@ -1550,6 +1559,7 @@ function startRealtimeSync(storageKey){
     if(remote === lastWrittenValue) return;
     try{
       data = JSON.parse(remote);
+      normalizeData();
       lastWrittenValue = remote;
       refreshCurrentView();
     }catch(e){ console.error('即時同步資料解析失敗', e); }
@@ -1576,6 +1586,14 @@ function confirmModalOk(){
   const cb = __confirmCallback;
   __confirmCallback = null;
   if(cb) cb();
+}
+let flashToastTimer = null;
+function flashToast(message){
+  const el = document.getElementById('flashToast');
+  el.textContent = message;
+  el.classList.add('show');
+  clearTimeout(flashToastTimer);
+  flashToastTimer = setTimeout(()=> el.classList.remove('show'), 1800);
 }
 function notify(message){
   document.getElementById('alertModalBody').textContent = message;
@@ -3224,7 +3242,7 @@ function recordMonthSalary(){
   data.salaryRecorded[monthKey] = true;
   persist();
   renderExpensePage();
-  notify('已記入本月薪資');
+  flashToast('已記入本月薪資');
 }
 function currentBankBalance(){
   const baseline = data.bankBalance || 0;
@@ -3247,7 +3265,7 @@ function saveBankBalance(){
   persist();
   closeModal('bankBalanceModal');
   renderExpensePage();
-  notify('已更新目前存款');
+  flashToast('已更新目前存款');
 }
 function renderExpensePage(){
   const monthKey = expenseMonthKeyOf(expenseUi.monthDate);
@@ -3341,7 +3359,7 @@ function saveExpense(){
   persist();
   closeModal('expenseModal');
   renderExpensePage();
-  notify(item ? '已更新這筆紀錄' : '已記一筆');
+  flashToast(item ? '已更新這筆紀錄' : '已記一筆');
 }
 function deleteExpense(id){
   data.expenses = data.expenses.filter(e=>e.id!==id);
@@ -3410,7 +3428,7 @@ function savePayrollSettings(){
   persist();
   closeModal('payrollModal');
   renderExpensePage();
-  notify('薪資設定已儲存');
+  flashToast('薪資設定已儲存');
 }
 
 function scheduleNextLeaf(){
