@@ -21,7 +21,7 @@ messaging.onBackgroundMessage((payload) => {
   self.registration.showNotification(title, options);
 });
 
-const CACHE_NAME = 'jishibu-cache-v95';
+const CACHE_NAME = 'jishibu-cache-v98';
 const CORE_ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (event) => {

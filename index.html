@@ -256,12 +256,8 @@
   .week-col-head{font-size:11px;font-weight:700;color:var(--ink-soft);margin-bottom:8px;display:flex;
     align-items:center;justify-content:space-between;gap:6px;padding:2px 2px 2px 4px;border-radius:10px;}
   .week-col-head.today{color:var(--accent);}
-  .week-col-head.clickable{cursor:pointer;}
-  .week-col-head.clickable:hover{background:#F1F0EA;}
   .week-col-date{white-space:nowrap;}
   .week-mood-face{width:20px;height:20px;flex-shrink:0;border-radius:6px;}
-  .week-mood-add{width:20px;height:20px;flex-shrink:0;border-radius:6px;border:1.5px dashed var(--border);
-    display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--ink-soft);}
   .week-item{font-size:11px;border-radius:10px;border-left:3px solid var(--border);padding:6px 8px;margin-bottom:6px;background:#F1F0EA;color:#1A1A1A;}
   .week-item .t{color:var(--ink-soft);display:block;font-size:10px;}
   .no-item{font-size:11px;color:#D8D8D8;text-align:center;padding-top:14px;}
@@ -307,6 +303,11 @@
   .monthday-btn{padding:7px 0;border-radius:10px;border:1.5px solid var(--border);background:#fff;color:#1A1A1A;font-size:12.5px;font-weight:700;}
   .monthday-btn.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
   .habit-schedule-note{font-size:10.5px;color:var(--ink-soft);margin-top:2px;}
+  .habit-mood-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+  .habit-mood-label{font-size:12.5px;color:var(--ink-soft);font-weight:700;margin-right:2px;}
+  .habit-mood-btn{background:#F1F0EA;border:2px solid transparent;border-radius:10px;padding:4px;line-height:0;}
+  .habit-mood-btn.selected{border-color:var(--accent);background:var(--accent-soft);}
+  .habit-mood-btn .week-mood-face{width:26px;height:26px;}
   .habit-grid-row.not-scheduled{opacity:.55;}
 
   .habit-summary{font-size:12.5px;color:var(--ink-soft);margin-bottom:14px;}
@@ -582,12 +583,7 @@
     0%{transform:translate(0,0) rotate(0deg);opacity:0;}
     8%{opacity:.85;}
     92%{opacity:.85;}
-    100%{transform:translate(var(--dx,120vw),var(--dy,80px)) rotate(var(--drot,380deg));opacity:0;}
-  }
-  @keyframes leafResumeDrift{
-    0%{transform:translate(0,0) rotate(0deg);}
-    92%{opacity:.85;}
-    100%{transform:translate(var(--dx,120vw),var(--dy,80px)) rotate(var(--drot,380deg));opacity:0;}
+    100%{transform:translate(var(--dx,450px),var(--dy,80px)) rotate(var(--drot,380deg));opacity:0;}
   }
 
   /* ============ 今天總結（夜間）／每日提醒（早晨） ============ */
@@ -812,7 +808,8 @@
         </div>
         <button class="btn-primary" onclick="openHabitModal()">＋ 新增習慣</button>
       </div>
-      <div id="habitCheckinView"></div>
+      <div class="habit-mood-row" id="habitMoodRow"></div>
+    <div id="habitCheckinView"></div>
       <div id="habitStatsView" style="display:none"></div>
     </div>
 
@@ -2713,6 +2710,29 @@ function renderDayDetail(){
     </div>`).join('') : `<div class="empty-state" style="padding:14px">當日無事項</div>`);
 }
 
+function renderHabitMoodRow(){
+  const box = document.getElementById('habitMoodRow');
+  if(!box) return;
+  const day = todayStr();
+  const existing = (data.dayRecaps||{})[day];
+  const moods = [['bad','不太好'],['ok','普通'],['good','很棒']];
+  box.innerHTML = `<span class="habit-mood-label">今天心情</span>` + moods.map(([m,label])=>
+    `<button type="button" class="habit-mood-btn ${existing&&existing.mood===m?'selected':''}" onclick="setTodayMoodQuick('${m}')" title="${label}">${moodFaceSvgSmall(m)}</button>`
+  ).join('');
+}
+function setTodayMoodQuick(mood){
+  const day = todayStr();
+  if(!data.dayRecaps) data.dayRecaps = {};
+  const existing = data.dayRecaps[day];
+  if(existing && existing.mood===mood){
+    delete existing.mood;
+    if(!existing.note) delete data.dayRecaps[day];
+  }else{
+    data.dayRecaps[day] = Object.assign({}, existing, {mood, createdAt:(existing&&existing.createdAt)||Date.now()});
+  }
+  persist();
+  renderHabitMoodRow();
+}
 function moodFaceSvgSmall(mood){
   if(mood==='bad') return `<svg class="week-mood-face" viewBox="0 0 40 40"><rect width="40" height="40" rx="10" fill="#5B9BD5"/><circle cx="14" cy="17" r="2.2" fill="#fff"/><circle cx="26" cy="17" r="2.2" fill="#fff"/><path d="M13 27 Q20 22 27 27" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>`;
   if(mood==='good') return `<svg class="week-mood-face" viewBox="0 0 40 40"><rect width="40" height="40" rx="10" fill="#F2A93B"/><path d="M11 16 Q14 13 17 16" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M23 16 Q26 13 29 16" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M12 23 Q20 31 28 23" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg>`;
@@ -2735,16 +2755,9 @@ function renderWeek(){
     }).sort((a,b)=>a.time.localeCompare(b.time));
     const isToday = d.toDateString()===today.toDateString();
     const dayStr = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-    const isPastOrToday = dayStr <= todayStr();
-    const recap = (data.dayRecaps || {})[dayStr];
-    let recapIndicator = '';
-    if(isPastOrToday){
-      recapIndicator = recap ? moodFaceSvgSmall(recap.mood) : `<span class="week-mood-add">＋</span>`;
-    }
     cols += `<div class="week-col">
-      <div class="week-col-head ${isToday?'today':''} ${isPastOrToday?'clickable':''}" ${isPastOrToday?`onclick="openRecapFromWeek('${dayStr}')"`:''}>
+      <div class="week-col-head ${isToday?'today':''}">
         <span class="week-col-date">${dows[i]} ${d.getMonth()+1}/${d.getDate()}</span>
-        ${recapIndicator}
       </div>
       ${dayItems.length? dayItems.map(it=>`<div class="week-item" style="border-left-color:${it.color}"><span class="t">${it.isDate? '截止' : fmtTime(it.time).split(' ')[1]}</span>${escapeHtml(it.title)}</div>`).join('') : `<div class="no-item">無事項</div>`}
     </div>`;
@@ -3058,23 +3071,39 @@ function renderHabitWeekStrip(){
   box.innerHTML = html;
 }
 function habitStreak(h, asOf){
+  /* 「連續天數」代表這一天所屬的那一整段連續打卡區塊的總長度,
+     同一段區塊裡的每一天顯示的數字都一樣,不是「累計到這天為止」。
+     例如10/1~10/2連續打卡10天,兩天都會顯示連續10天;10/3沒做則斷開。 */
   asOf = asOf || todayStr();
-  let streak = 0;
-  const d = new Date(asOf+'T00:00:00');
+  if(!habitScheduledOn(h, asOf) || !habitHasLog(h, asOf)) return 0;
   const pad = n=>String(n).padStart(2,'0');
+  const toStr = d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  let count = 1;
   let guard = 0;
+  const back = new Date(asOf+'T00:00:00');
   while(guard++ < 3660){
-    const ds = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-    if(habitScheduledOn(h, ds)){
-      if(!habitHasLog(h, ds)) break;
-      streak++;
-    }
-    d.setDate(d.getDate()-1);
+    back.setDate(back.getDate()-1);
+    const ds = toStr(back);
+    if(!habitScheduledOn(h, ds)) continue;
+    if(!habitHasLog(h, ds)) break;
+    count++;
   }
-  return streak;
+  const today = todayStr();
+  const fwd = new Date(asOf+'T00:00:00');
+  guard = 0;
+  while(guard++ < 3660){
+    fwd.setDate(fwd.getDate()+1);
+    const ds = toStr(fwd);
+    if(ds > today) break;
+    if(!habitScheduledOn(h, ds)) continue;
+    if(!habitHasLog(h, ds)) break;
+    count++;
+  }
+  return count;
 }
 function renderHabitCheckin(){
   if(!ui.habitDate) ui.habitDate = todayStr();
+  renderHabitMoodRow();
   renderHabitWeekStrip();
   const box = document.getElementById('habitCheckinView');
   if(data.habits.length===0){
@@ -3087,8 +3116,8 @@ function renderHabitCheckin(){
   const doneCount = scheduledToday.filter(h=> habitHasLog(h, day)).length;
   const dateLabel = day===todayStr() ? '今日' : day.slice(5).replace('-','/');
   let html = `<div class="habit-summary">${dateLabel}已完成 ${doneCount} / ${scheduledToday.length} 項習慣${future?'（未來日期尚無法勾選）':''}</div>`;
-  html += `<div class="habit-table">` + data.habits.map((h,idx)=>{
-    const scheduled = habitScheduledOn(h, day);
+  html += `<div class="habit-table">` + data.habits.filter(h=> habitScheduledOn(h, day)).map((h,idx)=>{
+    const scheduled = true;
     const entry = habitEntry(h, day);
     const val = entry ? entry.value : undefined;
     const checked = !!(entry && entry.checked);
@@ -3315,11 +3344,11 @@ function spawnLeaf(){
   leaf.className = 'quicknote-leaf';
   const topPct = 5 + Math.random()*70;
   const dur = 6 + Math.random()*4;
-  const dx = -(110 + Math.random()*15);
+  const dx = -(400 + Math.random()*100);
   const dy = 60 + Math.random()*120;
   const drot = 250 + Math.random()*260;
   leaf.style.top = topPct + '%';
-  leaf.style.setProperty('--dx', dx+'vw');
+  leaf.style.setProperty('--dx', dx+'px');
   leaf.style.setProperty('--dy', dy+'px');
   leaf.style.setProperty('--drot', drot+'deg');
   leaf.style.animationDuration = dur+'s';
@@ -3373,73 +3402,51 @@ function onLeafDragRelease(){
   draggingLeaf = null;
   releaseLeaf(leaf);
 }
-function resumeAmbientDrift(leaf, x, y){
-  if(leaf._onAnimEnd) leaf.removeEventListener('animationend', leaf._onAnimEnd);
-  const dur = 6 + Math.random()*4;
-  const dx = -(110 + Math.random()*15);
-  const dyPx = 60 + Math.random()*120;
-  const drot = 250 + Math.random()*260;
-  leaf.style.left = x + 'px';
-  leaf.style.top = y + 'px';
-  leaf.style.right = 'auto';
-  leaf.style.opacity = '.85';
-  leaf.style.setProperty('--dx', dx+'vw');
-  leaf.style.setProperty('--dy', dyPx+'px');
-  leaf.style.setProperty('--drot', drot+'deg');
-  leaf.style.animationDuration = dur+'s';
-  leaf.style.animationName = 'leafResumeDrift';
-  const onAnimEnd = ()=> leaf.remove();
-  leaf._onAnimEnd = onAnimEnd;
-  leaf.addEventListener('animationend', onAnimEnd);
-}
 function releaseLeaf(leaf){
+  /* 放開後全程只用一套連續運算,橫向跟垂直速度都用指數趨近慢慢逼近目標值,
+     不會有任何切換系統的接點,自然不會出現銜接時的停頓。
+     橫向跟垂直的目標速度都跟沒抓過的葉子一樣是固定像素值,不隨螢幕寬度縮放,
+     兩邊速度在任何螢幕上都完全一致。 */
   leaf.__caught = false;
+  if(leaf._onAnimEnd){ leaf.removeEventListener('animationend', leaf._onAnimEnd); leaf._onAnimEnd = null; }
+  leaf.style.animation = 'none';
   const layer = document.getElementById('quickNoteLeafLayer');
   const layerRect = layer.getBoundingClientRect();
   let x = parseFloat(leaf.style.left) || 0;
   let y = parseFloat(leaf.style.top) || 0;
+  leaf.style.right = 'auto';
+  leaf.style.transform = 'none';
+  leaf.style.opacity = '.85';
   let vx = 0;
   let vy = 0;
   const targetVy = 16 + Math.random()*8;
-  const gravity = 130;
-  const vyDrag = 3;
-  /* 橫向的「目標巡航速度」要跟沒抓過的葉子同一套vw基準,不能是螢幕寬度不變的固定像素值,
-     不然螢幕越寬,沒抓過的葉子飄得越快,抓過放開的葉子卻永遠一樣快,兩者就會不一致 */
-  const vwPerSec = -(110 + Math.random()*15) / (6 + Math.random()*4);
-  const maxVx = vwPerSec * layerRect.width / 100;
-  const windAccel = maxVx * (260/150);
-  const windStartDelay = 0.5;
-  let bounced = false;
+  const targetVx = -(400 + Math.random()*100) / (6 + Math.random()*4);
+  const drag = 3;
   const leafH = leaf.offsetHeight || 18;
   const groundY = layerRect.height - leafH - 2;
+  let rot = 0;
+  const rotSpeed = (Math.random()-0.5)*40;
   let lastT = performance.now();
-  let elapsed = 0;
 
   function step(now){
     if(leaf.__caught) return;
     const dt = Math.min((now - lastT) / 1000, 0.05);
     lastT = now;
-    elapsed += dt;
-    vy += vyDrag * (targetVy - vy) * dt;
-    if(elapsed >= windStartDelay){
-      vx += windAccel * dt;
-      if(vx < maxVx) vx = maxVx;
-    }
+    vy += drag * (targetVy - vy) * dt;
+    vx += drag * (targetVx - vx) * dt;
     x += vx * dt;
     y += vy * dt;
-    if(y >= groundY){
-      y = groundY;
-      vy = targetVy;
-      if(!bounced){ vx = vx / 2; bounced = true; }
-    }
+    if(y >= groundY) y = groundY;
+    rot += rotSpeed * dt;
     leaf.style.left = x + 'px';
     leaf.style.top = y + 'px';
+    leaf.style.transform = `rotate(${rot.toFixed(1)}deg)`;
+    const distToExit = Math.min(layerRect.width + 60 - x, x + 60);
+    if(distToExit < 50){
+      leaf.style.opacity = String(Math.max(0, (distToExit/50) * 0.85));
+    }
     if(x < -60 || x > layerRect.width + 60){
       leaf.remove();
-      return;
-    }
-    if(Math.abs(vy-targetVy)<3 && Math.abs(vx-maxVx)<8){
-      resumeAmbientDrift(leaf, x, y);
       return;
     }
     requestAnimationFrame(step);
@@ -4611,9 +4618,6 @@ function closeNightRecap(){
       maybeShowDailyBrief();
     }
   }, 1000);
-}
-function openRecapFromWeek(day){
-  showNightRecap(day, true);
 }
 function dismissDailyBriefToday(){
   data.dailyBriefDismissedDate = todayStr();
