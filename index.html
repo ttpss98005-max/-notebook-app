@@ -3403,8 +3403,11 @@ function releaseLeaf(leaf){
   const targetVy = 16 + Math.random()*8;
   const gravity = 130;
   const vyDrag = 3;
-  const windAccel = -260;
-  const maxVx = -150;
+  /* 橫向的「目標巡航速度」要跟沒抓過的葉子同一套vw基準,不能是螢幕寬度不變的固定像素值,
+     不然螢幕越寬,沒抓過的葉子飄得越快,抓過放開的葉子卻永遠一樣快,兩者就會不一致 */
+  const vwPerSec = -(110 + Math.random()*15) / (6 + Math.random()*4);
+  const maxVx = vwPerSec * layerRect.width / 100;
+  const windAccel = maxVx * (260/150);
   const windStartDelay = 0.5;
   let bounced = false;
   const leafH = leaf.offsetHeight || 18;
@@ -3435,7 +3438,7 @@ function releaseLeaf(leaf){
       leaf.remove();
       return;
     }
-    if(bounced && Math.abs(vy-targetVy)<3 && Math.abs(vx)<8){
+    if(Math.abs(vy-targetVy)<3 && Math.abs(vx-maxVx)<8){
       resumeAmbientDrift(leaf, x, y);
       return;
     }
