@@ -238,6 +238,16 @@
   .account-item .acc-bal.neg{color:#C0504D;}
   .account-item .acc-btn{background:#F1F0EA;border:none;border-radius:999px;padding:5px 9px;font-size:11px;color:#1A1A1A;white-space:nowrap;}
   .account-item .acc-btn.del{color:var(--danger);padding:5px 8px;}
+  .expense-item.clickable{cursor:pointer;}
+  .sd-sec{font-size:12px;color:var(--ink-soft);font-weight:700;margin:12px 0 6px;}
+  .sd-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;}
+  .sd-row label{font-size:13px;flex:1;min-width:0;}
+  .sd-row input,.sd-add{width:120px;padding:8px 12px;border:1.5px solid var(--border);border-radius:12px;font-size:13.5px;font-family:inherit;text-align:right;background:#fff;color:#1A1A1A;}
+  .sd-add{width:auto;flex:1;min-width:0;text-align:left;}
+  .sd-x-sp{width:22px;flex:none;}
+  .sd-x{background:none;border:none;color:var(--danger);font-size:15px;padding:2px 0;width:22px;flex:none;text-align:center;}
+  .sd-net{margin:14px 0 4px;padding-top:12px;border-top:1.5px solid var(--border);font-size:14px;}
+  .sd-net b{font-size:19px;}
   .item-line .t{color:var(--ink-soft);margin-right:8px;}
 
   .week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;}
@@ -290,6 +300,14 @@
   .pill-tabs{display:inline-flex;background:#F1F0EA;border-radius:999px;padding:4px;gap:2px;}
   .pill-tab{padding:9px 20px;border:none;background:none;border-radius:999px;font-size:13px;font-weight:700;color:var(--ink-soft);transition:.15s;}
   .pill-tab.active{background:var(--accent);color:#fff;box-shadow:var(--shadow-sm);}
+  .weekday-picker{display:flex;gap:6px;}
+  .weekday-btn{width:38px;height:38px;border-radius:50%;border:1.5px solid var(--border);background:#fff;color:#1A1A1A;font-size:13px;font-weight:700;flex-shrink:0;}
+  .weekday-btn.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .monthday-picker{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+  .monthday-btn{padding:7px 0;border-radius:10px;border:1.5px solid var(--border);background:#fff;color:#1A1A1A;font-size:12.5px;font-weight:700;}
+  .monthday-btn.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .habit-schedule-note{font-size:10.5px;color:var(--ink-soft);margin-top:2px;}
+  .habit-grid-row.not-scheduled{opacity:.55;}
 
   .habit-summary{font-size:12.5px;color:var(--ink-soft);margin-bottom:14px;}
   .habit-table{display:flex;flex-direction:column;gap:10px;}
@@ -566,6 +584,11 @@
     92%{opacity:.85;}
     100%{transform:translate(var(--dx,120vw),var(--dy,80px)) rotate(var(--drot,380deg));opacity:0;}
   }
+  @keyframes leafResumeDrift{
+    0%{transform:translate(0,0) rotate(0deg);}
+    92%{opacity:.85;}
+    100%{transform:translate(var(--dx,120vw),var(--dy,80px)) rotate(var(--drot,380deg));opacity:0;}
+  }
 
   /* ============ 今天總結（夜間）／每日提醒（早晨） ============ */
   #nightRecapOverlay{display:none;position:fixed;inset:0;z-index:160;align-items:center;justify-content:center;
@@ -692,6 +715,15 @@
     .week-grid{grid-template-columns:1fr;gap:10px;}
     .week-col{min-height:auto;}
     .week-col-head{text-align:left;margin-bottom:8px;}
+    .del-link{font-size:13px;}
+    .streak-badge{font-size:12.5px;padding:4px 10px;}
+    .habit-value-input{font-size:14px;padding:7px 5px;}
+    .habit-unit-label{font-size:12px;}
+    .acc-btn{font-size:13px;padding:6px 11px;}
+    .bm-del{font-size:14px;}
+    .quicknote-move{font-size:11.5px;padding:3px 8px;}
+    .ex-del{font-size:17px;}
+    .habit-schedule-note{font-size:12px;}
   }
   /* ============ BOOKMARKS ============ */
   .bm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;}
@@ -747,8 +779,8 @@
       </div>
     </div>
     <div class="pill-tabs" id="calModeSeg" style="display:none;margin-bottom:14px;">
-      <button class="pill-tab" id="calModeMonthBtn" onclick="setCalMode('cal')">月曆</button>
       <button class="pill-tab" id="calModeWeekBtn" onclick="setCalMode('week')">週曆</button>
+      <button class="pill-tab" id="calModeMonthBtn" onclick="setCalMode('cal')">月曆</button>
     </div>
     <div class="toolbar" id="sharedToolbar">
       <div class="seg" id="filterSeg">
@@ -825,6 +857,10 @@
         <div class="row-inline" style="max-width:300px;margin-top:10px;">
           <label style="margin:0;font-size:13px;">每次登入都顯示早安動畫</label>
           <button class="switch" id="morningGreetingSwitch" onclick="toggleMorningGreetingSwitch()"></button>
+        </div>
+        <div class="row-inline" style="max-width:300px;margin-top:10px;">
+          <label style="margin:0;font-size:13px;">晚上自動顯示回顧動畫</label>
+          <button class="switch" id="nightRecapSwitch" onclick="toggleNightRecapSwitch()"></button>
         </div>
       </div>
       <div class="setting-block">
@@ -1145,6 +1181,22 @@
       </div>
     </div>
     <div class="field">
+      <label>重複頻率</label>
+      <div class="pill-tabs" id="habitFreqSeg">
+        <button type="button" class="pill-tab active" data-freq="daily" onclick="selectHabitFreq('daily')">每天</button>
+        <button type="button" class="pill-tab" data-freq="weekly" onclick="selectHabitFreq('weekly')">每週</button>
+        <button type="button" class="pill-tab" data-freq="monthly" onclick="selectHabitFreq('monthly')">每月</button>
+      </div>
+    </div>
+    <div class="field" id="habitWeekdaysField" style="display:none">
+      <label>星期幾要做（可多選）</label>
+      <div class="weekday-picker" id="habitWeekdaysPicker"></div>
+    </div>
+    <div class="field" id="habitMonthdaysField" style="display:none">
+      <label>每月幾號要做（可多選）</label>
+      <div class="monthday-picker" id="habitMonthdaysPicker"></div>
+    </div>
+    <div class="field">
       <label>每日提醒時間（可留空）</label>
       <input type="time" id="habitRemindTime">
     </div>
@@ -1199,6 +1251,39 @@
     <div class="modal-actions">
       <button class="btn-ghost" onclick="closeModal('adjustModal')">取消</button>
       <button class="btn-primary" onclick="saveAdjust()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="salaryDetailModal">
+  <div class="modal" style="max-width:400px;">
+    <h3 id="salaryDetailTitle">薪資明細</h3>
+    <div class="fee-hint" id="salaryDetailInfo" style="margin-bottom:12px;"></div>
+    <div class="sd-row"><label>底薪</label><input type="number" id="sdBase" oninput="updateSalaryDetailNet()"><span class="sd-x-sp"></span></div>
+    <div class="sd-sec">加項（獎金、津貼等）</div>
+    <div id="sdAdds"></div>
+    <div class="row-inline" style="max-width:100%;gap:8px;margin-bottom:4px;">
+      <input type="text" id="sdNewAddName" placeholder="加項名稱" class="sd-add">
+      <input type="number" id="sdNewAddAmount" placeholder="金額" class="sd-add" style="width:80px;flex:none;">
+      <button class="btn-ghost" style="white-space:nowrap;flex:none;" onclick="addSdAdd()">新增</button>
+    </div>
+    <div class="sd-sec">扣款</div>
+    <div class="sd-row"><label>勞保</label><input type="number" id="sdLabor" oninput="updateSalaryDetailNet()"><span class="sd-x-sp"></span></div>
+    <div class="sd-row"><label>健保</label><input type="number" id="sdHealth" oninput="updateSalaryDetailNet()"><span class="sd-x-sp"></span></div>
+    <div class="sd-row"><label>勞退自提</label><input type="number" id="sdPension" oninput="updateSalaryDetailNet()"><span class="sd-x-sp"></span></div>
+    <div class="sd-row"><label>事假扣款</label><input type="number" id="sdPersonal" oninput="updateSalaryDetailNet()"><span class="sd-x-sp"></span></div>
+    <div class="sd-row"><label>病假扣款</label><input type="number" id="sdSick" oninput="updateSalaryDetailNet()"><span class="sd-x-sp"></span></div>
+    <div id="sdItems"></div>
+    <div class="row-inline" style="max-width:100%;gap:8px;margin-top:6px;">
+      <input type="text" id="sdNewName" placeholder="其他扣款名稱" class="sd-add">
+      <input type="number" id="sdNewAmount" placeholder="金額" class="sd-add" style="width:80px;flex:none;">
+      <button class="btn-ghost" style="white-space:nowrap;flex:none;" onclick="addSdItem()">新增</button>
+    </div>
+    <div class="sd-net">實領　<b id="sdNet">$0</b></div>
+    <div class="modal-actions" style="flex-wrap:wrap;">
+      <button class="btn-ghost" onclick="resetSalaryDetail()">依設定重算</button>
+      <button class="btn-ghost" onclick="closeModal('salaryDetailModal')">取消</button>
+      <button class="btn-primary" onclick="saveSalaryDetail()">儲存</button>
     </div>
   </div>
 </div>
@@ -1292,6 +1377,15 @@
       <input type="number" id="payrollSickFixedAmount" placeholder="固定扣款金額（每天）" style="margin-top:8px;display:none;">
     </div>
     <div class="field">
+      <label>自訂加項（每月固定加給，例如全勤獎金、津貼）</label>
+      <div id="payrollAdditionList"></div>
+      <div class="row-inline" style="max-width:100%;margin-top:8px;gap:8px;">
+        <input type="text" id="newAdditionName" placeholder="項目名稱" style="flex:1;min-width:0;">
+        <input type="number" id="newAdditionAmount" placeholder="金額" style="width:80px;">
+        <button class="btn-ghost" style="white-space:nowrap;flex:none;" onclick="addPayrollAddition()">新增</button>
+      </div>
+    </div>
+    <div class="field">
       <label>自訂扣款項目（每月固定扣除）</label>
       <div id="payrollDeductionList"></div>
       <div class="row-inline" style="max-width:100%;margin-top:8px;gap:8px;">
@@ -1343,7 +1437,7 @@
 let currentEmail = null;
 let currentStorageKey = null;
 let data = null;
-let ui = { catId:'overview', mainView:'list', filter:'pending', calDate:new Date(), weekDate:new Date(), selectedDate:null, expanded:{}, habitDate:null, calMode:'cal' };
+let ui = { catId:'overview', mainView:'list', filter:'pending', calDate:new Date(), weekDate:new Date(), selectedDate:null, expanded:{}, habitDate:null, calMode:'week' };
 
 const PRESET_PALETTES = [
   {id:'p01', name:'簡約白',   bg:'#FAFAFA', ink:'#1A1A1A', accent:'#3A6B5E'},
@@ -1384,6 +1478,8 @@ function defaultData(){
     quickNotes: [],
     dayRecaps: {},
     lastAutoRecapDate: null,
+    lastCatId: 'overview',
+    nightRecapDisabled: false,
     globalPaletteId:'p01',
     customPalettes:[],
     expenses: [],
@@ -1396,6 +1492,7 @@ function defaultData(){
       leaveDivisor: 'workdays',
       personalRule: {type:'halfpay', fixedAmount:0},
       sickRule: {type:'halfpay', fixedAmount:0},
+      additions: [],
       deductions: []
     },
     leaveByMonth: {},
@@ -1554,6 +1651,8 @@ function normalizeData(){
   if(!data.quickNotes) data.quickNotes = [];
   if(!data.dayRecaps) data.dayRecaps = {};
   if(data.lastAutoRecapDate===undefined) data.lastAutoRecapDate = null;
+  if(data.nightRecapDisabled===undefined) data.nightRecapDisabled = false;
+  if(!data.lastCatId) data.lastCatId = 'overview';
   if(data.morningGreetingAlwaysOn===undefined) data.morningGreetingAlwaysOn = false;
   if(data.morningGreetingShownDate===undefined) data.morningGreetingShownDate = null;
   if(!data.expenses) data.expenses = [];
@@ -1563,6 +1662,7 @@ function normalizeData(){
   if(!data.payroll.personalRule) data.payroll.personalRule = {type:'halfpay', fixedAmount:0};
   if(!data.payroll.sickRule) data.payroll.sickRule = {type:'halfpay', fixedAmount:0};
   if(!data.payroll.deductions) data.payroll.deductions = [];
+  if(!data.payroll.additions) data.payroll.additions = [];
   { const pr = data.payroll;
     if(pr.laborFee===undefined) pr.laborFee = Math.round((pr.baseSalary||0)*(pr.laborRate||0)/100);
     if(pr.healthFee===undefined) pr.healthFee = Math.round((pr.baseSalary||0)*(pr.healthRate||0)/100);
@@ -1921,6 +2021,7 @@ function enterAppDirectly(){
     document.getElementById('blackScreen').style.display='none';
     document.getElementById('stageLogin').style.display='none';
     document.getElementById('appShell').style.display='block';
+    ui.catId = data.lastCatId || 'overview';
     applyTheme();
     renderAll();
     const recapShown = maybeShowNightRecap();
@@ -2032,7 +2133,7 @@ function switchMainView(v){
   if(v==='list') renderTaskList();
   if(v==='cal') renderCalendar();
   if(v==='week') renderWeek();
-  if(v==='settings'){ renderBookmarks(); renderSettings(); updateDailyBriefSwitch(); updateMorningGreetingSwitch(); updatePushSwitch('Notification' in window && Notification.permission==='granted' && isPushConfigured()); }
+  if(v==='settings'){ renderBookmarks(); renderSettings(); updateDailyBriefSwitch(); updateMorningGreetingSwitch(); updateNightRecapSwitch(); updatePushSwitch('Notification' in window && Notification.permission==='granted' && isPushConfigured()); }
   if(v==='habits') setHabitTab('checkin');
   if(v==='expense') renderExpensePage();
   if(v==='quicknotes'){
@@ -2068,6 +2169,8 @@ function setListFilter(mode){
 
 function selectCategory(id){
   ui.catId = id;
+  data.lastCatId = id;
+  persist();
   updateCatIndicator();
   closeCategorySheet();
   applyTheme();
@@ -2672,11 +2775,49 @@ function setHabitTab(tab){
   if(tab==='stats') renderHabitStats(); else renderHabitCheckin();
 }
 let habitTypeSelected = 'boolean';
+let habitFreqSelected = 'daily';
+let habitWeekdaysSelected = [];
+let habitMonthdaysSelected = [];
 let editingHabitId = null;
 function selectHabitType(t){
   habitTypeSelected = t;
   document.querySelectorAll('#habitTypeSeg button').forEach(b=> b.classList.toggle('active', b.dataset.type===t));
   document.getElementById('habitUnitField').style.display = (t==='quantity') ? 'block' : 'none';
+}
+function selectHabitFreq(freq){
+  habitFreqSelected = freq;
+  document.querySelectorAll('#habitFreqSeg button').forEach(b=> b.classList.toggle('active', b.dataset.freq===freq));
+  document.getElementById('habitWeekdaysField').style.display = (freq==='weekly') ? 'block' : 'none';
+  document.getElementById('habitMonthdaysField').style.display = (freq==='monthly') ? 'block' : 'none';
+}
+function toggleHabitWeekday(d){
+  const i = habitWeekdaysSelected.indexOf(d);
+  if(i>=0) habitWeekdaysSelected.splice(i,1); else habitWeekdaysSelected.push(d);
+  renderHabitWeekdaysPicker();
+}
+function renderHabitWeekdaysPicker(){
+  const names=['日','一','二','三','四','五','六'];
+  document.getElementById('habitWeekdaysPicker').innerHTML = names.map((n,i)=>
+    `<button type="button" class="weekday-btn ${habitWeekdaysSelected.includes(i)?'selected':''}" onclick="toggleHabitWeekday(${i})">${n}</button>`).join('');
+}
+function toggleHabitMonthday(d){
+  const i = habitMonthdaysSelected.indexOf(d);
+  if(i>=0) habitMonthdaysSelected.splice(i,1); else habitMonthdaysSelected.push(d);
+  renderHabitMonthdaysPicker();
+}
+function renderHabitMonthdaysPicker(){
+  let html='';
+  for(let d=1;d<=31;d++){
+    html += `<button type="button" class="monthday-btn ${habitMonthdaysSelected.includes(d)?'selected':''}" onclick="toggleHabitMonthday(${d})">${d}</button>`;
+  }
+  document.getElementById('habitMonthdaysPicker').innerHTML = html;
+}
+function habitScheduledOn(h, day){
+  if(!h.freq || h.freq==='daily') return true;
+  const d = new Date(day+'T00:00:00');
+  if(h.freq==='weekly') return (h.weekdays||[]).includes(d.getDay());
+  if(h.freq==='monthly') return (h.monthdays||[]).includes(d.getDate());
+  return true;
 }
 function openHabitModal(habitId){
   editingHabitId = habitId || null;
@@ -2686,6 +2827,14 @@ function openHabitModal(habitId){
   document.getElementById('habitName').value = h ? h.name : '';
   document.getElementById('habitUnit').value = '';
   document.getElementById('habitRemindTime').value = h && h.remindTime ? h.remindTime : '';
+  habitFreqSelected = (h && h.freq) || 'daily';
+  habitWeekdaysSelected = (h && h.weekdays) ? h.weekdays.slice() : [];
+  habitMonthdaysSelected = (h && h.monthdays) ? h.monthdays.slice() : [];
+  document.querySelectorAll('#habitFreqSeg button').forEach(b=> b.classList.toggle('active', b.dataset.freq===habitFreqSelected));
+  document.getElementById('habitWeekdaysField').style.display = (habitFreqSelected==='weekly') ? 'block' : 'none';
+  document.getElementById('habitMonthdaysField').style.display = (habitFreqSelected==='monthly') ? 'block' : 'none';
+  renderHabitWeekdaysPicker();
+  renderHabitMonthdaysPicker();
   if(h){
     document.getElementById('habitTypeFieldWrap').style.display = 'none';
   }else{
@@ -2700,10 +2849,15 @@ function saveHabit(){
   const name = document.getElementById('habitName').value.trim();
   if(!name){ notify('請輸入習慣名稱'); return; }
   const remindTime = document.getElementById('habitRemindTime').value || null;
+  if(habitFreqSelected==='weekly' && habitWeekdaysSelected.length===0){ notify('請選擇每週要做的星期'); return; }
+  if(habitFreqSelected==='monthly' && habitMonthdaysSelected.length===0){ notify('請選擇每月要做的日期'); return; }
   if(editingHabitId){
     const h = data.habits.find(x=>x.id===editingHabitId);
     h.name = name;
     h.remindTime = remindTime;
+    h.freq = habitFreqSelected;
+    h.weekdays = habitWeekdaysSelected.slice();
+    h.monthdays = habitMonthdaysSelected.slice();
     editingHabitId = null;
     closeModal('habitModal');
     persist(); renderHabitCheckin();
@@ -2717,7 +2871,7 @@ function saveHabit(){
     unit = document.getElementById('habitUnit').value.trim();
     if(!unit){ notify('請輸入數量單位，例如：公斤、公升'); return; }
   }
-  const newHabit = {id:uid(), name, type, unit, remindTime, createdAt: todayStr()};
+  const newHabit = {id:uid(), name, type, unit, remindTime, freq:habitFreqSelected, weekdays:habitWeekdaysSelected.slice(), monthdays:habitMonthdaysSelected.slice(), createdAt: todayStr()};
   data.habits.push(newHabit);
   closeModal('habitModal');
   persist(); renderHabitCheckin();
@@ -2828,7 +2982,7 @@ function setHabitBoolean(id, day){
   if(nowChecked){
     bounceCheck(`habit:${id}:${day}`);
     const h = data.habits.find(x=>x.id===id);
-    if(h && [7,30,100,365].includes(habitStreak(h))) flashMilestone(id);
+    if(h && [7,30,100,365].includes(habitStreak(h, day))) flashMilestone(id);
   }
 }
 function setHabitChecked(id, day){
@@ -2842,7 +2996,7 @@ function setHabitChecked(id, day){
   if(nowChecked){
     bounceCheck(`habit:${id}:${day}`);
     const h = data.habits.find(x=>x.id===id);
-    if(h && [7,30,100,365].includes(habitStreak(h))) flashMilestone(id);
+    if(h && [7,30,100,365].includes(habitStreak(h, day))) flashMilestone(id);
   }
 }
 function setHabitValue(id, day, rawValue, type){
@@ -2862,7 +3016,7 @@ function setHabitValue(id, day, rawValue, type){
   if(justChecked){
     bounceCheck(`habit:${id}:${day}`);
     const h = data.habits.find(x=>x.id===id);
-    if(h && [7,30,100,365].includes(habitStreak(h))) flashMilestone(id);
+    if(h && [7,30,100,365].includes(habitStreak(h, day))) flashMilestone(id);
   }
 }
 function changeHabitWeek(delta){
@@ -2903,9 +3057,20 @@ function renderHabitWeekStrip(){
   html += `</div>`;
   box.innerHTML = html;
 }
-function habitStreak(h){
-  let streak = 0, i = 0;
-  while(habitHasLog(h, dateStrOffset(-i))){ streak++; i++; }
+function habitStreak(h, asOf){
+  asOf = asOf || todayStr();
+  let streak = 0;
+  const d = new Date(asOf+'T00:00:00');
+  const pad = n=>String(n).padStart(2,'0');
+  let guard = 0;
+  while(guard++ < 3660){
+    const ds = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    if(habitScheduledOn(h, ds)){
+      if(!habitHasLog(h, ds)) break;
+      streak++;
+    }
+    d.setDate(d.getDate()-1);
+  }
   return streak;
 }
 function renderHabitCheckin(){
@@ -2918,29 +3083,35 @@ function renderHabitCheckin(){
   }
   const day = ui.habitDate;
   const future = isFutureDay(day);
-  const doneCount = data.habits.filter(h=> habitHasLog(h, day)).length;
+  const scheduledToday = data.habits.filter(h=> habitScheduledOn(h, day));
+  const doneCount = scheduledToday.filter(h=> habitHasLog(h, day)).length;
   const dateLabel = day===todayStr() ? '今日' : day.slice(5).replace('-','/');
-  let html = `<div class="habit-summary">${dateLabel}已完成 ${doneCount} / ${data.habits.length} 項習慣${future?'（未來日期尚無法勾選）':''}</div>`;
+  let html = `<div class="habit-summary">${dateLabel}已完成 ${doneCount} / ${scheduledToday.length} 項習慣${future?'（未來日期尚無法勾選）':''}</div>`;
   html += `<div class="habit-table">` + data.habits.map((h,idx)=>{
+    const scheduled = habitScheduledOn(h, day);
     const entry = habitEntry(h, day);
     const val = entry ? entry.value : undefined;
     const checked = !!(entry && entry.checked);
-    const streak = habitStreak(h);
+    const streak = habitStreak(h, day);
+    const disabled = future || !scheduled;
     let inputHtml = '';
     let checkBtn = '';
     if(h.type==='quantity'){
-      inputHtml = `<input type="number" step="any" class="habit-value-input" value="${val!==undefined?val:''}" ${future?'disabled':''}
+      inputHtml = `<input type="number" step="any" class="habit-value-input" value="${val!==undefined?val:''}" ${disabled?'disabled':''}
         onchange="setHabitValue('${h.id}','${day}', this.value, 'quantity')">
         <span class="habit-unit-label">${escapeHtml(h.unit)}</span>`;
-      checkBtn = `<button class="check ${checked?'done':''}" data-check-id="habit:${h.id}:${day}" ${future?'disabled':''} onclick="setHabitChecked('${h.id}','${day}')"></button>`;
+      checkBtn = `<button class="check ${checked?'done':''}" data-check-id="habit:${h.id}:${day}" ${disabled?'disabled':''} onclick="setHabitChecked('${h.id}','${day}')"></button>`;
     }else if(h.type==='time'){
-      inputHtml = `<input type="time" class="habit-value-input" value="${val||''}" ${future?'disabled':''}
+      inputHtml = `<input type="time" class="habit-value-input" value="${val||''}" ${disabled?'disabled':''}
         onchange="setHabitValue('${h.id}','${day}', this.value, 'time')">`;
-      checkBtn = `<button class="check ${checked?'done':''}" data-check-id="habit:${h.id}:${day}" ${future?'disabled':''} onclick="setHabitChecked('${h.id}','${day}')"></button>`;
+      checkBtn = `<button class="check ${checked?'done':''}" data-check-id="habit:${h.id}:${day}" ${disabled?'disabled':''} onclick="setHabitChecked('${h.id}','${day}')"></button>`;
     }else{
-      checkBtn = `<button class="check ${checked?'done':''}" data-check-id="habit:${h.id}:${day}" ${future?'disabled':''} onclick="setHabitBoolean('${h.id}','${day}')"></button>`;
+      checkBtn = `<button class="check ${checked?'done':''}" data-check-id="habit:${h.id}:${day}" ${disabled?'disabled':''} onclick="setHabitBoolean('${h.id}','${day}')"></button>`;
     }
-    return `<div class="habit-grid-row" data-habit-id="${h.id}">
+    if(!scheduled){
+      inputHtml = `<span class="habit-schedule-note">非排定日</span>`;
+    }
+    return `<div class="habit-grid-row ${!scheduled?'not-scheduled':''}" data-habit-id="${h.id}">
       <div class="habit-grid-num">
         <button type="button" class="drag-handle" onpointerdown="habitHandlePointerDown(event,'${h.id}')"><span></span><span></span><span></span></button>
         <span>${idx+1}</span>
@@ -3202,6 +3373,25 @@ function onLeafDragRelease(){
   draggingLeaf = null;
   releaseLeaf(leaf);
 }
+function resumeAmbientDrift(leaf, x, y){
+  if(leaf._onAnimEnd) leaf.removeEventListener('animationend', leaf._onAnimEnd);
+  const dur = 6 + Math.random()*4;
+  const dx = -(110 + Math.random()*15);
+  const dyPx = 60 + Math.random()*120;
+  const drot = 250 + Math.random()*260;
+  leaf.style.left = x + 'px';
+  leaf.style.top = y + 'px';
+  leaf.style.right = 'auto';
+  leaf.style.opacity = '.85';
+  leaf.style.setProperty('--dx', dx+'vw');
+  leaf.style.setProperty('--dy', dyPx+'px');
+  leaf.style.setProperty('--drot', drot+'deg');
+  leaf.style.animationDuration = dur+'s';
+  leaf.style.animationName = 'leafResumeDrift';
+  const onAnimEnd = ()=> leaf.remove();
+  leaf._onAnimEnd = onAnimEnd;
+  leaf.addEventListener('animationend', onAnimEnd);
+}
 function releaseLeaf(leaf){
   leaf.__caught = false;
   const layer = document.getElementById('quickNoteLeafLayer');
@@ -3210,6 +3400,7 @@ function releaseLeaf(leaf){
   let y = parseFloat(leaf.style.top) || 0;
   let vx = 0;
   let vy = 0;
+  const targetVy = 16 + Math.random()*8;
   const gravity = 130;
   const vyDrag = 3;
   const windAccel = -260;
@@ -3226,7 +3417,7 @@ function releaseLeaf(leaf){
     const dt = Math.min((now - lastT) / 1000, 0.05);
     lastT = now;
     elapsed += dt;
-    vy += (gravity - vyDrag * vy) * dt;
+    vy += vyDrag * (targetVy - vy) * dt;
     if(elapsed >= windStartDelay){
       vx += windAccel * dt;
       if(vx < maxVx) vx = maxVx;
@@ -3235,13 +3426,17 @@ function releaseLeaf(leaf){
     y += vy * dt;
     if(y >= groundY){
       y = groundY;
-      vy = 0;
+      vy = targetVy;
       if(!bounced){ vx = vx / 2; bounced = true; }
     }
     leaf.style.left = x + 'px';
     leaf.style.top = y + 'px';
     if(x < -60 || x > layerRect.width + 60){
       leaf.remove();
+      return;
+    }
+    if(bounced && Math.abs(vy-targetVy)<3 && Math.abs(vx)<8){
+      resumeAmbientDrift(leaf, x, y);
       return;
     }
     requestAnimationFrame(step);
@@ -3372,8 +3567,9 @@ function computeSalaryBreakdown(year, monthIdx, personalDays, sickDays){
   const health = Number(p.healthFee)||0;
   const pension = Math.round(p.baseSalary * (p.pensionSelfRate||0)/100);
   const customTotal = (p.deductions||[]).reduce((s,d)=>s+(Number(d.amount)||0),0);
-  const net = p.baseSalary - personalDeduct - sickDeduct - labor - health - pension - customTotal;
-  return { dailyRate, personalDeduct, sickDeduct, labor, health, pension, customTotal, net, base:p.baseSalary };
+  const additionsTotal = (p.additions||[]).reduce((s,d)=>s+(Number(d.amount)||0),0);
+  const net = p.baseSalary + additionsTotal - personalDeduct - sickDeduct - labor - health - pension - customTotal;
+  return { dailyRate, personalDeduct, sickDeduct, labor, health, pension, customTotal, additionsTotal, net, base:p.baseSalary };
 }
 function updateSalaryPreview(){
   const monthKey = expenseMonthKeyOf(expenseUi.monthDate);
@@ -3421,9 +3617,9 @@ function runSalaryAuto(){
     if(data.salaryRecorded[key]) continue;
     const pay = salaryPayDate(d.getFullYear(), d.getMonth());
     if(pay.dateStr <= p.autoFrom || pay.dateStr > today) continue;
-    const b = salaryForMonth(key);
-    const amount = Math.round(b.net);
-    data.expenses.push({id:uid(), type:'income', amount, category:'salary', note:(d.getMonth()+1)+'月薪資', date:pay.dateStr, accountId:salaryAccountId(), salaryMonth:key, createdAt:Date.now()});
+    const salaryDetail = salaryDetailFromBreakdown(salaryForMonth(key));
+    const amount = Math.max(0, salaryDetailNet(salaryDetail));
+    data.expenses.push({id:uid(), type:'income', amount, category:'salary', note:(d.getMonth()+1)+'月薪資', date:pay.dateStr, accountId:salaryAccountId(), salaryMonth:key, salaryDetail, createdAt:Date.now()});
     data.salaryRecorded[key] = true;
     made.push({month:d.getMonth()+1, amount, pm:pay.pm, day:pay.day});
   }
@@ -3442,6 +3638,135 @@ function salaryEntryMonthKey(e){
     if(diff < bestDiff){ bestDiff = diff; best = y+'-'+String(mm).padStart(2,'0'); }
   });
   return best;
+}
+/* ===== 單筆薪水明細：點薪水紀錄，只調整「這一筆」的費用，不影響薪資設定 ===== */
+function isSalaryEntry(e){ return e.type==='income' && e.category==='salary'; }
+function salaryEntryKeyLoose(e){
+  const k = salaryEntryMonthKey(e);
+  if(k) return k;
+  const d = new Date(e.date+'T00:00:00');
+  d.setMonth(d.getMonth() - (Number(data.payroll.payMonthOffset)||0), 1);
+  return expenseMonthKeyOf(d);
+}
+function salaryDetailFromBreakdown(b){
+  return { base:b.base, labor:b.labor, health:b.health, pension:b.pension,
+    personal:Math.round(b.personalDeduct), sick:Math.round(b.sickDeduct),
+    additions:(data.payroll.additions||[]).map(x=>({name:x.name, amount:Number(x.amount)||0})),
+    items:(data.payroll.deductions||[]).map(x=>({name:x.name, amount:Number(x.amount)||0})) };
+}
+function salaryDetailNet(dt){
+  const adds = (dt.additions||[]).reduce((t,x)=>t+(Number(x.amount)||0),0);
+  return dt.base + adds - dt.labor - dt.health - dt.pension - dt.personal - dt.sick - dt.items.reduce((t,x)=>t+(Number(x.amount)||0),0);
+}
+function defaultSalaryDetail(key, fallbackAmount){
+  if(!(Number(data.payroll.baseSalary)>0)) return {base:fallbackAmount||0, labor:0, health:0, pension:0, personal:0, sick:0, additions:[], items:[]};
+  return salaryDetailFromBreakdown(salaryForMonth(key));
+}
+function readSalaryDetailInputs(){
+  const n = id => Number(document.getElementById(id).value)||0;
+  return { base:n('sdBase'), labor:n('sdLabor'), health:n('sdHealth'), pension:n('sdPension'), personal:n('sdPersonal'), sick:n('sdSick'),
+    additions: expenseUi.sd.adds.map(x=>({name:x.name, amount:Number(x.amount)||0})),
+    items: expenseUi.sd.items.map(x=>({name:x.name, amount:Number(x.amount)||0})) };
+}
+function updateSalaryDetailNet(){
+  if(!expenseUi.sd) return;
+  document.getElementById('sdNet').textContent = fmtMoney(salaryDetailNet(readSalaryDetailInputs()));
+}
+function renderSdItems(){
+  document.getElementById('sdItems').innerHTML = expenseUi.sd.items.map(x=>
+    `<div class="sd-row"><label>${escapeHtml(x.name)}</label><input type="number" value="${Number(x.amount)||0}" oninput="setSdItem('${x.id}', this.value)"><button class="sd-x" onclick="removeSdItem('${x.id}')">×</button></div>`).join('');
+}
+function fillSalaryDetail(dt){
+  const set = (id,v)=>{ document.getElementById(id).value = v; };
+  set('sdBase', dt.base); set('sdLabor', dt.labor); set('sdHealth', dt.health); set('sdPension', dt.pension); set('sdPersonal', dt.personal); set('sdSick', dt.sick);
+  expenseUi.sd.adds = (dt.additions||[]).map(x=>({id:uid(), name:x.name, amount:Number(x.amount)||0}));
+  renderSdAdds();
+  expenseUi.sd.items = dt.items.map(x=>({id:uid(), name:x.name, amount:Number(x.amount)||0}));
+  renderSdItems();
+  updateSalaryDetailNet();
+}
+function openSalaryDetail(id){
+  const e = data.expenses.find(x=>x.id===id);
+  if(!e || !isSalaryEntry(e)) return;
+  const key = salaryEntryKeyLoose(e);
+  expenseUi.sd = { id, key, items:[], adds:[] };
+  fillSalaryDetail(e.salaryDetail ? e.salaryDetail : defaultSalaryDetail(key, e.amount));
+  document.getElementById('salaryDetailTitle').textContent = Number(key.slice(5))+'月薪資明細';
+  document.getElementById('salaryDetailInfo').textContent = e.date.slice(5).replace('-','/')+' 入帳・'+accountName(e.accountId)+'・目前 '+fmtMoney(e.amount)
+    + (e.salaryDetail ? '' : '（這筆原本沒有明細，先依目前的薪資設定帶入）');
+  document.getElementById('sdNewName').value = '';
+  document.getElementById('sdNewAmount').value = '';
+  document.getElementById('sdNewAddName').value = '';
+  document.getElementById('sdNewAddAmount').value = '';
+  document.getElementById('salaryDetailModal').classList.add('show');
+}
+function setSdItem(id, v){
+  const it = expenseUi.sd.items.find(x=>x.id===id);
+  if(it) it.amount = Number(v)||0;
+  updateSalaryDetailNet();
+}
+function removeSdItem(id){
+  expenseUi.sd.items = expenseUi.sd.items.filter(x=>x.id!==id);
+  renderSdItems();
+  updateSalaryDetailNet();
+}
+function addSdItem(){
+  const name = document.getElementById('sdNewName').value.trim();
+  const amount = Number(document.getElementById('sdNewAmount').value);
+  if(!name || !amount){ notify('請輸入項目名稱與金額'); return; }
+  expenseUi.sd.items.push({id:uid(), name, amount});
+  document.getElementById('sdNewName').value = '';
+  document.getElementById('sdNewAmount').value = '';
+  renderSdItems();
+  updateSalaryDetailNet();
+}
+function renderSdAdds(){
+  document.getElementById('sdAdds').innerHTML = expenseUi.sd.adds.map(x=>
+    `<div class="sd-row"><label>${escapeHtml(x.name)}</label><input type="number" value="${Number(x.amount)||0}" oninput="setSdAdd('${x.id}', this.value)"><button class="sd-x" onclick="removeSdAdd('${x.id}')">×</button></div>`).join('');
+}
+function setSdAdd(id, v){
+  const it = expenseUi.sd.adds.find(x=>x.id===id);
+  if(it) it.amount = Number(v)||0;
+  updateSalaryDetailNet();
+}
+function removeSdAdd(id){
+  expenseUi.sd.adds = expenseUi.sd.adds.filter(x=>x.id!==id);
+  renderSdAdds();
+  updateSalaryDetailNet();
+}
+function addSdAdd(){
+  const name = document.getElementById('sdNewAddName').value.trim();
+  const amount = Number(document.getElementById('sdNewAddAmount').value);
+  if(!name || !amount){ notify('請輸入項目名稱與金額'); return; }
+  expenseUi.sd.adds.push({id:uid(), name, amount});
+  document.getElementById('sdNewAddName').value = '';
+  document.getElementById('sdNewAddAmount').value = '';
+  renderSdAdds();
+  updateSalaryDetailNet();
+}
+function resetSalaryDetail(){
+  const sd = expenseUi.sd;
+  if(!sd) return;
+  const e = data.expenses.find(x=>x.id===sd.id);
+  fillSalaryDetail(defaultSalaryDetail(sd.key, e ? e.amount : 0));
+  flashToast('已依目前的薪資設定與該月請假重新帶入，記得按儲存');
+}
+function saveSalaryDetail(){
+  const sd = expenseUi.sd;
+  if(!sd) return;
+  const e = data.expenses.find(x=>x.id===sd.id);
+  if(!e){ closeModal('salaryDetailModal'); return; }
+  const dt = readSalaryDetailInputs();
+  const net = Math.round(salaryDetailNet(dt)*100)/100;
+  if(net<0){ notify('實領金額不能是負的，請檢查各項扣款'); return; }
+  e.salaryDetail = dt;
+  e.amount = net;
+  if(!e.salaryMonth) e.salaryMonth = sd.key;
+  data.salaryRecorded[sd.key] = true;
+  persist();
+  closeModal('salaryDetailModal');
+  renderExpensePage();
+  flashToast('已更新這筆薪水：'+fmtMoney(net));
 }
 function renderSalaryBlockHeader(){
   const y = expenseUi.monthDate.getFullYear(), m = expenseUi.monthDate.getMonth();
@@ -3701,16 +4026,17 @@ function renderExpensePage(){
     byDay[day].forEach(e=>{
       const cat = e.type==='adjust' ? {name:'調整誤差', icon:'scale'}
         : ((e.type==='income'?INCOME_CATEGORIES:EXPENSE_CATEGORIES).find(c=>c.id===e.category) || {name:e.category, icon:'other'});
-      const noteText = [accountName(e.accountId), e.note].filter(Boolean).join('・');
+      const isSal = isSalaryEntry(e);
+      const noteText = [accountName(e.accountId), e.note, isSal ? '點一下調整明細' : ''].filter(Boolean).join('・');
       const amtText = e.type==='income' ? '+'+fmtMoney(e.amount) : e.type==='expense' ? '-'+fmtMoney(e.amount) : (e.amount>0?'+':'-')+fmtMoney(Math.abs(e.amount));
-      html += `<div class="expense-item">
+      html += `<div class="expense-item${isSal?' clickable':''}"${isSal?` onclick="openSalaryDetail('${e.id}')"`:''}>
         <div class="ex-icon">${iconSvg(cat.icon,18)}</div>
         <div class="ex-info">
           <div class="ex-cat-name">${escapeHtml(cat.name)}</div>
           <div class="ex-note">${escapeHtml(noteText)}</div>
         </div>
         <div class="ex-amt ${e.type}">${amtText}</div>
-        <button class="ex-del" onclick="deleteExpense('${e.id}')">×</button>
+        <button class="ex-del" onclick="event.stopPropagation();deleteExpense('${e.id}')">×</button>
       </div>`;
     });
     html += `</div>`;
@@ -3798,6 +4124,7 @@ function openPayrollModal(){
   document.getElementById('payrollPersonalFixedAmount').value = p.personalRule.fixedAmount || '';
   document.getElementById('payrollSickFixedAmount').value = p.sickRule.fixedAmount || '';
   renderPayrollDeductionList();
+  renderPayrollAdditionList();
   document.getElementById('payrollModal').classList.add('show');
 }
 function setPayrollDivisor(mode, skipStore){
@@ -3813,6 +4140,29 @@ function setPayrollRule(kind, type, skipStore){
   document.getElementById('payroll'+suffix+'FixedBtn').classList.toggle('active', type==='fixed');
   document.getElementById('payroll'+suffix+'FixedAmount').style.display = type==='fixed' ? 'block' : 'none';
 }
+function renderPayrollAdditionList(){
+  const box = document.getElementById('payrollAdditionList');
+  const list = data.payroll.additions||[];
+  box.innerHTML = list.map(d=>`<div class="payroll-deduction-item"><span>${escapeHtml(d.name)}　+$${Number(d.amount).toLocaleString()}</span><button onclick="removePayrollAddition('${d.id}')">刪除</button></div>`).join('');
+}
+
+function addPayrollAddition(){
+  const name = document.getElementById('newAdditionName').value.trim();
+  const amount = Number(document.getElementById('newAdditionAmount').value);
+  if(!name || !amount){ notify('請輸入項目名稱與金額'); return; }
+  data.payroll.additions.push({id:uid(), name, amount});
+  document.getElementById('newAdditionName').value='';
+  document.getElementById('newAdditionAmount').value='';
+  persist();
+  renderPayrollAdditionList();
+}
+
+function removePayrollAddition(id){
+  data.payroll.additions = data.payroll.additions.filter(d=>d.id!==id);
+  persist();
+  renderPayrollAdditionList();
+}
+
 function renderPayrollDeductionList(){
   const box = document.getElementById('payrollDeductionList');
   const list = data.payroll.deductions||[];
@@ -3853,7 +4203,7 @@ function savePayrollSettings(){
 }
 
 /* 記帳相關入口出錯時直接顯示原因，避免按了沒反應卻不知道為什麼 */
-['renderExpensePage','openExpenseModal','saveExpense','deleteExpense','openPayrollModal','savePayrollSettings','openAccountsModal','addAccount','deleteAccount','renameAccount','openAdjustModal','saveAdjust','openRecurringModal','saveRecurring','deleteRecurring'].forEach(name=>{
+['renderExpensePage','openExpenseModal','saveExpense','deleteExpense','openPayrollModal','savePayrollSettings','openAccountsModal','addAccount','deleteAccount','renameAccount','openAdjustModal','saveAdjust','openRecurringModal','saveRecurring','deleteRecurring','openSalaryDetail','saveSalaryDetail','resetSalaryDetail','addSdItem','removeSdItem','addSdAdd','removeSdAdd','addPayrollAddition','removePayrollAddition'].forEach(name=>{
   const fn = globalThis[name];
   globalThis[name] = function(...args){
     try{ return fn.apply(this, args); }
@@ -4119,6 +4469,7 @@ function isNightRecapWindow(){
   return hour >= 22 || hour < 10;
 }
 function maybeShowNightRecap(){
+  if(data.nightRecapDisabled) return false;
   if(!isNightRecapWindow()) return false;
   const recapDay = getRecapDateStr();
   if(data.lastAutoRecapDate === recapDay) return false;
@@ -4289,6 +4640,19 @@ function toggleMorningGreetingSwitch(){
   persist();
   updateMorningGreetingSwitch();
 }
+function updateNightRecapSwitch(){
+  const sw = document.getElementById('nightRecapSwitch');
+  if(!sw) return;
+  sw.classList.toggle('on', !data.nightRecapDisabled);
+}
+
+function toggleNightRecapSwitch(){
+  data.nightRecapDisabled = !data.nightRecapDisabled;
+  persist();
+  updateNightRecapSwitch();
+  flashToast(data.nightRecapDisabled ? '已關閉晚上回顧動畫' : '已開啟晚上回顧動畫');
+}
+
 function toggleDailyBriefSwitch(){
   const today = todayStr();
   if(data.dailyBriefDismissedDate === today){
