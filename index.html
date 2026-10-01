@@ -587,6 +587,7 @@
   /* ============ 今天總結（夜間）／每日提醒（早晨） ============ */
   #nightRecapOverlay{display:none;position:fixed;inset:0;z-index:160;align-items:center;justify-content:center;
     background:linear-gradient(160deg,#1B2333,#0B0F17);overflow:hidden;transition:opacity 1s ease;}
+  #nightRecapOverlay.quick-transition{transition:opacity .5s ease;}
   #nightRecapOverlay.show{display:flex;opacity:1;}
   #nightRecapOverlay.fading-out{opacity:0;}
   .recap-stars{position:absolute;inset:0;pointer-events:none;}
@@ -688,8 +689,6 @@
   /* ============ MODAL ============ */
   .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:150;align-items:center;justify-content:center;padding:20px;}
   .overlay.show{display:flex;}
-  #quickMoodModal{display:flex;opacity:0;pointer-events:none;transition:opacity .5s ease;}
-  #quickMoodModal.show{opacity:1;pointer-events:auto;}
   .modal{background:#fff;border-radius:24px;padding:28px;max-width:360px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25);color:#1A1A1A;max-height:calc(100vh - 40px);overflow-y:auto;}
   .fee-hint{font-size:11px;color:var(--ink-soft);margin-top:4px;}
   .modal h3{margin:0 0 18px;font-size:16px;}
@@ -1228,14 +1227,6 @@
   </div>
 </div>
 
-<div class="overlay" id="quickMoodModal">
-  <div class="modal" style="text-align:center;">
-    <h3>今天心情</h3>
-    <div class="quick-mood-row" id="quickMoodRow" style="display:flex;justify-content:center;gap:14px;margin:14px 0;"></div>
-    <div class="modal-actions"><button class="btn-ghost" onclick="closeModal('quickMoodModal')">關閉</button></div>
-  </div>
-</div>
-
 <div class="overlay" id="accountsModal">
   <div class="modal">
     <h3>我的存款</h3>
@@ -1449,6 +1440,7 @@
 ============================================================ */
 let currentEmail = null;
 let currentStorageKey = null;
+let recapSimpleMode = false;
 const DEV_EMAIL = 'ttpss98005@gmail.com';
 function isDevUser(){ return !!currentEmail && currentEmail.toLowerCase()===DEV_EMAIL; }
 let data = null;
@@ -2735,36 +2727,46 @@ function renderDayDetail(){
 /* 今天心情:改到週日期條的「今天」格子。若在晚安動畫時段(22:00~10:00)點擊,
    開啟完整的晚安回顧動畫(跟自動彈出的一樣);若在這個時段之外點擊,
    只開一個簡單的心情選擇視窗,轉場速度跟早安動畫一致(0.5秒淡入淡出),不跑完整動畫。 */
-function openTodayMoodFlow(){
-  selectHabitDate(todayStr());
-  if(isNightRecapWindow()){
-    showNightRecap(todayStr(), true);
-  }else{
-    openQuickMoodModal();
-  }
+/* 今天在22:00~5:00(晚安時段)點擊 → 完整晚安動畫,存檔後會看到晚安動畫。
+   今天在5:00~22:00點擊 → 同樣是「今日完成＋選擇心情＋一句話」的卡片,但開關速度
+   跟早安動畫一樣快(0.5秒),存檔後直接關閉,不會跑完整的晚安動畫。
+   過去的日期:第一次點只是切換成看那一天的打卡頁面,已經在那天了、再點一次才會
+   開心情編輯(用跟白天一樣的快速卡片,畢竟不是正在經歷那個晚上)。未來不能設定。 */
+/* 「晚安時段」是綁在「被點的那一天」本身,不是只看現在的時鐘:
+   10/1的晚安時段是10/1 22:00到10/2 5:00(跨過午夜算同一段)。
+   這段時間內點10/1 → 完整晚安動畫。
+   這段過了之後,10/1變成「昨天」,單次點擊就能打開簡化卡片(今日完成＋心情＋一句話,
+   速度跟早安動畫一樣)。再更早的日子,要先點一次切換頁面,點第二次才打開同一張簡化卡片。
+   未來的日子不處理。 */
+function dayNightWindowActive(dayStr){
+  const now = new Date();
+  const hour = now.getHours();
+  const nowStr = todayStr();
+  if(nowStr === dayStr && hour >= 22) return true;
+  const next = new Date(dayStr+'T00:00:00');
+  next.setDate(next.getDate()+1);
+  const pad = n=>String(n).padStart(2,'0');
+  const nextStr = `${next.getFullYear()}-${pad(next.getMonth()+1)}-${pad(next.getDate())}`;
+  if(nowStr === nextStr && hour < 5) return true;
+  return false;
 }
-function openQuickMoodModal(){
-  const day = todayStr();
-  const existing = (data.dayRecaps||{})[day];
-  const moods = [['bad','不太好'],['ok','普通'],['good','很棒']];
-  document.getElementById('quickMoodRow').innerHTML = moods.map(([m,label])=>
-    `<button type="button" class="habit-mood-btn ${existing&&existing.mood===m?'selected':''}" onclick="setTodayMoodQuick('${m}')" title="${label}">${moodFaceSvgSmall(m)}</button>`
-  ).join('');
-  document.getElementById('quickMoodModal').classList.add('show');
-}
-function setTodayMoodQuick(mood){
-  const day = todayStr();
-  if(!data.dayRecaps) data.dayRecaps = {};
-  const existing = data.dayRecaps[day];
-  if(existing && existing.mood===mood){
-    delete existing.mood;
-    if(!existing.note) delete data.dayRecaps[day];
-  }else{
-    data.dayRecaps[day] = Object.assign({}, existing, {mood, createdAt:(existing&&existing.createdAt)||Date.now()});
+function openDayMoodFlow(dayStr){
+  const today = todayStr();
+  if(dayStr > today) return;
+  if(dayNightWindowActive(dayStr)){
+    selectHabitDate(dayStr);
+    showNightRecap(dayStr, true, false);
+    return;
   }
-  persist();
-  openQuickMoodModal();
-  renderHabitWeekStrip();
+  if(dayStr === today || dayStr === dateStrOffset(-1)){
+    selectHabitDate(dayStr);
+    showNightRecap(dayStr, true, true);
+    return;
+  }
+  const alreadySelected = ui.habitDate === dayStr;
+  selectHabitDate(dayStr);
+  if(!alreadySelected) return;
+  showNightRecap(dayStr, true, true);
 }
 function moodFaceSvgSmall(mood){
   if(mood==='bad') return `<svg class="week-mood-face" viewBox="0 0 40 40"><rect width="40" height="40" rx="10" fill="#5B9BD5"/><circle cx="14" cy="17" r="2.2" fill="#fff"/><circle cx="26" cy="17" r="2.2" fill="#fff"/><path d="M13 27 Q20 22 27 27" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>`;
@@ -3095,9 +3097,10 @@ function renderHabitWeekStrip(){
     const dayStr = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
     const isToday = dayStr===today;
     const isSelected = dayStr===ui.habitDate;
-    const todayMood = isToday ? (data.dayRecaps||{})[dayStr] : null;
-    const numDisplay = (isToday && todayMood && todayMood.mood) ? moodFaceSvgSmall(todayMood.mood) : `<span class="num">${d.getDate()}</span>`;
-    const clickAction = isToday ? `openTodayMoodFlow()` : `selectHabitDate('${dayStr}')`;
+    const isPastOrToday = dayStr <= today;
+    const dayMood = isPastOrToday ? (data.dayRecaps||{})[dayStr] : null;
+    const numDisplay = (dayMood && dayMood.mood) ? moodFaceSvgSmall(dayMood.mood) : `<span class="num">${d.getDate()}</span>`;
+    const clickAction = `openDayMoodFlow('${dayStr}')`;
     html += `<button class="habit-day ${isToday?'today':''} ${isSelected?'selected':''}" onclick="${clickAction}">
       <span class="dow">${dows[i]}</span>
       ${numDisplay}
@@ -4558,9 +4561,10 @@ function buildRecapSummaryHtml(day){
   }
   return html;
 }
-function showNightRecap(day, isManual){
+function showNightRecap(day, isManual, simple){
   recapTargetDate = day;
   recapSelectedMood = null;
+  recapSimpleMode = !!simple;
   if(!data.dayRecaps) data.dayRecaps = {};
   const existing = data.dayRecaps[day];
   document.getElementById('recapTitle').textContent = (isManual? '' : getRecapLabel()) + '總結';
@@ -4582,6 +4586,7 @@ function showNightRecap(day, isManual){
   card.style.transition = '';
   document.getElementById('recapGoodnightScreen').classList.remove('show');
   document.getElementById('recapGoodnightScreen').style.display = 'none';
+  overlay.classList.toggle('quick-transition', recapSimpleMode);
   overlay.classList.add('show');
 }
 function nightRecapNextStep(){
@@ -4620,7 +4625,23 @@ function saveNightRecap(){
   if(!data.dayRecaps) data.dayRecaps = {};
   data.dayRecaps[recapTargetDate] = { mood: recapSelectedMood, note, createdAt: Date.now() };
   persist();
-  showGoodnightScreen();
+  renderHabitWeekStrip();
+  if(recapSimpleMode){
+    closeNightRecapQuick();
+  }else{
+    showGoodnightScreen();
+  }
+}
+function closeNightRecapQuick(){
+  const overlay = document.getElementById('nightRecapOverlay');
+  overlay.classList.add('fading-out');
+  setTimeout(()=>{
+    overlay.classList.remove('show','fading-out','quick-transition');
+    if(pendingMorningBriefAfterRecap){
+      pendingMorningBriefAfterRecap = false;
+      maybeShowDailyBrief();
+    }
+  }, 500);
 }
 function showGoodnightScreen(){
   const card = document.getElementById('recapCard');
@@ -4647,6 +4668,7 @@ function closeFromGoodnight(){
   }, 1000);
 }
 function closeNightRecap(){
+  if(recapSimpleMode){ closeNightRecapQuick(); return; }
   const overlay = document.getElementById('nightRecapOverlay');
   overlay.classList.add('fading-out');
   setTimeout(()=>{
