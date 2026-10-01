@@ -576,13 +576,7 @@
   .quicknote-flying.landed{transform:scale(0.85) rotate(-4deg) translateY(140px);opacity:.9;}
   @keyframes quicknoteAppear{from{opacity:0;} to{opacity:1;}}
   #quickNoteLeafLayer{position:fixed;inset:0;pointer-events:none;z-index:50;overflow:hidden;}
-  .quicknote-leaf{position:absolute;right:-30px;animation:leafDrift linear forwards;pointer-events:auto;cursor:grab;}
-  @keyframes leafDrift{
-    0%{transform:translate(0,0) rotate(0deg);opacity:0;}
-    8%{opacity:.85;}
-    92%{opacity:.85;}
-    100%{transform:translate(var(--dx,450px),var(--dy,80px)) rotate(var(--drot,380deg));opacity:0;}
-  }
+  .quicknote-leaf{position:absolute;pointer-events:auto;cursor:grab;}
 
   /* ============ 今天總結（夜間）／每日提醒（早晨） ============ */
   #nightRecapOverlay{display:none;position:fixed;inset:0;z-index:160;align-items:center;justify-content:center;
@@ -2753,13 +2747,15 @@ function dayNightWindowActive(dayStr){
   return false;
 }
 function openDayMoodFlow(dayStr){
+  /* 切換到那天的打卡頁面,不管是過去、今天還是未來都可以點,跟以前一樣。
+     只是「選心情」這件事只對過去跟今天有意義,未來還沒發生,不能設定心情,
+     所以點未來日期永遠只會切換頁面,不會有點兩次打開心情視窗這件事。
+     過去跟今天:所有日期都要點兩次,第一次只是切換頁面,已經在那天了、
+     再點第二次才真的打開心情視窗。 */
   const today = todayStr();
-  if(dayStr > today) return;
-  /* 所有日期(包含今天)都要點兩次:第一次只是切換到那天的打卡頁面,
-     已經在那天了、再點第二次才真的打開心情視窗。有沒有跑完整晚安動畫
-     還是簡化卡片,則看「被點的那一天」自己的晚安時段是否正在進行。 */
   const alreadySelected = ui.habitDate === dayStr;
   selectHabitDate(dayStr);
+  if(dayStr > today) return;
   if(!alreadySelected) return;
   showNightRecap(dayStr, true, !dayNightWindowActive(dayStr));
 }
@@ -3373,36 +3369,25 @@ function spawnLeaf(){
   const layer = document.getElementById('quickNoteLeafLayer');
   if(!layer) return;
   if(layer.children.length >= 3) return;
+  const layerRect = layer.getBoundingClientRect();
   const leaf = document.createElement('div');
   leaf.className = 'quicknote-leaf';
-  const topPct = 5 + Math.random()*70;
-  const dur = 6 + Math.random()*4;
-  const dx = -(400 + Math.random()*100);
-  const dy = 60 + Math.random()*120;
-  const drot = 250 + Math.random()*260;
-  leaf.style.top = topPct + '%';
-  leaf.style.setProperty('--dx', dx+'px');
-  leaf.style.setProperty('--dy', dy+'px');
-  leaf.style.setProperty('--drot', drot+'deg');
-  leaf.style.animationDuration = dur+'s';
   leaf.innerHTML = `<svg viewBox="0 0 30 20" width="26" height="18"><path d="M2 10 Q8 0 28 2 Q22 12 15 18 Q6 18 2 10Z" fill="#8FAE7A"/><path d="M3 10 Q14 8 27 3" stroke="#6E8F5C" stroke-width="1" fill="none" opacity="0.6"/></svg>`;
-  const onAnimEnd = ()=> leaf.remove();
-  leaf._onAnimEnd = onAnimEnd;
-  leaf.addEventListener('animationend', onAnimEnd);
   leaf.addEventListener('mousedown', (e)=> startDragLeaf(e, leaf));
   leaf.addEventListener('touchstart', (e)=> startDragLeaf(e, leaf), {passive:false});
   layer.appendChild(leaf);
+  const topPct = 5 + Math.random()*70;
+  leaf.style.left = (layerRect.width - 26) + 'px';
+  leaf.style.top = topPct + '%';
+  startLeafMotion(leaf, true);
 }
 function startDragLeaf(e, leaf){
   if(leaf.__caught) return;
   e.preventDefault();
   leaf.__caught = true;
-  if(leaf._onAnimEnd){ leaf.removeEventListener('animationend', leaf._onAnimEnd); leaf._onAnimEnd = null; }
   const layer = document.getElementById('quickNoteLeafLayer');
   const layerRect = layer.getBoundingClientRect();
   const rect = leaf.getBoundingClientRect();
-  leaf.style.animation = 'none';
-  leaf.style.right = 'auto';
   leaf.style.left = (rect.left - layerRect.left) + 'px';
   leaf.style.top = (rect.top - layerRect.top) + 'px';
   leaf.style.transform = 'none';
@@ -3435,21 +3420,20 @@ function onLeafDragRelease(){
   draggingLeaf = null;
   releaseLeaf(leaf);
 }
-function releaseLeaf(leaf){
-  /* 放開後全程只用一套連續運算,橫向跟垂直速度都用指數趨近慢慢逼近目標值,
-     不會有任何切換系統的接點,自然不會出現銜接時的停頓。
-     橫向跟垂直的目標速度都跟沒抓過的葉子一樣是固定像素值,不隨螢幕寬度縮放,
-     兩邊速度在任何螢幕上都完全一致。 */
+/* 沒抓過的葉子(spawnLeaf剛建立時)跟抓過放開的葉子,現在共用同一套物理運算,
+   不再是「一套CSS動畫+一套JS物理」分開維護。這樣淡出/消失的時機永遠是
+   用「葉子目前實際露在畫面內的範圍」即時算出來的,不是照一張寫死的時間表走,
+   不管螢幕多寬、葉子有沒有被抓過放開,都不會出現「還沒離開畫面就消失」的狀況。
+   橫向跟垂直的目標速度都是固定像素值,不隨螢幕寬度縮放,兩者速度感覺一致。 */
+function startLeafMotion(leaf, fadeIn){
   leaf.__caught = false;
-  if(leaf._onAnimEnd){ leaf.removeEventListener('animationend', leaf._onAnimEnd); leaf._onAnimEnd = null; }
-  leaf.style.animation = 'none';
   const layer = document.getElementById('quickNoteLeafLayer');
   const layerRect = layer.getBoundingClientRect();
   let x = parseFloat(leaf.style.left) || 0;
-  let y = parseFloat(leaf.style.top) || 0;
-  leaf.style.right = 'auto';
+  let y = parseFloat(leaf.style.top.includes('%') ? (parseFloat(leaf.style.top)/100*layerRect.height) : leaf.style.top) || 0;
+  leaf.style.top = y + 'px';
   leaf.style.transform = 'none';
-  leaf.style.opacity = '.85';
+  if(fadeIn) leaf.style.opacity = '0';
   let vx = 0;
   let vy = 0;
   const targetVy = 16 + Math.random()*8;
@@ -3460,11 +3444,13 @@ function releaseLeaf(leaf){
   let rot = 0;
   const rotSpeed = (Math.random()-0.5)*40;
   let lastT = performance.now();
+  let elapsed = 0;
 
   function step(now){
     if(leaf.__caught) return;
     const dt = Math.min((now - lastT) / 1000, 0.05);
     lastT = now;
+    elapsed += dt;
     vy += drag * (targetVy - vy) * dt;
     vx += drag * (targetVx - vx) * dt;
     x += vx * dt;
@@ -3488,10 +3474,14 @@ function releaseLeaf(leaf){
       leaf.remove();
       return;
     }
-    leaf.style.opacity = String((visibleW / diag) * 0.85);
+    const fadeFactor = fadeIn ? Math.min(1, elapsed/0.4) : 1;
+    leaf.style.opacity = String((visibleW / diag) * 0.85 * fadeFactor);
     requestAnimationFrame(step);
   }
   requestAnimationFrame(step);
+}
+function releaseLeaf(leaf){
+  startLeafMotion(leaf, false);
 }
 
 /* ============================================================
