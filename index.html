@@ -303,8 +303,6 @@
   .monthday-btn{padding:7px 0;border-radius:10px;border:1.5px solid var(--border);background:#fff;color:#1A1A1A;font-size:12.5px;font-weight:700;}
   .monthday-btn.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
   .habit-schedule-note{font-size:10.5px;color:var(--ink-soft);margin-top:2px;}
-  .habit-mood-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
-  .habit-mood-label{font-size:12.5px;color:var(--ink-soft);font-weight:700;margin-right:2px;}
   .habit-mood-btn{background:#F1F0EA;border:2px solid transparent;border-radius:10px;padding:4px;line-height:0;}
   .habit-mood-btn.selected{border-color:var(--accent);background:var(--accent-soft);}
   .habit-mood-btn .week-mood-face{width:26px;height:26px;}
@@ -690,6 +688,8 @@
   /* ============ MODAL ============ */
   .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:150;align-items:center;justify-content:center;padding:20px;}
   .overlay.show{display:flex;}
+  #quickMoodModal{display:flex;opacity:0;pointer-events:none;transition:opacity .5s ease;}
+  #quickMoodModal.show{opacity:1;pointer-events:auto;}
   .modal{background:#fff;border-radius:24px;padding:28px;max-width:360px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25);color:#1A1A1A;max-height:calc(100vh - 40px);overflow-y:auto;}
   .fee-hint{font-size:11px;color:var(--ink-soft);margin-top:4px;}
   .modal h3{margin:0 0 18px;font-size:16px;}
@@ -808,7 +808,6 @@
         </div>
         <button class="btn-primary" onclick="openHabitModal()">＋ 新增習慣</button>
       </div>
-      <div class="habit-mood-row" id="habitMoodRow"></div>
     <div id="habitCheckinView"></div>
       <div id="habitStatsView" style="display:none"></div>
     </div>
@@ -835,6 +834,15 @@
           <button class="side-logout" onclick="logout()">登出／切換帳號</button>
         </div>
       </div>
+      <div class="setting-block" id="devToolsBlock" style="display:none;">
+        <h3>開發者工具</h3>
+        <p class="fee-hint" style="margin-bottom:10px;">只有這個帳號看得到,用來手動測試需要等特定時間才會自動出現的動畫</p>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <button class="btn-ghost" onclick="devTriggerMorning()">立即觸發早安動畫</button>
+          <button class="btn-ghost" onclick="devTriggerNight()">立即觸發晚安動畫</button>
+          <button class="btn-ghost" onclick="devResetShownFlags()">重置今天的顯示標記</button>
+        </div>
+      </div>
       <div class="setting-block">
         <h3>推播通知</h3>
         <div class="row-inline" style="max-width:300px;">
@@ -852,7 +860,7 @@
           </div>
         </div>
         <div class="row-inline" style="max-width:300px;margin-top:10px;">
-          <label style="margin:0;font-size:13px;">每次登入都顯示早安動畫</label>
+          <label style="margin:0;font-size:13px;">早上自動顯示早安動畫</label>
           <button class="switch" id="morningGreetingSwitch" onclick="toggleMorningGreetingSwitch()"></button>
         </div>
         <div class="row-inline" style="max-width:300px;margin-top:10px;">
@@ -1220,6 +1228,14 @@
   </div>
 </div>
 
+<div class="overlay" id="quickMoodModal">
+  <div class="modal" style="text-align:center;">
+    <h3>今天心情</h3>
+    <div class="quick-mood-row" id="quickMoodRow" style="display:flex;justify-content:center;gap:14px;margin:14px 0;"></div>
+    <div class="modal-actions"><button class="btn-ghost" onclick="closeModal('quickMoodModal')">關閉</button></div>
+  </div>
+</div>
+
 <div class="overlay" id="accountsModal">
   <div class="modal">
     <h3>我的存款</h3>
@@ -1433,6 +1449,8 @@
 ============================================================ */
 let currentEmail = null;
 let currentStorageKey = null;
+const DEV_EMAIL = 'ttpss98005@gmail.com';
+function isDevUser(){ return !!currentEmail && currentEmail.toLowerCase()===DEV_EMAIL; }
 let data = null;
 let ui = { catId:'overview', mainView:'list', filter:'pending', calDate:new Date(), weekDate:new Date(), selectedDate:null, expanded:{}, habitDate:null, calMode:'week' };
 
@@ -1650,7 +1668,11 @@ function normalizeData(){
   if(data.lastAutoRecapDate===undefined) data.lastAutoRecapDate = null;
   if(data.nightRecapDisabled===undefined) data.nightRecapDisabled = false;
   if(!data.lastCatId) data.lastCatId = 'overview';
-  if(data.morningGreetingAlwaysOn===undefined) data.morningGreetingAlwaysOn = false;
+  if(data.morningGreetingDisabled===undefined){
+    /* 舊版是「每次登入都顯示」的開關,語意跟現在不同,直接視為預設開啟(跟晚安一樣的行為) */
+    data.morningGreetingDisabled = false;
+    delete data.morningGreetingAlwaysOn;
+  }
   if(data.morningGreetingShownDate===undefined) data.morningGreetingShownDate = null;
   if(!data.expenses) data.expenses = [];
   if(data.bankBalance===undefined) data.bankBalance = 0;
@@ -2710,15 +2732,25 @@ function renderDayDetail(){
     </div>`).join('') : `<div class="empty-state" style="padding:14px">當日無事項</div>`);
 }
 
-function renderHabitMoodRow(){
-  const box = document.getElementById('habitMoodRow');
-  if(!box) return;
+/* 今天心情:改到週日期條的「今天」格子。若在晚安動畫時段(22:00~10:00)點擊,
+   開啟完整的晚安回顧動畫(跟自動彈出的一樣);若在這個時段之外點擊,
+   只開一個簡單的心情選擇視窗,轉場速度跟早安動畫一致(0.5秒淡入淡出),不跑完整動畫。 */
+function openTodayMoodFlow(){
+  selectHabitDate(todayStr());
+  if(isNightRecapWindow()){
+    showNightRecap(todayStr(), true);
+  }else{
+    openQuickMoodModal();
+  }
+}
+function openQuickMoodModal(){
   const day = todayStr();
   const existing = (data.dayRecaps||{})[day];
   const moods = [['bad','不太好'],['ok','普通'],['good','很棒']];
-  box.innerHTML = `<span class="habit-mood-label">今天心情</span>` + moods.map(([m,label])=>
+  document.getElementById('quickMoodRow').innerHTML = moods.map(([m,label])=>
     `<button type="button" class="habit-mood-btn ${existing&&existing.mood===m?'selected':''}" onclick="setTodayMoodQuick('${m}')" title="${label}">${moodFaceSvgSmall(m)}</button>`
   ).join('');
+  document.getElementById('quickMoodModal').classList.add('show');
 }
 function setTodayMoodQuick(mood){
   const day = todayStr();
@@ -2731,7 +2763,8 @@ function setTodayMoodQuick(mood){
     data.dayRecaps[day] = Object.assign({}, existing, {mood, createdAt:(existing&&existing.createdAt)||Date.now()});
   }
   persist();
-  renderHabitMoodRow();
+  openQuickMoodModal();
+  renderHabitWeekStrip();
 }
 function moodFaceSvgSmall(mood){
   if(mood==='bad') return `<svg class="week-mood-face" viewBox="0 0 40 40"><rect width="40" height="40" rx="10" fill="#5B9BD5"/><circle cx="14" cy="17" r="2.2" fill="#fff"/><circle cx="26" cy="17" r="2.2" fill="#fff"/><path d="M13 27 Q20 22 27 27" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>`;
@@ -3062,9 +3095,12 @@ function renderHabitWeekStrip(){
     const dayStr = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
     const isToday = dayStr===today;
     const isSelected = dayStr===ui.habitDate;
-    html += `<button class="habit-day ${isToday?'today':''} ${isSelected?'selected':''}" onclick="selectHabitDate('${dayStr}')">
+    const todayMood = isToday ? (data.dayRecaps||{})[dayStr] : null;
+    const numDisplay = (isToday && todayMood && todayMood.mood) ? moodFaceSvgSmall(todayMood.mood) : `<span class="num">${d.getDate()}</span>`;
+    const clickAction = isToday ? `openTodayMoodFlow()` : `selectHabitDate('${dayStr}')`;
+    html += `<button class="habit-day ${isToday?'today':''} ${isSelected?'selected':''}" onclick="${clickAction}">
       <span class="dow">${dows[i]}</span>
-      <span class="num">${d.getDate()}</span>
+      ${numDisplay}
     </button>`;
   }
   html += `</div>`;
@@ -3103,7 +3139,6 @@ function habitStreak(h, asOf){
 }
 function renderHabitCheckin(){
   if(!ui.habitDate) ui.habitDate = todayStr();
-  renderHabitMoodRow();
   renderHabitWeekStrip();
   const box = document.getElementById('habitCheckinView');
   if(data.habits.length===0){
@@ -3441,14 +3476,17 @@ function releaseLeaf(leaf){
     leaf.style.left = x + 'px';
     leaf.style.top = y + 'px';
     leaf.style.transform = `rotate(${rot.toFixed(1)}deg)`;
-    const distToExit = Math.min(layerRect.width + 60 - x, x + 60);
-    if(distToExit < 50){
-      leaf.style.opacity = String(Math.max(0, (distToExit/50) * 0.85));
-    }
-    if(x < -60 || x > layerRect.width + 60){
+    const leafW = leaf.offsetWidth || 26;
+    /* 用「葉子實際還露在畫面內的寬度」算淡出跟移除時機,而不是只看左邊界座標,
+       這樣才不會葉子明明還有一部分看得到,就已經淡出或被移除 */
+    const visibleLeft = Math.max(0, x);
+    const visibleRight = Math.min(layerRect.width, x + leafW);
+    const visibleW = Math.max(0, visibleRight - visibleLeft);
+    if(visibleW <= 0){
       leaf.remove();
       return;
     }
+    leaf.style.opacity = String((visibleW / leafW) * 0.85);
     requestAnimationFrame(step);
   }
   requestAnimationFrame(step);
@@ -4392,7 +4430,7 @@ function maybeShowDailyBrief(){
   if(hour < 7) return false;
   const today = todayStr();
   if(data.dailyBriefDismissedDate === today) return false;
-  const showGreeting = !!data.morningGreetingAlwaysOn || data.morningGreetingShownDate !== today;
+  const showGreeting = !data.morningGreetingDisabled && data.morningGreetingShownDate !== today;
   if(showGreeting){
     data.morningGreetingShownDate = today;
     persist();
@@ -4635,7 +4673,7 @@ function updateMorningGreetingSwitch(){
   const sw = document.getElementById('morningGreetingSwitch');
   if(!sw) return;
   const dailyOff = data.dailyBriefDismissedDate === todayStr();
-  sw.classList.toggle('on', !dailyOff && !!data.morningGreetingAlwaysOn);
+  sw.classList.toggle('on', !dailyOff && !data.morningGreetingDisabled);
   sw.classList.toggle('disabled', dailyOff);
 }
 function toggleMorningGreetingSwitch(){
@@ -4643,9 +4681,10 @@ function toggleMorningGreetingSwitch(){
     notify('請先開啟每日提醒');
     return;
   }
-  data.morningGreetingAlwaysOn = !data.morningGreetingAlwaysOn;
+  data.morningGreetingDisabled = !data.morningGreetingDisabled;
   persist();
   updateMorningGreetingSwitch();
+  flashToast(data.morningGreetingDisabled ? '已關閉早安動畫' : '已開啟早安動畫');
 }
 function updateNightRecapSwitch(){
   const sw = document.getElementById('nightRecapSwitch');
@@ -4669,7 +4708,7 @@ function toggleDailyBriefSwitch(){
     updateMorningGreetingSwitch();
   }else{
     data.dailyBriefDismissedDate = today;
-    data.morningGreetingAlwaysOn = false;
+    data.morningGreetingDisabled = false;
     persist();
     updateDailyBriefSwitch();
     updateMorningGreetingSwitch();
@@ -4804,6 +4843,30 @@ function renderSettings(){
         ${allPalettes.map(p=>`<option value="${p.id}" ${c.paletteId===p.id?'selected':''}>${escapeHtml(p.name)}</option>`).join('')}
       </select>
     </div>`).join('');
+
+  const devBlock = document.getElementById('devToolsBlock');
+  if(devBlock) devBlock.style.display = isDevUser() ? 'block' : 'none';
+}
+
+/* ============ 開發者工具:只有 DEV_EMAIL 這個帳號登入時看得到,
+   用來手動觸發「需要等特定時間才會自動出現」的動畫,不用真的等到那個時間 ============ */
+function devTriggerMorning(){
+  if(!isDevUser()) return;
+  showDailyBrief(true);
+  flashToast('已手動觸發早安動畫');
+}
+function devTriggerNight(){
+  if(!isDevUser()) return;
+  showNightRecap(getRecapDateStr());
+  flashToast('已手動觸發晚安動畫');
+}
+function devResetShownFlags(){
+  if(!isDevUser()) return;
+  data.morningGreetingShownDate = null;
+  data.lastAutoRecapDate = null;
+  data.dailyBriefDismissedDate = null;
+  persist();
+  flashToast('已重置今天的顯示標記,重新整理後會再自動跳出一次');
 }
 function setGlobalPalette(id){
   data.globalPaletteId = id;
