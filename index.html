@@ -699,7 +699,6 @@
   .row-inline{display:flex;align-items:center;justify-content:space-between;}
   .switch{position:relative;width:38px;height:22px;background:#DDD;border-radius:999px;border:none;flex-shrink:0;}
   .switch.on{background:var(--accent);}
-  .switch.disabled{opacity:.4;}
   .switch::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;background:#fff;border-radius:50%;transition:.15s;box-shadow:var(--shadow-sm);}
   .switch.on::after{left:18px;}
 
@@ -1440,6 +1439,7 @@
 ============================================================ */
 let currentEmail = null;
 let currentStorageKey = null;
+let dailyBriefContentSkipped = false;
 let recapSimpleMode = false;
 const DEV_EMAIL = 'ttpss98005@gmail.com';
 function isDevUser(){ return !!currentEmail && currentEmail.toLowerCase()===DEV_EMAIL; }
@@ -2360,6 +2360,7 @@ function toggleTask(id){
   const t = data.tasks.find(x=>x.id===id);
   const nowDone = t.status !== 'done';
   t.status = t.status==='done' ? 'pending' : 'done';
+  t.completedAt = nowDone ? todayStr() : null;
   persist(); refreshAll();
   if(nowDone) bounceCheck(`task:${id}`);
 }
@@ -2368,6 +2369,7 @@ function toggleSubtask(tid,sid){
   const s = t.subtasks.find(x=>x.id===sid);
   const nowDone = s.status !== 'done';
   s.status = s.status==='done' ? 'pending' : 'done';
+  s.completedAt = nowDone ? todayStr() : null;
   persist(); refreshAll();
   if(nowDone) bounceCheck(`sub:${tid}:${sid}`);
 }
@@ -2753,20 +2755,13 @@ function dayNightWindowActive(dayStr){
 function openDayMoodFlow(dayStr){
   const today = todayStr();
   if(dayStr > today) return;
-  if(dayNightWindowActive(dayStr)){
-    selectHabitDate(dayStr);
-    showNightRecap(dayStr, true, false);
-    return;
-  }
-  if(dayStr === today || dayStr === dateStrOffset(-1)){
-    selectHabitDate(dayStr);
-    showNightRecap(dayStr, true, true);
-    return;
-  }
+  /* 所有日期(包含今天)都要點兩次:第一次只是切換到那天的打卡頁面,
+     已經在那天了、再點第二次才真的打開心情視窗。有沒有跑完整晚安動畫
+     還是簡化卡片,則看「被點的那一天」自己的晚安時段是否正在進行。 */
   const alreadySelected = ui.habitDate === dayStr;
   selectHabitDate(dayStr);
   if(!alreadySelected) return;
-  showNightRecap(dayStr, true, true);
+  showNightRecap(dayStr, true, !dayNightWindowActive(dayStr));
 }
 function moodFaceSvgSmall(mood){
   if(mood==='bad') return `<svg class="week-mood-face" viewBox="0 0 40 40"><rect width="40" height="40" rx="10" fill="#5B9BD5"/><circle cx="14" cy="17" r="2.2" fill="#fff"/><circle cx="26" cy="17" r="2.2" fill="#fff"/><path d="M13 27 Q20 22 27 27" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>`;
@@ -3480,16 +3475,20 @@ function releaseLeaf(leaf){
     leaf.style.top = y + 'px';
     leaf.style.transform = `rotate(${rot.toFixed(1)}deg)`;
     const leafW = leaf.offsetWidth || 26;
-    /* 用「葉子實際還露在畫面內的寬度」算淡出跟移除時機,而不是只看左邊界座標,
-       這樣才不會葉子明明還有一部分看得到,就已經淡出或被移除 */
-    const visibleLeft = Math.max(0, x);
-    const visibleRight = Math.min(layerRect.width, x + leafW);
+    const leafHpx = leaf.offsetHeight || 18;
+    /* 葉子會持續旋轉,旋轉時實際占到畫面的範圍比「沒轉動時的寬度」更大
+       (對角線最長),用對角線當保守的範圍去判斷淡出/消失時機,才不會葉子
+       轉到某個角度時明明還露在畫面內,卻已經被判定成「離開了」。 */
+    const diag = Math.sqrt(leafW*leafW + leafHpx*leafHpx);
+    const cx = x + leafW/2;
+    const visibleLeft = Math.max(0, cx - diag/2);
+    const visibleRight = Math.min(layerRect.width, cx + diag/2);
     const visibleW = Math.max(0, visibleRight - visibleLeft);
     if(visibleW <= 0){
       leaf.remove();
       return;
     }
-    leaf.style.opacity = String((visibleW / leafW) * 0.85);
+    leaf.style.opacity = String((visibleW / diag) * 0.85);
     requestAnimationFrame(step);
   }
   requestAnimationFrame(step);
@@ -4432,16 +4431,18 @@ function maybeShowDailyBrief(){
   const hour = new Date().getHours();
   if(hour < 7) return false;
   const today = todayStr();
-  if(data.dailyBriefDismissedDate === today) return false;
+  const briefOff = data.dailyBriefDismissedDate === today;
   const showGreeting = !data.morningGreetingDisabled && data.morningGreetingShownDate !== today;
+  if(briefOff && !showGreeting) return false;
   if(showGreeting){
     data.morningGreetingShownDate = today;
     persist();
   }
-  showDailyBrief(showGreeting);
+  showDailyBrief(showGreeting, briefOff);
   return true;
 }
-function showDailyBrief(withGreeting){
+function showDailyBrief(withGreeting, briefOff){
+  dailyBriefContentSkipped = !!briefOff;
   const day = todayStr();
   const dueTasks = data.tasks.filter(t=> t.status!=='done' && t.dueDate && t.dueDate<=day);
   const todaySubtasks = [];
@@ -4485,10 +4486,17 @@ function viewDailyBriefNow(){
 }
 function advanceFromMorningGreeting(){
   const greetScreen = document.getElementById('morningGreetingScreen');
-  const contentCard = document.getElementById('dailyBriefContentCard');
   const overlay = document.getElementById('dailyBriefOverlay');
   greetScreen.classList.add('fade-out');
   overlay.classList.remove('sky-cycle');
+  if(dailyBriefContentSkipped){
+    setTimeout(()=>{
+      greetScreen.style.display = 'none';
+      overlay.classList.remove('show');
+    }, 500);
+    return;
+  }
+  const contentCard = document.getElementById('dailyBriefContentCard');
   setTimeout(()=>{
     greetScreen.style.display = 'none';
     contentCard.style.display = 'block';
@@ -4537,8 +4545,11 @@ function buildRecapSummaryHtml(day){
   const undoneItems = [];
   const overdueItems = [];
   data.tasks.forEach(t=>{
-    if(t.status==='done') doneItems.push(t.title);
-    else if(t.dueDate && t.dueDate < day) overdueItems.push(t.title);
+    /* 「今天完成了」要用完成當天(completedAt)判斷,不能只看status==='done',
+       不然只要是已完成的任務,不管哪天完成的,每一天的總結都會全部塞進去。 */
+    if(t.status==='done'){
+      if(t.completedAt===day) doneItems.push(t.title);
+    }else if(t.dueDate && t.dueDate < day) overdueItems.push(t.title);
     else if(t.dueDate === day) undoneItems.push(t.title);
     (t.subtasks||[]).forEach(s=>{
       if(!s.time) return;
@@ -4694,15 +4705,9 @@ function updateDailyBriefSwitch(){
 function updateMorningGreetingSwitch(){
   const sw = document.getElementById('morningGreetingSwitch');
   if(!sw) return;
-  const dailyOff = data.dailyBriefDismissedDate === todayStr();
-  sw.classList.toggle('on', !dailyOff && !data.morningGreetingDisabled);
-  sw.classList.toggle('disabled', dailyOff);
+  sw.classList.toggle('on', !data.morningGreetingDisabled);
 }
 function toggleMorningGreetingSwitch(){
-  if(data.dailyBriefDismissedDate === todayStr()){
-    notify('請先開啟每日提醒');
-    return;
-  }
   data.morningGreetingDisabled = !data.morningGreetingDisabled;
   persist();
   updateMorningGreetingSwitch();
@@ -4723,18 +4728,9 @@ function toggleNightRecapSwitch(){
 
 function toggleDailyBriefSwitch(){
   const today = todayStr();
-  if(data.dailyBriefDismissedDate === today){
-    data.dailyBriefDismissedDate = null;
-    persist();
-    updateDailyBriefSwitch();
-    updateMorningGreetingSwitch();
-  }else{
-    data.dailyBriefDismissedDate = today;
-    data.morningGreetingDisabled = false;
-    persist();
-    updateDailyBriefSwitch();
-    updateMorningGreetingSwitch();
-  }
+  data.dailyBriefDismissedDate = (data.dailyBriefDismissedDate === today) ? null : today;
+  persist();
+  updateDailyBriefSwitch();
 }
 
 function openSummary(range){
