@@ -278,7 +278,11 @@
   .palette-name{font-size:11.5px;font-weight:700;}
   .cat-palette-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:14px;background:#FDFDFB;border:1.5px solid var(--border);font-size:13px;margin-bottom:8px;color:#1A1A1A;}
 
-  .habit-week-strip{margin-bottom:18px;}
+  .habit-week-strip{margin-bottom:18px;position:relative;}
+  .habit-day-indicator{position:absolute;width:34px;height:34px;border-radius:50%;background:var(--accent);
+    box-shadow:var(--shadow-sm);transform:translate(0,0);transition:transform .28s cubic-bezier(.4,0,.2,1), opacity .2s ease;
+    opacity:0;pointer-events:none;z-index:0;}
+  #habitWeekStripContent{position:relative;z-index:1;}
   .habit-week-nav{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:8px;}
   .habit-week-arrow{background:#F1F0EA;border:none;width:26px;height:26px;border-radius:50%;font-size:14px;color:var(--ink-soft);}
   .habit-week-arrow:disabled{opacity:.35;}
@@ -812,7 +816,10 @@
 
     <!-- 習慣（總覽專屬） -->
     <div id="view-habits" style="display:none">
-      <div class="habit-week-strip" id="habitWeekStrip"></div>
+      <div class="habit-week-strip" id="habitWeekStrip">
+        <div class="habit-day-indicator" id="habitDayIndicator"></div>
+        <div id="habitWeekStripContent"></div>
+      </div>
       <div class="toolbar" style="margin-bottom:16px;">
         <button class="habit-sidebar-toggle" onclick="openHabitSidebar()" title="習慣總覽">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="14" y2="17"/></svg>
@@ -3169,7 +3176,7 @@ function selectHabitDate(day){
 function renderHabitWeekStrip(){
   if(!ui.habitDate) ui.habitDate = todayStr();
   if(!ui.habitWeekOffset) ui.habitWeekOffset = 0;
-  const box = document.getElementById('habitWeekStrip');
+  const box = document.getElementById('habitWeekStripContent');
   const today = todayStr();
   const dows = ['日','一','二','三','四','五','六'];
   const base = new Date();
@@ -3189,7 +3196,7 @@ function renderHabitWeekStrip(){
     const isSelected = dayStr===ui.habitDate;
     const isPastOrToday = dayStr <= today;
     const dayMood = isPastOrToday ? (data.dayRecaps||{})[dayStr] : null;
-    const numDisplay = (dayMood && dayMood.mood) ? moodFaceSvgSmall(dayMood.mood) : `<span class="num">${d.getDate()}</span>`;
+    const numDisplay = (dayMood && dayMood.mood) ? `<span class="day-slot">${moodFaceSvgSmall(dayMood.mood)}</span>` : `<span class="num day-slot">${d.getDate()}</span>`;
     const clickAction = `openDayMoodFlow('${dayStr}')`;
     html += `<button class="habit-day ${isToday?'today':''} ${isSelected?'selected':''}" onclick="${clickAction}">
       <span class="dow">${dows[i]}</span>
@@ -3198,6 +3205,22 @@ function renderHabitWeekStrip(){
   }
   html += `</div>`;
   box.innerHTML = html;
+  updateHabitDayIndicator();
+}
+function updateHabitDayIndicator(){
+  const wrap = document.getElementById('habitWeekStrip');
+  const indicator = document.getElementById('habitDayIndicator');
+  const selected = wrap.querySelector('.habit-day.selected .day-slot');
+  if(!selected){
+    indicator.style.opacity = '0';
+    return;
+  }
+  const wrapRect = wrap.getBoundingClientRect();
+  const slotRect = selected.getBoundingClientRect();
+  const x = slotRect.left - wrapRect.left + (slotRect.width - 34)/2;
+  const y = slotRect.top - wrapRect.top + (slotRect.height - 34)/2;
+  indicator.style.opacity = '1';
+  indicator.style.transform = `translate(${x}px, ${y}px)`;
 }
 function habitStreak(h, asOf){
   /* 「連續天數」代表這一天所屬的那一整段連續打卡區塊的總長度,
