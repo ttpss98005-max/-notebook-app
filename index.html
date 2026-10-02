@@ -682,6 +682,26 @@
 
   /* ============ MODAL ============ */
   .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:150;align-items:center;justify-content:center;padding:20px;}
+  .habit-sidebar-toggle{background:#F1F0EA;border:none;border-radius:10px;width:36px;height:36px;display:flex;
+    align-items:center;justify-content:center;color:var(--ink);flex-shrink:0;margin-right:8px;}
+  .habit-sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,0);z-index:170;pointer-events:none;
+    transition:background .3s ease;}
+  .habit-sidebar-overlay.show{background:rgba(0,0,0,.35);pointer-events:auto;}
+  .habit-sidebar-panel{position:absolute;left:0;top:0;bottom:0;width:82%;max-width:320px;background:var(--surface);
+    box-shadow:var(--shadow-md);transform:translateX(-100%);transition:transform .3s ease;
+    display:flex;flex-direction:column;padding:20px 16px;overflow-y:auto;}
+  .habit-sidebar-overlay.show .habit-sidebar-panel{transform:translateX(0);}
+  .habit-sidebar-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .habit-sidebar-head h3{margin:0;font-size:16px;}
+  .habit-sidebar-close{background:none;border:none;font-size:20px;color:var(--ink-soft);padding:4px 8px;}
+  .habit-sidebar-item{padding:12px 0;border-bottom:1px solid var(--border);}
+  .habit-sidebar-item:last-child{border-bottom:none;}
+  .habit-sidebar-item-name{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:3px;}
+  .habit-sidebar-item-freq{font-size:12px;color:var(--ink-soft);margin-bottom:8px;}
+  .habit-sidebar-item-actions{display:flex;gap:14px;}
+  .habit-sidebar-item-actions button{background:none;border:none;font-size:12.5px;color:var(--accent);padding:0;}
+  .habit-sidebar-item-actions button.danger{color:var(--danger);}
+  .habit-sidebar-empty{color:var(--ink-soft);font-size:13px;text-align:center;padding:30px 0;}
   .overlay.show{display:flex;}
   .modal{background:#fff;border-radius:24px;padding:28px;max-width:360px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25);color:#1A1A1A;max-height:calc(100vh - 40px);overflow-y:auto;}
   .fee-hint{font-size:11px;color:var(--ink-soft);margin-top:4px;}
@@ -794,6 +814,9 @@
     <div id="view-habits" style="display:none">
       <div class="habit-week-strip" id="habitWeekStrip"></div>
       <div class="toolbar" style="margin-bottom:16px;">
+        <button class="habit-sidebar-toggle" onclick="openHabitSidebar()" title="習慣總覽">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="14" y2="17"/></svg>
+        </button>
         <div class="pill-tabs" id="habitTabSeg">
           <button id="habitCheckinBtn" class="pill-tab active" onclick="setHabitTab('checkin')">打卡</button>
           <button id="habitStatsBtn" class="pill-tab" onclick="setHabitTab('stats')">統計</button>
@@ -802,6 +825,16 @@
       </div>
     <div id="habitCheckinView"></div>
       <div id="habitStatsView" style="display:none"></div>
+    </div>
+
+    <div class="habit-sidebar-overlay" id="habitSidebarOverlay" onclick="closeHabitSidebar()">
+      <div class="habit-sidebar-panel" onclick="event.stopPropagation()">
+        <div class="habit-sidebar-head">
+          <h3>習慣總覽</h3>
+          <button class="habit-sidebar-close" onclick="closeHabitSidebar()">×</button>
+        </div>
+        <div id="habitSidebarList"></div>
+      </div>
     </div>
 
     <!-- 隨手記 -->
@@ -2746,18 +2779,65 @@ function dayNightWindowActive(dayStr){
   if(nowStr === nextStr && hour < 5) return true;
   return false;
 }
+function habitFreqLabel(h){
+  if(!h.freq || h.freq==='daily') return '每天';
+  if(h.freq==='weekly'){
+    const names=['日','一','二','三','四','五','六'];
+    const days=(h.weekdays||[]).slice().sort((a,b)=>a-b).map(d=>names[d]);
+    return days.length ? '每週'+days.join('、') : '每週(尚未選擇星期)';
+  }
+  if(h.freq==='monthly'){
+    const days=(h.monthdays||[]).slice().sort((a,b)=>a-b);
+    return days.length ? '每月'+days.join('、')+'號' : '每月(尚未選擇日期)';
+  }
+  return '每天';
+}
+function renderHabitSidebarList(){
+  const box = document.getElementById('habitSidebarList');
+  if(!box) return;
+  if(data.habits.length===0){
+    box.innerHTML = `<div class="habit-sidebar-empty">還沒有任何習慣</div>`;
+    return;
+  }
+  box.innerHTML = data.habits.map(h=>`
+    <div class="habit-sidebar-item">
+      <div class="habit-sidebar-item-name">${escapeHtml(h.name)}</div>
+      <div class="habit-sidebar-item-freq">${habitFreqLabel(h)}</div>
+      <div class="habit-sidebar-item-actions">
+        <button onclick="habitSidebarEdit('${h.id}')">編輯</button>
+        <button class="danger" onclick="deleteHabit('${h.id}')">刪除</button>
+      </div>
+    </div>`).join('');
+}
+function openHabitSidebar(){
+  renderHabitSidebarList();
+  document.getElementById('habitSidebarOverlay').classList.add('show');
+}
+function closeHabitSidebar(){
+  document.getElementById('habitSidebarOverlay').classList.remove('show');
+}
+function habitSidebarEdit(id){
+  closeHabitSidebar();
+  openHabitModal(id);
+}
+let habitMoodArmedDay = null;
 function openDayMoodFlow(dayStr){
   /* 切換到那天的打卡頁面,不管是過去、今天還是未來都可以點,跟以前一樣。
      只是「選心情」這件事只對過去跟今天有意義,未來還沒發生,不能設定心情,
      所以點未來日期永遠只會切換頁面,不會有點兩次打開心情視窗這件事。
-     過去跟今天:所有日期都要點兩次,第一次只是切換頁面,已經在那天了、
-     再點第二次才真的打開心情視窗。 */
-  const today = todayStr();
-  const alreadySelected = ui.habitDate === dayStr;
+     過去跟今天:所有日期都要點兩次才會打開心情視窗。這裡用「這次操作有沒有
+     真的點過這一天」(habitMoodArmedDay)來判斷,不能直接看ui.habitDate是否
+     等於這一天,因為「今天」本來就常常是預設就選中的日期,如果拿目前選中的
+     日期來判斷,會讓使用者明明只點了一次,卻被誤判成「已經選過了」直接打開。 */
   selectHabitDate(dayStr);
-  if(dayStr > today) return;
-  if(!alreadySelected) return;
-  showNightRecap(dayStr, true, !dayNightWindowActive(dayStr));
+  const today = todayStr();
+  if(dayStr > today){ habitMoodArmedDay = null; return; }
+  if(habitMoodArmedDay === dayStr){
+    habitMoodArmedDay = null;
+    showNightRecap(dayStr, true, !dayNightWindowActive(dayStr));
+  }else{
+    habitMoodArmedDay = dayStr;
+  }
 }
 function moodFaceSvgSmall(mood){
   if(mood==='bad') return `<svg class="week-mood-face" viewBox="0 0 40 40"><rect width="40" height="40" rx="10" fill="#5B9BD5"/><circle cx="14" cy="17" r="2.2" fill="#fff"/><circle cx="26" cy="17" r="2.2" fill="#fff"/><path d="M13 27 Q20 22 27 27" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>`;
@@ -2925,12 +3005,13 @@ function deleteHabit(id){
     data.habits.splice(idx,1);
     delete data.habitLogs[id];
     renderHabitCheckin();
+    renderHabitSidebarList();
     if(fbDb) fbDb.collection('habitReminders').doc(id).delete().catch(()=>{});
     showUndoToast('已刪除習慣「'+removed.name+'」', ()=>{
       data.habits.splice(idx,0,removed);
       if(removedLog) data.habitLogs[id] = removedLog;
       writeHabitReminderDoc(removed);
-    }, renderHabitCheckin);
+    }, ()=>{ renderHabitCheckin(); renderHabitSidebarList(); });
   });
 }
 let habitDragCtx = null;
