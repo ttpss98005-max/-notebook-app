@@ -279,8 +279,8 @@
   .cat-palette-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:14px;background:#FDFDFB;border:1.5px solid var(--border);font-size:13px;margin-bottom:8px;color:#1A1A1A;}
 
   .habit-week-strip{margin-bottom:18px;position:relative;}
-  .habit-day-indicator{position:absolute;width:34px;height:34px;border-radius:50%;background:var(--accent);
-    box-shadow:var(--shadow-sm);transform:translate(0,0);transition:transform .28s cubic-bezier(.4,0,.2,1), opacity .2s ease;
+  .habit-day-indicator{position:absolute;border-radius:14px;background:#fff;
+    box-shadow:var(--shadow-sm);transform:translate(0,0);transition:transform .28s cubic-bezier(.4,0,.2,1), opacity .2s ease, width .2s ease, height .2s ease;
     opacity:0;pointer-events:none;z-index:0;}
   #habitWeekStripContent{position:relative;z-index:1;}
   .habit-week-nav{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:8px;}
@@ -293,7 +293,7 @@
   .habit-day .dow{font-size:11px;color:var(--ink-soft);}
   .habit-day .num{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--ink-soft);transition:.15s;}
   .habit-day.today .dow{color:var(--accent);font-weight:700;}
-  .habit-day.selected .num{background:var(--accent);color:#fff;box-shadow:var(--shadow-sm);}
+  .habit-day.selected .num{color:var(--accent);}
   .habit-day:disabled{opacity:.35;cursor:not-allowed;}
   .habit-day:disabled:hover{background:none;}
 
@@ -3210,15 +3210,20 @@ function renderHabitWeekStrip(){
 function updateHabitDayIndicator(){
   const wrap = document.getElementById('habitWeekStrip');
   const indicator = document.getElementById('habitDayIndicator');
-  const selected = wrap.querySelector('.habit-day.selected .day-slot');
+  const selected = wrap.querySelector('.habit-day.selected');
   if(!selected){
     indicator.style.opacity = '0';
     return;
   }
   const wrapRect = wrap.getBoundingClientRect();
-  const slotRect = selected.getBoundingClientRect();
-  const x = slotRect.left - wrapRect.left + (slotRect.width - 34)/2;
-  const y = slotRect.top - wrapRect.top + (slotRect.height - 34)/2;
+  const dayRect = selected.getBoundingClientRect();
+  const pad = 2;
+  const w = dayRect.width - pad*2;
+  const h = dayRect.height - pad*2;
+  const x = dayRect.left - wrapRect.left + pad;
+  const y = dayRect.top - wrapRect.top + pad;
+  indicator.style.width = w + 'px';
+  indicator.style.height = h + 'px';
   indicator.style.opacity = '1';
   indicator.style.transform = `translate(${x}px, ${y}px)`;
 }
@@ -3574,7 +3579,9 @@ function startLeafMotion(leaf, fadeIn){
     lastT = now;
     elapsed += dt;
     vy += drag * (targetVy - vy) * dt;
-    vx += drag * (targetVx - vx) * dt;
+    if(elapsed >= 2){
+      vx += drag * (targetVx - vx) * dt;
+    }
     x += vx * dt;
     y += vy * dt;
     if(y >= groundY) y = groundY;
