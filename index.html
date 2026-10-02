@@ -3565,12 +3565,12 @@ function startLeafMotion(leaf, fadeIn){
   let vy = 0;
   const targetVy = 16 + Math.random()*8;
   const targetVx = -(400 + Math.random()*100) / (6 + Math.random()*4);
-  const drag = 3;
+  const drag = 6;
   const leafH = leaf.offsetHeight || 18;
   const groundY = layerRect.height - leafH - 2;
   let rot = 0;
   const rotSpeed = (Math.random()-0.5)*40;
-  const dragX = 0.5;
+  const dragX = 1;
   let lastT = performance.now();
   let elapsed = 0;
 
