@@ -2823,18 +2823,36 @@ function habitSidebarEdit(id){
 let habitMoodArmedDay = null;
 function openDayMoodFlow(dayStr){
   /* 切換到那天的打卡頁面,不管是過去、今天還是未來都可以點,跟以前一樣。
-     只是「選心情」這件事只對過去跟今天有意義,未來還沒發生,不能設定心情,
-     所以點未來日期永遠只會切換頁面,不會有點兩次打開心情視窗這件事。
-     過去跟今天:所有日期都要點兩次才會打開心情視窗。這裡用「這次操作有沒有
-     真的點過這一天」(habitMoodArmedDay)來判斷,不能直接看ui.habitDate是否
-     等於這一天,因為「今天」本來就常常是預設就選中的日期,如果拿目前選中的
-     日期來判斷,會讓使用者明明只點了一次,卻被誤判成「已經選過了」直接打開。 */
+     「選心情」這件事:
+     - 未來:永遠不能選,只切換頁面。
+     - 今天:只有在今天自己的晚安時段(22:00~5:00)正在進行時才能選,
+       這段時間之外,不管點幾次都不會打開,不是「點兩次」的問題。
+       完整晚安動畫一天只會播一次:不管是自動跳出來播的,還是手動點兩次
+       觸發播的,只要今天已經播過了(data.lastAutoRecapDate===today),
+       之後同一天內再打開,都只會給簡化卡片,不會重複播放完整動畫。
+     - 過去:固定要點兩次才打開(第一次只是切換頁面,已經在那天了、
+       再點第二次才真的打開),用這次操作有沒有真的點過這一天
+       (habitMoodArmedDay)判斷,不能直接比對ui.habitDate,因為「今天」
+       本來就常常是預設選中的日期,會害使用者點第一次就被誤判成第二次。 */
   selectHabitDate(dayStr);
   const today = todayStr();
   if(dayStr > today){ habitMoodArmedDay = null; return; }
+  if(dayStr === today && !dayNightWindowActive(dayStr)){
+    habitMoodArmedDay = null;
+    return;
+  }
   if(habitMoodArmedDay === dayStr){
     habitMoodArmedDay = null;
-    showNightRecap(dayStr, true, !dayNightWindowActive(dayStr));
+    let useSimple = !dayNightWindowActive(dayStr);
+    if(dayStr === today && !useSimple){
+      if(data.lastAutoRecapDate === today){
+        useSimple = true;
+      }else{
+        data.lastAutoRecapDate = today;
+        persist();
+      }
+    }
+    showNightRecap(dayStr, true, useSimple);
   }else{
     habitMoodArmedDay = dayStr;
   }
