@@ -351,6 +351,16 @@
   .rate-bar-fill.over{background:var(--danger);}
   .budget-amt{width:auto;flex-shrink:0;font-size:11px;color:var(--ink-soft);}
   .budget-amt.over-text{color:var(--danger);font-weight:700;}
+  .pie-legend{display:flex;flex-direction:column;gap:7px;}
+  .pie-legend-row{display:flex;align-items:center;gap:6px;font-size:12px;}
+  .pie-legend-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+  .pie-legend-icon{color:var(--ink-soft);display:flex;flex-shrink:0;}
+  .pie-legend-name{flex:1;min-width:0;color:var(--ink);}
+  .pie-legend-amt{color:var(--ink-soft);flex-shrink:0;}
+  .pie-legend-pct{width:34px;text-align:right;font-weight:700;color:var(--ink);flex-shrink:0;}
+  .trend-legend{display:flex;gap:16px;justify-content:center;margin-top:4px;font-size:11.5px;color:var(--ink-soft);}
+  .trend-legend span{display:inline-flex;align-items:center;gap:5px;}
+  .trend-dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
   .chart-line-draw{stroke-dasharray:1000;stroke-dashoffset:1000;animation:drawLine 1.1s ease-out forwards;}
   @keyframes drawLine{to{stroke-dashoffset:0;}}
   .chart-dot{opacity:0;animation:dotAppear .3s ease forwards;}
@@ -935,6 +945,11 @@
     </div>
 
     <div id="view-expense" style="display:none">
+      <div class="pill-tabs" id="expenseTabSeg" style="margin-bottom:14px;">
+        <button id="expenseTabRecordBtn" class="pill-tab active" onclick="setExpenseTab('record')">記帳</button>
+        <button id="expenseTabStatsBtn" class="pill-tab" onclick="setExpenseTab('stats')">統計</button>
+      </div>
+      <div id="expenseMainView">
       <div class="expense-month-nav">
         <button class="cal-nav-btn" onclick="expenseMonthNav(-1)">‹</button>
         <span id="expenseMonthLabel">-</span>
@@ -996,6 +1011,8 @@
       </div>
       <button class="btn-primary" style="width:100%;margin:6px 0 14px;" onclick="openExpenseModal()">＋ 記一筆</button>
       <div id="expenseList"></div>
+      </div>
+      <div id="expenseStatsView" style="display:none"></div>
     </div>
   </div>
 </div>
@@ -4326,6 +4343,95 @@ function renderBudgetSection(monthList){
   document.getElementById('budgetList').innerHTML = html;
   animateRateBars(document.getElementById('budgetBlock'));
 }
+const CHART_PALETTE = ['#D98E73','#7FA67C','#6FA3C7','#D9B36A','#B38AC4','#E08A9E','#8FBF9F','#C7A27F','#7FC7C2','#C78FA8','#A3A5D9','#D9D973'];
+
+function setExpenseTab(tab){
+  document.getElementById('expenseTabRecordBtn').classList.toggle('active', tab==='record');
+  document.getElementById('expenseTabStatsBtn').classList.toggle('active', tab==='stats');
+  document.getElementById('expenseMainView').style.display = tab==='record' ? 'block' : 'none';
+  document.getElementById('expenseStatsView').style.display = tab==='stats' ? 'block' : 'none';
+  if(tab==='stats') renderExpenseStats(); else renderExpensePage();
+}
+
+function buildExpensePieChart(monthList){
+  const byCat = {};
+  monthList.forEach(e=>{
+    if(e.type!=='expense') return;
+    byCat[e.category] = (byCat[e.category]||0) + e.amount;
+  });
+  const entries = Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
+  const total = entries.reduce((s,[,v])=>s+v,0);
+  if(total<=0){
+    return `<div class="empty-state" style="padding:24px">這個月還沒有支出紀錄</div>`;
+  }
+  const R = 70, CX=100, CY=100, SW=30, CIRC = 2*Math.PI*R;
+  let acc = 0, slices = '';
+  const legendRows = entries.map(([catId, amt], i)=>{
+    const cat = data.expenseCategories.find(c=>c.id===catId) || {name:catId, icon:'other'};
+    const pct = amt/total*100;
+    const color = CHART_PALETTE[i % CHART_PALETTE.length];
+    const len = pct/100*CIRC;
+    const dashoffset = -acc/100*CIRC;
+    acc += pct;
+    slices += `<circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="${color}" stroke-width="${SW}" stroke-dasharray="${len.toFixed(1)} ${(CIRC-len).toFixed(1)}" stroke-dashoffset="${dashoffset.toFixed(1)}"></circle>`;
+    return `<div class="pie-legend-row"><span class="pie-legend-dot" style="background:${color}"></span>
+      <span class="pie-legend-icon">${iconSvg(cat.icon,15)}</span>
+      <span class="pie-legend-name">${escapeHtml(cat.name)}</span>
+      <span class="pie-legend-amt">${fmtMoney(amt)}</span>
+      <span class="pie-legend-pct">${Math.round(pct)}%</span></div>`;
+  }).join('');
+  return `<div style="display:flex;justify-content:center;margin-bottom:10px;">
+    <svg viewBox="0 0 200 200" width="180" height="180">
+      <g transform="rotate(-90 ${CX} ${CY})">${slices}</g>
+      <text x="${CX}" y="${CY-4}" text-anchor="middle" font-size="12" fill="var(--ink-soft)">本月支出</text>
+      <text x="${CX}" y="${CY+16}" text-anchor="middle" font-size="16" font-weight="800" fill="var(--ink)">${fmtMoney(total)}</text>
+    </svg>
+  </div>
+  <div class="pie-legend">${legendRows}</div>`;
+}
+
+function buildExpenseTrendChart(){
+  const months = [];
+  const base = new Date();
+  for(let i=5;i>=0;i--){
+    const d = new Date(base.getFullYear(), base.getMonth()-i, 1);
+    months.push(expenseMonthKeyOf(d));
+  }
+  const rows = months.map(mk=>{
+    const list = getExpensesForMonth(mk);
+    const income = list.filter(e=>e.type==='income').reduce((s,e)=>s+e.amount,0);
+    const expense = list.filter(e=>e.type==='expense').reduce((s,e)=>s+e.amount,0);
+    return { mk, income, expense };
+  });
+  const maxVal = Math.max(1, ...rows.map(r=>Math.max(r.income,r.expense)));
+  const W=320, H=150, padL=4, padR=4, padT=10, padB=20;
+  const innerH = H-padT-padB;
+  const groupW = (W-padL-padR)/rows.length;
+  const barW = Math.min(16, groupW/3.2);
+  let bars = '';
+  rows.forEach((r,i)=>{
+    const gx = padL + i*groupW + groupW/2;
+    const hInc = r.income/maxVal*innerH, hExp = r.expense/maxVal*innerH;
+    bars += `<rect x="${(gx-barW-2).toFixed(1)}" y="${(padT+innerH-hInc).toFixed(1)}" width="${barW}" height="${hInc.toFixed(1)}" rx="2" fill="#3A8A5E"></rect>`;
+    bars += `<rect x="${(gx+2).toFixed(1)}" y="${(padT+innerH-hExp).toFixed(1)}" width="${barW}" height="${hExp.toFixed(1)}" rx="2" fill="#C0504D"></rect>`;
+    const label = r.mk.slice(5)+'月';
+    bars += `<text x="${gx.toFixed(1)}" y="${H-4}" text-anchor="middle" font-size="9" fill="var(--ink-soft)">${label}</text>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:150px;display:block;">
+    <line x1="${padL}" y1="${padT+innerH}" x2="${W-padR}" y2="${padT+innerH}" stroke="var(--border)" stroke-width="1"></line>
+    ${bars}
+  </svg>
+  <div class="trend-legend"><span><span class="trend-dot" style="background:#3A8A5E"></span>收入</span><span><span class="trend-dot" style="background:#C0504D"></span>支出</span></div>`;
+}
+
+function renderExpenseStats(){
+  const monthKey = expenseMonthKeyOf(expenseUi.monthDate);
+  const monthList = getExpensesForMonth(monthKey);
+  document.getElementById('expenseStatsView').innerHTML = `
+    <div class="setting-block"><h3>分類佔比</h3>${buildExpensePieChart(monthList)}</div>
+    <div class="setting-block"><h3>近6個月收支趨勢</h3>${buildExpenseTrendChart()}</div>`;
+}
+
 function renderExpensePage(){
   const auto = runRecurring();
   if(auto) flashToast('已自動記入 '+auto+' 筆固定扣款');
