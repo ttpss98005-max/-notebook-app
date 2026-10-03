@@ -2183,7 +2183,10 @@ function runFlowSplash(onDone){
   };
   const inv = (a,b,t)=> Math.max(0, Math.min(1, (t-a)/(b-a)));
   const outCubic = t=> 1-Math.pow(1-t,3);
-  const C = { ink:'#2A241E', paper:'#F6EFE4', clay:'#C97F56' };
+  /* 顏色跟著使用者目前選的配色風格走:背景用該配色的bg、線條用該配色的ink(文字色,
+     跟bg本來就是對比組合)、中間的強調色用該配色的accent,不管淺色或深色主題都適用。 */
+  const pal = effectivePalette();
+  const C = { ink: pal.bg, paper: pal.ink, clay: pal.accent };
   const SERIF = "Georgia, 'Noto Serif TC', serif";
   const LINES=58, Y_TOP=172, GAP=6.9, WORD_AFTER=25, BEAT=0.7, PULSE=BEAT*2;
   const DURATION = 2.0;
