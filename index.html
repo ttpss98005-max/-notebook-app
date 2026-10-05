@@ -66,6 +66,11 @@
   .login-anim span:nth-child(3){animation-delay:.3s;}
 
   .login-note{margin-top:22px;font-size:11px;color:#B5B5B5;line-height:1.7;text-align:left;background:#FAFAF7;border-radius:14px;padding:12px 14px;}
+  .inapp-title{font-size:15px;font-weight:700;margin-bottom:8px;color:#1A1A1A;}
+  .inapp-desc{font-size:12.5px;line-height:1.7;color:#6F6F6F;margin-bottom:18px;text-align:left;}
+  .inapp-btn{width:100%;margin-bottom:10px;}
+  .inapp-hint{font-size:11.5px;line-height:1.7;color:#8A8A8A;text-align:left;background:#FAFAF7;border-radius:14px;padding:10px 12px;margin-top:4px;}
+  .inapp-url{margin-top:10px;font-size:10.5px;color:#B5B5B5;word-break:break-all;user-select:text;-webkit-user-select:text;text-align:left;}
 
   /* ============ APP SHELL ============ */
   #appShell{display:none;min-height:100vh;}
@@ -783,6 +788,14 @@
     <div class="login-note" id="authCheckingNote">正在確認登入狀態...</div>
     <div id="gsiButtonContainer" style="display:none;justify-content:center;align-items:center;min-height:44px;margin-bottom:2px;">
       <div class="login-anim" id="gsiLoadingAnim" style="margin:0;"><span></span><span></span><span></span></div>
+    </div>
+    <div id="inAppPanel" style="display:none;">
+      <div class="inapp-title">請用瀏覽器開啟</div>
+      <div class="inapp-desc" id="inAppDesc"></div>
+      <button class="btn-primary inapp-btn" onclick="openInExternalBrowser()">用瀏覽器開啟</button>
+      <button class="btn-ghost inapp-btn" id="inAppCopyBtn" onclick="copyAppUrl()">複製網址</button>
+      <div class="inapp-hint" id="inAppHint"></div>
+      <div class="inapp-url" id="inAppUrl"></div>
     </div>
     <div class="login-note" id="loginNote" style="display:none">Google 登入元件載入失敗，請檢查網路連線後重新整理頁面。</div>
   </div>
@@ -2061,6 +2074,7 @@ const GOOGLE_CLIENT_ID = '826476371547-f1omvto42ta1s5t7knkph573a74cm89i.apps.goo
 
 let gsiInitialized = false;
 function initGoogleSignIn(){
+  if(isInAppBrowser()) return;
   if(!window.google || !google.accounts || !google.accounts.id){
     const anim = document.getElementById('gsiLoadingAnim'); if(anim) anim.remove();
     document.getElementById('loginNote').style.display = 'block';
@@ -2204,10 +2218,89 @@ window.addEventListener('DOMContentLoaded', async ()=>{
     revealLoginButton();
   }
 });
+/* ===== Instagram / Facebook / LINE 等App內建瀏覽器:Google不允許在這裡登入(會出現400錯誤),
+   所以偵測到時改顯示「請用瀏覽器開啟」,並提供自動跳轉、複製網址兩種方式 ===== */
+function inAppBrowserName(){
+  const ua = navigator.userAgent || '';
+  if(/Instagram/i.test(ua)) return 'Instagram';
+  if(/FBAN|FBAV|FB_IAB|Messenger/i.test(ua)) return 'Facebook';
+  if(/Line\//i.test(ua)) return 'LINE';
+  if(/MicroMessenger/i.test(ua)) return '微信';
+  if(/Barcelona/i.test(ua)) return 'Threads';
+  return null;
+}
+function isInAppBrowser(){ return !!inAppBrowserName(); }
+function externalBrowserTargets(){
+  const href = location.href.split('#')[0];
+  const noProto = href.replace(/^https?:\/\//,'');
+  const isHttps = /^https:/i.test(href);
+  return {
+    href,
+    android: `intent://${noProto}#Intent;scheme=${isHttps?'https':'http'};package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(href)};end`,
+    line: href + (href.includes('?') ? '&' : '?') + 'openExternalBrowser=1',
+    safari: 'x-safari-' + href,
+    chrome: (isHttps ? 'googlechromes://' : 'googlechrome://') + noProto
+  };
+}
+function inAppHintText(){
+  const ua = navigator.userAgent || '';
+  const name = inAppBrowserName();
+  if(/iPhone|iPad|iPod/i.test(ua)){
+    return name==='LINE'
+      ? '若沒有自動跳轉：請點畫面右下角的分享圖示，選「在 Safari 中開啟」。'
+      : '若沒有自動跳轉：請點畫面右下角的「⋯」，選「在瀏覽器中開啟」。';
+  }
+  if(/Android/i.test(ua)){
+    return '若沒有自動跳轉：請點畫面右上角的「⋯」，選「在 Chrome 中開啟」（或「用其他瀏覽器開啟」）。';
+  }
+  return '若沒有自動跳轉：請點畫面角落的「⋯」，選「在瀏覽器中開啟」，或複製網址後貼到 Safari／Chrome。';
+}
+function showInAppPanel(){
+  const name = inAppBrowserName();
+  document.getElementById('inAppDesc').textContent =
+    'Google 不允許在 '+name+' 內建瀏覽器登入。請改用 Safari 或 Chrome 開啟，就能正常登入使用。';
+  document.getElementById('inAppHint').textContent = inAppHintText();
+  document.getElementById('inAppUrl').textContent = externalBrowserTargets().href;
+  document.getElementById('inAppPanel').style.display = 'block';
+}
+function openInExternalBrowser(){
+  const t = externalBrowserTargets();
+  const ua = navigator.userAgent || '';
+  if(/Line\//i.test(ua)){ location.href = t.line; return; }
+  if(/Android/i.test(ua)){ location.href = t.android; return; }
+  if(/iPhone|iPad|iPod/i.test(ua)){
+    location.href = t.safari;
+    setTimeout(()=>{ if(document.visibilityState==='visible') location.href = t.chrome; }, 900);
+    return;
+  }
+  copyAppUrl();
+}
+function copyAppUrl(){
+  const url = location.href.split('#')[0];
+  const done = ()=>{
+    const b = document.getElementById('inAppCopyBtn');
+    if(!b) return;
+    b.textContent = '已複製，請到瀏覽器貼上網址';
+    setTimeout(()=>{ b.textContent = '複製網址'; }, 2600);
+  };
+  const fallback = ()=>{
+    const ta = document.createElement('textarea');
+    ta.value = url; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    try{ if(document.execCommand('copy')) done(); }catch(e){}
+    ta.remove();
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(url).then(done).catch(fallback);
+  }else{
+    fallback();
+  }
+}
 function revealLoginButton(){
   const checkingNote = document.getElementById('authCheckingNote');
   const btnContainer = document.getElementById('gsiButtonContainer');
   if(checkingNote) checkingNote.style.display = 'none';
+  if(isInAppBrowser()){ showInAppPanel(); return; }
   if(btnContainer) btnContainer.style.display = 'flex';
 }
 
