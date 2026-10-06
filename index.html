@@ -722,9 +722,6 @@
   .field input,.field select{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:14px;font-size:13.5px;font-family:inherit;}
   .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:22px;}
   .row-inline{display:flex;align-items:center;justify-content:space-between;}
-  .notify-row{display:flex;align-items:center;gap:10px;margin-top:12px;max-width:360px;}
-  .notify-row label{margin:0;font-size:13px;flex:1;min-width:0;}
-  .notify-time{padding:6px 8px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:#fff;color:#1A1A1A;flex-shrink:0;}
   .switch{position:relative;width:38px;height:22px;background:#DDD;border-radius:999px;border:none;flex-shrink:0;}
   .switch.on{background:var(--accent);}
   .switch::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;background:#fff;border-radius:50%;transition:.15s;box-shadow:var(--shadow-sm);}
@@ -910,6 +907,11 @@
           <label style="margin:0;font-size:13px;">背景推播提醒（App沒開也會響）</label>
           <button class="switch" id="pushSwitch" onclick="togglePushSwitch()"></button>
         </div>
+        <div class="row-inline" style="max-width:300px;margin-top:14px;">
+          <label style="margin:0;font-size:13px;">早晚安推播</label>
+          <button class="switch" id="greetPushSwitch" onclick="toggleGreetPush()"></button>
+        </div>
+        <div class="fee-hint" style="margin-top:6px;">早上 8:00 提醒今天的習慣，晚上 10:00 提醒你回顧今天。實際送出可能晚幾分鐘。</div>
       </div>
       <div class="setting-block">
         <h3>每日提醒</h3>
@@ -928,13 +930,6 @@
           <label style="margin:0;font-size:13px;">晚上自動顯示回顧動畫</label>
           <button class="switch" id="nightRecapSwitch" onclick="toggleNightRecapSwitch()"></button>
         </div>
-      </div>
-      <div class="setting-block">
-        <h3>每日通知</h3>
-        <div class="fee-hint" style="margin:-4px 0 2px;">到時間手機會跳出通知，要先打開上面的「背景推播提醒」。實際送出可能晚幾分鐘。</div>
-        <div class="notify-row"><label>早安通知</label><input type="time" class="notify-time" id="notifyTime_morning" onchange="setNotifyTime('morning', this.value)"><button class="switch" id="notifySwitch_morning" onclick="toggleNotify('morning')"></button></div>
-        <div class="notify-row"><label>清單通知（明天要做的事）</label><input type="time" class="notify-time" id="notifyTime_list" onchange="setNotifyTime('list', this.value)"><button class="switch" id="notifySwitch_list" onclick="toggleNotify('list')"></button></div>
-        <div class="notify-row"><label>晚安通知</label><input type="time" class="notify-time" id="notifyTime_night" onchange="setNotifyTime('night', this.value)"><button class="switch" id="notifySwitch_night" onclick="toggleNotify('night')"></button></div>
       </div>
       <div class="setting-block">
         <h3>回顧小結</h3>
@@ -1588,7 +1583,7 @@ function defaultData(){
     incomeCategories: DEFAULT_INCOME_CATEGORIES.map(c=>({...c})),
     categoryBudgets: {},
     notifySettings: {
-      morning:{on:false, time:'08:00'}, list:{on:false, time:'21:00'}, night:{on:false, time:'22:00'}
+      morning:{on:false, time:'08:00'}, night:{on:false, time:'22:00'}
     },
     recurring: [],
     payroll: {
@@ -2211,12 +2206,14 @@ async function deleteReminderDoc(id){
    而且只寫「還沒到時間」的那幾筆,所以不會把已經送出的標記洗掉造成重複送。 */
 const NOTIFY_KINDS = {
   morning:{ time:'08:00' },
-  list:{ time:'21:00' },
   night:{ time:'22:00' }
 };
+const NOTIFY_LEGACY_KINDS = ['list'];     /* 舊版的「清單通知」已經移除;只用來清掉雲端上舊的排程 */
+let legacyNotifyCleanup = false;
 const NOTIFY_HORIZON_DAYS = 7;
 function ensureNotifySettings(){
   if(!data.notifySettings || typeof data.notifySettings!=='object') data.notifySettings = {};
+  if(data.notifySettings.list!==undefined){ delete data.notifySettings.list; legacyNotifyCleanup = true; }
   Object.keys(NOTIFY_KINDS).forEach(k=>{
     const cur = data.notifySettings[k];
     if(!cur || typeof cur!=='object'){
@@ -2232,26 +2229,11 @@ function notifyDueAt(dateStr, timeStr){
   const [hh,mm] = timeStr.split(':').map(Number);
   return new Date(y, m-1, d, hh, mm, 0, 0).getTime();
 }
-function notifyItemsOnDate(dateStr){
-  const items = [];
-  data.tasks.forEach(t=>{
-    if(t.status!=='done' && t.dueDate===dateStr) items.push(t.title);
-    (t.subtasks||[]).forEach(sub=>{
-      if(sub.status!=='done' && sub.time && sub.time.slice(0,10)===dateStr) items.push(sub.title);
-    });
-  });
-  return items;
-}
 function buildNotifyContent(kind, dayOffset){
   if(kind==='morning'){
     const day = dateStrOffset(dayOffset);
     const n = data.habits.filter(h=>habitScheduledOn(h, day)).length;
     return { title:'早安', body: n>0 ? '新的一天，今天有 '+n+' 個習慣要打卡。' : '新的一天開始了，今天也慢慢來。' };
-  }
-  if(kind==='list'){
-    const items = notifyItemsOnDate(dateStrOffset(dayOffset+1));
-    if(items.length===0) return null;
-    return { title:'明天要做的事', body:'明天有 '+items.length+' 件事：'+items.slice(0,3).join('、')+(items.length>3?'…':'') };
   }
   return { title:'晚安', body:'今天辛苦了，睡前花一分鐘回顧今天、選個心情吧。' };
 }
@@ -2269,6 +2251,11 @@ async function syncDailyNotifications(opts){
   if(!opts.force && now - __notifyLastSync < 20000) return;
   __notifyLastSync = now;
   try{
+    if(legacyNotifyCleanup){
+      legacyNotifyCleanup = false;
+      for(const kind of NOTIFY_LEGACY_KINDS) for(let i=0;i<NOTIFY_HORIZON_DAYS;i++) await deleteReminderDoc(notifyDocId(kind, dateStrOffset(i)));
+      persist();     /* 把「已移除清單通知」這個結果存回去 */
+    }
     for(const kind of Object.keys(NOTIFY_KINDS)){
       const st = data.notifySettings[kind];
       for(let i=0;i<NOTIFY_HORIZON_DAYS;i++){
@@ -2301,37 +2288,34 @@ async function pruneOldDailyNotifications(){
   let from = last ? shiftDay(last,1) : dateStrOffset(-14);
   if(from < dateStrOffset(-30)) from = dateStrOffset(-30);
   for(let d=from; d<today; d=shiftDay(d,1)){
-    for(const kind of Object.keys(NOTIFY_KINDS)) await deleteReminderDoc(notifyDocId(kind, d));
+    for(const kind of Object.keys(NOTIFY_KINDS).concat(NOTIFY_LEGACY_KINDS)) await deleteReminderDoc(notifyDocId(kind, d));
   }
   try{ localStorage.setItem(flag, today); }catch(e){}
+}
+function greetPushOn(){
+  ensureNotifySettings();
+  return !!(data.notifySettings.morning.on || data.notifySettings.night.on);
 }
 function renderNotifySettings(){
   if(!data) return;
   ensureNotifySettings();
-  Object.keys(NOTIFY_KINDS).forEach(k=>{
-    const sw = document.getElementById('notifySwitch_'+k);
-    const t = document.getElementById('notifyTime_'+k);
-    if(sw) sw.classList.toggle('on', data.notifySettings[k].on);
-    if(t) t.value = data.notifySettings[k].time;
-  });
+  const sw = document.getElementById('greetPushSwitch');
+  if(sw) sw.classList.toggle('on', greetPushOn());
 }
-function toggleNotify(kind){
+/* 「早晚安推播」:一個開關同時管早上 8:00 和晚上 10:00 兩則。
+   還沒打開「背景推播提醒」(沒有通知權限)的話,會先幫你走一次開啟推播的流程 */
+async function toggleGreetPush(){
   ensureNotifySettings();
-  const st = data.notifySettings[kind];
-  st.on = !st.on;
+  const turnOn = !greetPushOn();
+  if(turnOn && !(('Notification' in window) && Notification.permission==='granted')){
+    await enablePushNotifications();
+    if(!(('Notification' in window) && Notification.permission==='granted')){ renderNotifySettings(); return; }
+  }
+  data.notifySettings.morning.on = turnOn;
+  data.notifySettings.night.on = turnOn;
   persist();
   renderNotifySettings();
-  syncDailyNotifications({ force:true, cleanup:kind });
-  if(st.on && !(('Notification' in window) && Notification.permission==='granted')){
-    flashToast('已排程。要在手機收到，請先打開上面的「背景推播提醒」');
-  }
-}
-function setNotifyTime(kind, value){
-  if(!/^\d{2}:\d{2}$/.test(value||'')){ renderNotifySettings(); return; }
-  ensureNotifySettings();
-  data.notifySettings[kind].time = value;
-  persist();
-  syncDailyNotifications({ force:true });
+  syncDailyNotifications({ force:true, cleanup:true });
 }
 async function devListScheduledNotifications(){
   if(!isDevUser()) return;
@@ -2675,14 +2659,25 @@ const SceneAnim = (function(){
     let L=null;
     function build(w,h){
       const U=Math.min(w,h*.56), R=.18*U;
-      const hills=[ {x:.2*w,y:.8*h,r:.42*U,col:'acc2',d:.35}, {x:.78*w,y:.84*h,r:.46*U,col:'accent',d:.5}, {x:.45*w,y:1.04*h,r:.42*U,col:'deep',d:.65} ];
+      /* 山的位置原本是用「螢幕寬度的比例」算的,螢幕一變寬(電腦),三座山就被拉得各自孤立、散開。
+         改成:手機是整個畫面當一塊舞台(跟以前完全一樣);大螢幕只用中間一塊(寬度 U)當舞台,
+         兩邊用同一組山一塊一塊往外接,山脈才會連在一起 */
+      const phone = w <= U*1.02, Ws = phone ? w : U;
+      const baseHills = [ {fx:.2,y:.8,r:.42,col:'acc2',d:.35,o:0}, {fx:.78,y:.84,r:.46,col:'accent',d:.5,o:1}, {fx:.45,y:1.04,r:.42,col:'deep',d:.65,o:2} ];
+      const hills = [];
+      for(let rep=phone?0:-8; rep<=(phone?0:8); rep++) for(const q of baseHills){
+        const x = w/2+(q.fx-.5)*Ws+rep*Ws, r = q.r*U;
+        if(x+r<0 || x-r>w) continue;
+        hills.push({ x, y:q.y*h, r, col:q.col, d:q.d+Math.abs(rep)*.1, o:q.o });
+      }
+      hills.sort((a,b)=>a.o-b.o);     /* 由後(淺色)往前(深色)畫 */
       /* 太陽要藏在「山完全長好之後」的山後面。山的輪廓不是平的,所以沿著太陽的整個寬度逐點檢查:
          太陽在每個位置的上緣,都不能高過那個位置的山頭,取最嚴格的那個當起點,一開始就完全看不到 */
       const ridge=x=>{ let y=h; for(const q of hills){ const dx=Math.abs(q.x-x); if(dx<q.r) y=Math.min(y,q.y-Math.sqrt(q.r*q.r-dx*dx)); } return y; };
       let y0=0; for(let i=0;i<=60;i++){ const dx=-R+2*R*i/60; y0=Math.max(y0, ridge(w/2+dx)+Math.sqrt(Math.max(0,R*R-dx*dx))); }
       y0+=6;
       const y1=h*.3, hillsTop=Math.min(...hills.map(q=>q.y-q.r));
-      return {w,h,U,R,hills,y0,y1,cardY:((y1+R)+hillsTop)/2,cardSpace:hillsTop-(y1+R)};
+      return {w,h,U,R,hills,phone,y0,y1,cardY:((y1+R)+hillsTop)/2,cardSpace:hillsTop-(y1+R)};
     }
     return {
       cardAt:3.4,
@@ -2698,6 +2693,7 @@ const SceneAnim = (function(){
           if(t>4.3){ const u=((t-4.3)%3.4)/3.4; ctx.strokeStyle=C.accent; ctx.lineWidth=2; ctx.globalAlpha=.35*(1-u); ctx.beginPath(); ctx.arc(w/2,sy,R*(1.1+.6*u),0,TAU); ctx.stroke(); ctx.globalAlpha=1; }
         }
         for(const q of L.hills){ const o=(1-spring(t-q.d,2,.6))*h*.4; disc(ctx,q.x,q.y+o,q.r,C[q.col]); }
+        if(!L.phone){ ctx.fillStyle=C.deep; ctx.fillRect(0,h*.92+(1-spring(t-.65,2,.6))*h*.4,w,h); }   /* 大螢幕:最前面一層山之間補一條地面,底部才不會露出縫 */
       }
     };
   }
@@ -2708,23 +2704,34 @@ const SceneAnim = (function(){
     function build(w,h){
       const U=Math.min(w,h*.56), hz=h*.56, R=.15*U, dy=h*.028, rs=mulberry32(5), stars=[];
       for(let k=0;k<11;k++){ let x,y,n=0; do{ x=w*(.06+.88*rs()); y=hz*(.05+.7*rs()); n++; }while(n<40&&Math.hypot(x-w/2,y-h*.26)<R*3.1); stars.push({x,y,s:U*(.012+.014*rs()),ph:rs()*6.28,fr:1.2+rs()*1.4}); }
-      return {w,h,U,hz,R,dy,stars,cardY:(hz+dy*6+h)/2,cardSpace:h-(hz+dy*6)};
+      /* 小島:手機維持原本(左右各一座)。大螢幕改成沿著整條海平線分布、大小不一、比較扁,不要只剩兩座貼在最左最右的小凸起 */
+      const phone = w <= U*1.02;
+      let islands;
+      if(phone) islands = [ { x:w*.14, rx:U*.13, ry:U*.13 }, { x:w*.9, rx:U*.08, ry:U*.08 } ];
+      else{
+        const ri = mulberry32(11), n = Math.max(3, Math.round(w/(U*.7)));
+        islands = Array.from({length:n},(_,i)=>{ const r=U*(.05+.09*ri()); return { x:(i+.25+.5*ri())/n*w, rx:r*1.8, ry:r*.75 }; });
+      }
+      return {w,h,U,hz,R,dy,stars,islands,cardY:(hz+dy*6+h)/2,cardSpace:h-(hz+dy*6)};
     }
     return {
       cardAt:4.0,
       reset(w,h){ L=build(w,h); this.cardY=L.cardY; this.cardSpace=L.cardSpace; },
       draw(ctx,t,C){
         const {w,h,hz,R,dy}=L, N=10, bh=hz/N;
-        ctx.fillStyle=C.sky; ctx.fillRect(0,0,w,h);
-        /* 天空色帶:由上往下,從黃昏的暖色一條一條暗成夜色 */
-        for(let k=0;k<N;k++){ const p=k/(N-1), a=smooth(.15+k*.1,.95+k*.1,t);
-          ctx.fillStyle=mixHex(mixHex(C.sky,C.acc2,Math.pow(p,1.6)),mixHex(C.n1,C.n3,Math.pow(p,1.4)*.9),a); ctx.fillRect(0,k*bh,w,bh+1); }
+        ctx.fillStyle=C.n1; ctx.fillRect(0,0,w,h);
+        /* 天空色帶:一開始就是暗的(前一個畫面是深色的回顧畫面,不能突然亮一下),只有靠近海平線還留著一點黃昏的餘暉,
+           整片慢慢、一起退成夜色。原本是從「接近純白的白天」開始,在深色畫面上淡入後 0.5 秒內急速變暗,看起來像閃一下、重播一次 */
+        for(let k=0;k<N;k++){ const p=k/(N-1), a=smooth(.2+k*.04,2.8+k*.04,t);
+          const dusk=mixHex(C.n1,mixHex(C.n3,C.accent,.45),Math.pow(p,1.7)), night=mixHex(C.n1,C.n3,Math.pow(p,1.4)*.9);
+          ctx.fillStyle=mixHex(dusk,night,a); ctx.fillRect(0,k*bh,w,bh+1); }
         for(const s of L.stars){ const ap=3+s.ph*.3; if(t<ap) continue; const u=spring(t-ap,2.5,.5), tw=.8+.2*Math.sin(t*s.fr+s.ph); ctx.fillStyle=C.star; ctx.globalAlpha=.5+.5*tw; sparkle(ctx,s.x,s.y,s.s*u*tw*1.8); ctx.globalAlpha=1; }
         /* 新月:從海平線下面升起(海面在後面才畫,所以一開始看不到) */
         const p=outCubic(inv(1,4,t)), my=lerp(hz+R*1.7,h*.26,p);
         if(!dbg.noMoon){ disc(ctx,w/2,my,R*2.4,C.moon,.05*p); disc(ctx,w/2,my,R*1.6,C.moon,.08*p); crescent(ctx,w/2,my,R,C.moon); }
-        const o=(1-spring(t-.3,2,.6))*h*.2;
-        disc(ctx,w*.14,hz+o,L.U*.13,C.n5); disc(ctx,w*.9,hz+o,L.U*.08,C.n5);
+        const o=(1-outCubic(inv(.3,1.5,t)))*h*.2;     /* 小島從海平線下面平順地浮上來(不用會彈跳的彈簧,不會「跳一下」) */
+        ctx.fillStyle=C.n5;
+        for(const is of L.islands){ ctx.beginPath(); ctx.ellipse(is.x,hz+o,is.rx,is.ry,0,0,TAU); ctx.fill(); }
         ctx.fillStyle=C.n4; ctx.fillRect(0,hz,w,h-hz);
         /* 海面上的倒影:一格一格,輪流左右飄動 */
         for(let k=0;k<6;k++){
@@ -5699,7 +5706,9 @@ function maybeShowDailyBrief(){
   if(hour < 7) return false;
   const today = todayStr();
   const briefOff = data.dailyBriefDismissedDate === today;
-  const showGreeting = !data.morningGreetingDisabled && data.morningGreetingShownDate !== today;
+  /* 早安動畫只在早上(7:00～11:59)自動顯示。晚上才打開 App 時(例如 23:00)不該出現早安,也不能把「今天已經顯示過」記起來 */
+  const isMorning = hour >= 7 && hour < 12;
+  const showGreeting = isMorning && !data.morningGreetingDisabled && data.morningGreetingShownDate !== today;
   if(briefOff && !showGreeting) return false;
   if(showGreeting){
     data.morningGreetingShownDate = today;
@@ -6115,7 +6124,7 @@ function applyTheme(){
   /* 手機瀏覽器的狀態列／網址列顏色也跟著目前配色的強調色走(原本是寫死的綠色) */
   const tc = document.querySelector('meta[name="theme-color"]');
   if(tc) tc.setAttribute('content', p.accent);
-  try{ LoginBg.saveTheme(getPaletteById(data.globalPaletteId) || PRESET_PALETTES[0]); }catch(e){}
+  try{ LoginBg.saveTheme(p); }catch(e){}   /* 登入畫面跟著「目前的頁面」:整體,或目前選的清單分類(分類各自有專屬配色,而且會被記住) */
 }
 function renderSettings(){
   renderNotifySettings();
