@@ -2169,7 +2169,9 @@ async function devListScheduledNotifications(){
     const fmt = ms=>{ const d=new Date(ms); return (d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); };
     box.textContent = '尚未送出的排程：'+pending.length+' 筆（全部 '+rows.length+' 筆）\n' + pending.slice(0,8).map(r=>fmt(r.dueAt)+'　'+r.title).join('\n');
   }catch(e){
-    box.textContent = '查詢失敗：'+(e.code||e.message||e);
+    box.textContent = e.code==='permission-denied'
+      ? '資料庫規則不允許讀取 reminders，所以列不出來（不影響通知的寫入與送出）。要確認排程，可以到 Firebase 控制台看 reminders 集合。'
+      : '查詢失敗：'+(e.code||e.message||e);
   }
 }
 async function writeHabitReminderDoc(habit){
@@ -5568,17 +5570,25 @@ async function devPushTokenState(){
   if(perm!=='granted') return {ok:false, text:'通知權限：'+({denied:'已封鎖',default:'尚未詢問'}[perm]||perm)+'（請先到設定頁打開「背景推播提醒」並允許通知）'};
   if(!window.firebase || !firebase.messaging) return {ok:false, text:'Firebase 推播元件沒有載入（請檢查網路）'};
   if(!fbDb || !currentStorageKey) return {ok:false, text:'尚未連上雲端資料庫'};
+  /* 第1步:向推播服務取得這支手機的代碼 */
+  let token;
   try{
     const reg = swRegistration || await navigator.serviceWorker.getRegistration();
     if(!reg) return {ok:false, text:'Service Worker 尚未註冊'};
-    const token = await firebase.messaging().getToken({ vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
-    if(!token) return {ok:false, text:'取不到這支手機的推播代碼'};
-    const doc = await fbDb.collection('deviceTokens').doc(token).get();
-    if(!doc.exists) return {ok:false, text:'有推播代碼，但資料庫沒有登記這支手機（請把設定頁的推播開關關掉再重新打開一次）'};
-    return {ok:true, text:'這支手機的推播代碼已登記（…'+token.slice(-6)+'）'};
+    token = await firebase.messaging().getToken({ vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
   }catch(e){
-    return {ok:false, text:'取得推播代碼失敗：'+(e.code||e.message||e)};
+    return {ok:false, text:'向推播服務取得代碼失敗：'+(e.code||e.message||e)};
   }
+  if(!token) return {ok:false, text:'取不到這支手機的推播代碼'};
+  /* 第2步:寫進資料庫(跟打開推播開關時做的事一模一樣)。
+     這裡只「寫」不「讀」:資料庫規則通常只允許寫入 deviceTokens,讀取會被擋(permission-denied)。 */
+  try{
+    await fbDb.collection('deviceTokens').doc(token).set({ uid: currentStorageKey, updatedAt: Date.now() });
+  }catch(e){
+    const code = e.code||e.message||e;
+    return {ok:false, text:'已取得推播代碼，但寫入資料庫失敗：'+code+(e.code==='permission-denied'?'（資料庫規則不允許寫入 deviceTokens）':'')};
+  }
+  return {ok:true, text:'已取得這支手機的推播代碼，並確認登記到資料庫（…'+token.slice(-6)+'）'};
 }
 async function devCheckPushStatus(){
   if(!isDevUser()) return;
