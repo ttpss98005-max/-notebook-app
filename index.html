@@ -2332,9 +2332,9 @@ const LoginBg = (function(){
   /* 速度:比預覽版再慢一點(翻面週期 1.5→1.9 秒、彈簧頻率 2.9→2.4、波的間隔拉長) */
   /* 兩種狀態:
      忙碌(確認登入狀態、按下登入後載入資料):整片連續翻面,像在等
-     等你操作(畫面停在「用 Google 登入」):整片靜止,只每隔一下隨機輕輕翻 2 塊磚,
+     等你操作(畫面停在「用 Google 登入」):整片靜止,只每隔一下隨機輕輕翻 5 塊磚,
      像呼吸,不像在載入;也不會因為整個定住而太單調 */
-  const CFG = { period:1.9, delay:.085, f:2.4, idleGap:1.7, idleF:1.9, idleCount:2, types:[0,1,3], combos:[['soft','accent'],['accent','paper'],['paper','soft'],['deep','accent']] };
+  const CFG = { period:1.9, delay:.085, f:2.4, idleGap:1.7, idleF:1.9, idleCount:5, types:[0,1,3], combos:[['soft','accent'],['accent','paper'],['paper','soft'],['deep','accent']] };
   let canvas=null, ctx=null, raf=0, running=false, active=false, S=null, t0=0;
   let waves=[], baseCount=0, waveSeq=0, busy=true, idleRnd=null;
   function build(){
