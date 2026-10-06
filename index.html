@@ -2265,6 +2265,7 @@ function base64UrlDecode(str){
 }
 
 async function handleGoogleCredentialResponse(response){
+  LoginBg.setBusy(true);   /* 按下登入後到載入完資料之間，是真的在等，背景動畫恢復忙碌節奏 */
   try{
     if(fbDb && window.firebase && firebase.auth){
       const credential = firebase.auth.GoogleAuthProvider.credential(response.credential);
@@ -2277,6 +2278,7 @@ async function handleGoogleCredentialResponse(response){
     }
   }catch(e){
     console.error('Google 登入失敗', e);
+    LoginBg.setBusy(false);
     notify('Google 登入失敗，請重新嘗試。');
   }
 }
@@ -2328,8 +2330,13 @@ const LoginBg = (function(){
     const tc = document.querySelector('meta[name="theme-color"]'); if(tc && tc.setAttribute) tc.setAttribute('content', c.accent);
   }
   /* 速度:比預覽版再慢一點(翻面週期 1.5→1.9 秒、彈簧頻率 2.9→2.4、波的間隔拉長) */
-  const CFG = { period:1.9, delay:.085, f:2.4, types:[0,1,3], combos:[['soft','accent'],['accent','paper'],['paper','soft'],['deep','accent']] };
+  /* 兩種狀態:
+     忙碌(確認登入狀態、按下登入後載入資料):整片連續翻面,像在等
+     等你操作(畫面停在「用 Google 登入」):整片靜止,只每隔一下隨機輕輕翻 2 塊磚,
+     像呼吸,不像在載入;也不會因為整個定住而太單調 */
+  const CFG = { period:1.9, delay:.085, f:2.4, idleGap:1.7, idleF:1.9, idleCount:2, types:[0,1,3], combos:[['soft','accent'],['accent','paper'],['paper','soft'],['deep','accent']] };
   let canvas=null, ctx=null, raf=0, running=false, active=false, S=null, t0=0;
+  let waves=[], baseCount=0, waveSeq=0, busy=true, idleRnd=null;
   function build(){
     const w = window.innerWidth, h = window.innerHeight, dpr = Math.min(window.devicePixelRatio||1, 2);
     canvas.width = Math.round(w*dpr); canvas.height = Math.round(h*dpr);
@@ -2339,10 +2346,12 @@ const LoginBg = (function(){
       const types=[], combos=[];
       for(let k=0;k<4;k++){ types.push(CFG.types[Math.floor(rnd()*CFG.types.length)]); combos.push(Math.floor(rnd()*nC)); }
       for(let k=1;k<4;k++){ if(combos[k]===combos[k-1]) combos[k]=(combos[k]+1)%nC; }
-      tiles.push({ i, j, types, combos, rot0:Math.floor(rnd()*4) });
+      tiles.push({ i, j, idx:j*cols+i, base:0, types, combos, rot0:Math.floor(rnd()*4) });
     }
     const c = readCached();
-    S = { w, h, dpr, cols, tile, rows, oy, tiles, ci0:(cols-1)/2, cj0:(rows-1)/2, C:derive(c ? c.accent : DEFAULT_ACCENT) };
+    waves = []; baseCount = 0; waveSeq = 0;
+    const seen = tiles.filter(T=>{ const cy=oy+T.j*tile+tile/2; return cy>0 && cy<h; }).map(T=>T.idx);
+    S = { w, h, dpr, cols, tile, rows, oy, tiles, seen, ci0:(cols-1)/2, cj0:(rows-1)/2, C:derive(c ? c.accent : DEFAULT_ACCENT) };
   }
   function tileShape(type){
     ctx.beginPath();
@@ -2351,19 +2360,36 @@ const LoginBg = (function(){
     else { ctx.moveTo(-1,1); ctx.lineTo(1,1); ctx.lineTo(-1,-1); ctx.closePath(); }
     ctx.fill();
   }
-  function delayOf(dir,i,j){
-    return dir===0 ? (i+j)*CFG.delay : dir===1 ? (S.cols-1-i+j)*CFG.delay : Math.hypot(i-S.ci0,j-S.cj0)*CFG.delay*1.7;
+  function delayOf(dir,dk,i,j){
+    return dir===0 ? (i+j)*dk : dir===1 ? (S.cols-1-i+j)*dk : Math.hypot(i-S.ci0,j-S.cj0)*dk*1.7;
   }
   function draw(t){
     const C = S.C; ctx.setTransform(S.dpr,0,0,S.dpr,0,0);
     ctx.fillStyle = C.paper; ctx.fillRect(0,0,S.w,S.h);
     const COMBO = CFG.combos.map(([b,f])=>[C[b],C[f]]);
-    const P = CFG.period, J = Math.floor(t/P), jFrom = Math.max(0,J-3), kick = Math.exp(-(t%P)*6);
+    /* 排程:忙碌時每 period 秒翻整片一波;等你操作時每 idleGap 秒只翻 idleCount 塊隨機的磚 */
+    const gap = busy ? CFG.period : CFG.idleGap, last = waves.length ? waves[waves.length-1].start : null;
+    if(last===null || t >= last+gap){
+      const start = (last===null || t-last > gap*1.5) ? t : last+gap;
+      let only = null;
+      if(!busy){
+        only = []; const pool = S.seen.slice();
+        for(let k=0;k<CFG.idleCount && pool.length;k++){ only.push(pool.splice(Math.floor(idleRnd()*pool.length),1)[0]); }
+      }
+      waves.push({ start, dir:waveSeq%3, f:busy?CFG.f:CFG.idleF, dk:busy?CFG.delay:0, soft:!busy, only }); waveSeq++;
+    }
+    /* 早就翻完的波，合併成計數(整片的記在 baseCount，個別磚的記在那塊磚自己身上) */
+    while(waves.length && t-waves[0].start > 4){
+      const w = waves.shift();
+      if(w.only){ for(const idx of w.only) S.tiles[idx].base++; } else baseCount++;
+    }
     for(const T of S.tiles){
-      let rot = T.rot0*Math.PI/2 + jFrom*Math.PI/2, passed = jFrom;
-      for(let j=jFrom;j<=J;j++){
-        const sp = spring(t - j*P - delayOf(j%3,T.i,T.j), CFG.f, .45);
+      let rot = T.rot0*Math.PI/2 + (baseCount+T.base)*Math.PI/2, passed = baseCount+T.base, kick = 0;
+      for(const w of waves){
+        if(w.only && w.only.indexOf(T.idx)<0) continue;
+        const d = delayOf(w.dir,w.dk,T.i,T.j), sp = spring(t - w.start - d, w.f, .45);
         rot += sp*Math.PI/2; if(sp>.5) passed++;
+        const ta = t - w.start - d; if(ta>=0) kick = Math.max(kick, Math.exp(-ta*6)*(w.soft?.5:1));
       }
       const cI = passed%4, bg = COMBO[T.combos[cI]][0], fg = COMBO[T.combos[cI]][1], type = T.types[cI];
       const x = T.i*S.tile, y = S.oy+T.j*S.tile;
@@ -2377,8 +2403,9 @@ const LoginBg = (function(){
     }
   }
   function frame(now){ if(!running) return; draw((now-t0)/1000); raf = requestAnimationFrame(frame); }
-  function start(){
+  function start(isBusy){
     if(active) return;
+    busy = (isBusy!==false); idleRnd = mulberry32(777);
     canvas = document.getElementById('loginBgCanvas');
     if(!canvas || !canvas.getContext) return;
     ctx = canvas.getContext('2d'); if(!ctx) return;
@@ -2393,7 +2420,8 @@ const LoginBg = (function(){
   }
   window.addEventListener('resize', ()=>{ if(active && canvas){ build(); if(!running) draw(.3); } });
   applyCachedTheme();
-  return { start, stop, saveTheme, isRunning:()=>running, isActive:()=>active };
+  function setBusy(b){ busy = !!b; }
+  return { start, stop, saveTheme, setBusy, isRunning:()=>running, isActive:()=>active, stats:()=>({ busy, waves:waveSeq }) };
 })();
 
 function enterAppDirectly(){
@@ -2436,7 +2464,7 @@ async function logout(){
   }
   const bs = document.getElementById('blackScreen');
   bs.style.display='flex'; bs.classList.remove('fade-out');
-  LoginBg.start();
+  LoginBg.start(false);
   document.getElementById('stageLogin').style.display='block';
   requestAnimationFrame(()=> document.getElementById('stageLogin').classList.add('show'));
   const container = document.getElementById('gsiButtonContainer');
@@ -2564,6 +2592,7 @@ function copyAppUrl(){
   }
 }
 function revealLoginButton(){
+  LoginBg.setBusy(false);   /* 確認完了，畫面停在「等你操作」，背景動畫改成慢節奏 */
   const checkingNote = document.getElementById('authCheckingNote');
   const btnContainer = document.getElementById('gsiButtonContainer');
   if(checkingNote) checkingNote.style.display = 'none';
