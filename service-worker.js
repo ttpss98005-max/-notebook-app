@@ -1,32 +1,38 @@
-importScripts('https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/12.19.0/firebase-messaging-compat.js');
+/* 推播腳本來自 Google 的伺服器。載入失敗(離線、被擋住)時,不能讓整個 Service Worker 一起壞掉,
+   否則離線快取也會跟著失效。所以包在 try 裡,失敗就只是沒有背景推播,其他功能照常運作。 */
+try{
+  importScripts('https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js');
+  importScripts('https://www.gstatic.com/firebasejs/12.19.0/firebase-messaging-compat.js');
+  /* 這裡的設定值要跟 index.html 裡的 FIREBASE_CONFIG 完全一樣 */
+  firebase.initializeApp({
+    apiKey: "AIzaSyBeztpgvYaM-ehRP0rh-qKwuY2Xs3_sNWI",
+    authDomain: "notebook-app-509000.firebaseapp.com",
+    projectId: "notebook-app-509000",
+    storageBucket: "notebook-app-509000.firebasestorage.app",
+    messagingSenderId: "826476371547",
+    appId: "1:826476371547:web:1ce534bb5fd1fed891697e"
+  });
+  const messaging = firebase.messaging();
+  messaging.onBackgroundMessage((payload) => {
+    const title = (payload.notification && payload.notification.title) || '提醒';
+    const options = {
+      body: (payload.notification && payload.notification.body) || '',
+      icon: 'icon-192.png',
+      badge: 'icon-notification.png'
+    };
+    self.registration.showNotification(title, options);
+  });
+}catch(e){ /* 沒有推播也沒關係 */ }
 
-/* 這裡的設定值要跟 index.html 裡的 FIREBASE_CONFIG 完全一樣 */
-firebase.initializeApp({
-  apiKey: "AIzaSyBeztpgvYaM-ehRP0rh-qKwuY2Xs3_sNWI",
-  authDomain: "notebook-app-509000.firebaseapp.com",
-  projectId: "notebook-app-509000",
-  storageBucket: "notebook-app-509000.firebasestorage.app",
-  messagingSenderId: "826476371547",
-  appId: "1:826476371547:web:1ce534bb5fd1fed891697e"
-});
-const messaging = firebase.messaging();
-messaging.onBackgroundMessage((payload) => {
-  const title = (payload.notification && payload.notification.title) || '提醒';
-  const options = {
-    body: (payload.notification && payload.notification.body) || '',
-    icon: 'icon-192.png',
-    badge: 'icon-notification.png'
-  };
-  self.registration.showNotification(title, options);
-});
-
-const CACHE_NAME = 'jishibu-cache-v132';
-const CORE_ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
+const CACHE_NAME = 'jishibu-cache-v134';
+const CORE_ASSETS = ['./index.html', './manifest.json', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './icon-notification.png'];
 
 self.addEventListener('install', (event) => {
+  /* cache:'reload' = 跳過瀏覽器自己的暫存,一定拿最新的。每個檔案各自加,有一個失敗也不影響其他的 */
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(CORE_ASSETS)).catch(() => {})
+    caches.open(CACHE_NAME).then((cache) =>
+      Promise.all(CORE_ASSETS.map((a) => cache.add(new Request(a, { cache: 'reload' })).catch(() => {})))
+    )
   );
   self.skipWaiting();
 });
@@ -35,9 +41,8 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    )
+    ).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
 /* 點通知:把已經開著的記事簿拉到前面,沒開著就開一個新的 */
@@ -53,21 +58,37 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
+/* 網頁本身:網路優先。有網路就拿最新的(程式更新後,第一次重新整理就是新版,不會新舊混在一起);
+   網路太慢(4 秒)或沒網路,才用快取的。所有進入網址(包含 ?shortcut=…)共用同一份快取,離線時也開得起來 */
+async function handleNavigate(req) {
+  const cache = await caches.open(CACHE_NAME);
+  const net = fetch(req.url, { cache: 'no-cache' }).then((res) => {
+    if (res && res.status === 200) cache.put('./index.html', res.clone()).catch(() => {});
+    return res;
+  });
+  net.catch(() => {});
+  try {
+    return await Promise.race([net, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 4000))]);
+  } catch (e) {
+    const cached = await cache.match('./index.html');
+    if (cached) return cached;
+    return net.catch(() => Response.error());
+  }
+}
+/* 圖示、設定檔這類:先給快取的(快),同時在背景更新 */
+async function handleAsset(req) {
+  const cache = await caches.open(CACHE_NAME);
+  const cached = await cache.match(req, { ignoreSearch: true });
+  const net = fetch(req).then((res) => {
+    if (res && res.status === 200 && res.type === 'basic') cache.put(req, res.clone()).catch(() => {});
+    return res;
+  }).catch(() => cached);
+  return cached || net;
+}
+
 self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
-  if (new URL(event.request.url).origin !== self.location.origin) return;
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const fetchPromise = fetch(event.request)
-        .then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
-            const clone = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone).catch(() => {}));
-          }
-          return networkResponse;
-        })
-        .catch(() => cached);
-      return cached || fetchPromise;
-    })
-  );
+  const req = event.request;
+  if (req.method !== 'GET') return;
+  if (new URL(req.url).origin !== self.location.origin) return;
+  event.respondWith(req.mode === 'navigate' ? handleNavigate(req) : handleAsset(req));
 });
