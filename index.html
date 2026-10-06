@@ -655,60 +655,25 @@
   #recapGoodnightScreen{display:none;position:absolute;inset:0;z-index:5;flex-direction:column;align-items:center;
     justify-content:center;opacity:0;transition:opacity 1s ease;cursor:pointer;overflow:hidden;}
   #recapGoodnightScreen.show{display:flex;opacity:1;}
-  .goodnight-sky{position:absolute;inset:0;z-index:0;overflow:hidden;}
-  .goodnight-moon-svg{position:absolute;top:9%;left:14%;width:50px;height:50px;
-    filter:drop-shadow(0 0 16px rgba(245,240,224,.6));animation:recapFloat 6s ease-in-out infinite;}
-  .goodnight-twinkle{position:absolute;width:4px;height:4px;border-radius:50%;background:#fff;
-    animation:twinkle 3s ease-in-out infinite;}
-  .goodnight-twinkle.t1{top:10%;left:22%;animation-delay:0s;}
-  .goodnight-twinkle.t2{top:15%;left:68%;width:3px;height:3px;animation-delay:.6s;}
-  .goodnight-twinkle.t3{top:26%;left:82%;animation-delay:1.2s;}
-  .goodnight-twinkle.t4{top:7%;left:47%;width:3px;height:3px;animation-delay:1.8s;}
-  .goodnight-twinkle.t5{top:33%;left:10%;animation-delay:2.2s;}
-  .goodnight-twinkle.t6{top:19%;left:36%;width:3px;height:3px;animation-delay:.3s;}
-  .goodnight-twinkle.t7{top:38%;left:58%;animation-delay:1.5s;}
-  .goodnight-twinkle.t8{top:12%;left:90%;width:3px;height:3px;animation-delay:2.6s;}
-  @keyframes twinkle{0%,100%{opacity:.2;transform:scale(.7);} 50%{opacity:1;transform:scale(1.3);}}
-  .goodnight-shootingstar{position:absolute;width:60px;height:2px;border-radius:2px;
-    background:linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.9));
-    opacity:0;transform:rotate(-20deg) translateX(0);animation:shootingStar 6s linear infinite;}
-  .goodnight-shootingstar.ss1{top:14%;left:6%;animation-delay:1.5s;}
-  .goodnight-shootingstar.ss2{top:28%;left:52%;animation-delay:4.5s;}
-  @keyframes shootingStar{
-    0%{opacity:0;transform:rotate(-20deg) translateX(0);}
-    3%{opacity:1;}
-    16%{opacity:0;transform:rotate(-20deg) translateX(150px);}
-    100%{opacity:0;transform:rotate(-20deg) translateX(150px);}
-  }
-  .goodnight-mountains{position:absolute;left:0;bottom:0;width:100%;height:33%;z-index:1;}
-  .goodnight-text{position:relative;z-index:2;color:#fff;font-size:19px;font-weight:700;text-align:center;line-height:1.8;
-    text-shadow:0 2px 16px rgba(0,0,0,.6);padding:0 30px;animation:recapFloat 5.5s ease-in-out .3s infinite;}
-
   #dailyBriefOverlay{display:none;position:fixed;inset:0;z-index:150;align-items:center;justify-content:center;
     background:rgba(0,0,0,.35);overflow:hidden;transition:opacity .5s ease;padding:20px;}
   #dailyBriefOverlay.show{display:flex;opacity:1;}
   #dailyBriefOverlay.fading-out{opacity:0;}
-  .sky-layer{position:absolute;inset:0;z-index:-1;}
-  .sky-layer.day{background:linear-gradient(180deg,#E3F2FD,#90CAF9);}
-  .sky-layer.white{background:#FFFFFF;opacity:0;}
-  .sky-layer.morning{background:linear-gradient(180deg,#FBE3B8,#F3A768);opacity:1;}
-  #dailyBriefOverlay.plain-mode .sky-layer{display:none;}
-  #dailyBriefOverlay.sky-cycle .sky-layer.morning{animation:morningFadeOut 10s ease both;}
-  #dailyBriefOverlay.sky-cycle .sky-layer.white{animation:whiteFadeInOut 10s ease both;}
-  @keyframes morningFadeOut{0%{opacity:1;} 100%{opacity:0;}}
-  @keyframes whiteFadeInOut{0%{opacity:0;} 50%{opacity:1;} 100%{opacity:0;}}
-
   #morningGreetingScreen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
     text-align:center;padding:0 30px;cursor:pointer;transition:opacity .5s ease;}
   #morningGreetingScreen.fade-out{opacity:0;}
-  .sunrise-mountains{position:absolute;left:0;bottom:0;width:100%;height:33%;z-index:1;}
-  .morning-sun-el{position:absolute;left:50%;margin-left:-55px;width:110px;height:110px;border-radius:50%;
-    background:#FFD873;filter:drop-shadow(0 0 30px rgba(255,216,115,.9));
-    top:80%;z-index:0;
-    animation:sunRiseNew 10s cubic-bezier(.25,.1,.25,1) both, recapFloat 6s ease-in-out 10s infinite;}
-  @keyframes sunRiseNew{from{top:80%;} to{top:25%;}}
-  .morning-text{position:relative;z-index:2;color:#fff;font-size:22px;font-weight:700;line-height:1.8;
-    text-shadow:0 2px 14px rgba(0,0,0,.35);animation:recapFloat 5.5s ease-in-out .3s infinite;}
+  .scene-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;}
+  .scene-card{position:absolute;left:50%;top:50%;width:76%;max-width:300px;transform:translate(-50%,-44%) scale(var(--cs,1));opacity:0;
+    transition:opacity .7s ease,transform .7s ease;border-radius:26px;padding:20px 18px;text-align:center;box-shadow:0 4px 16px rgba(30,30,30,.14);pointer-events:none;}
+  .scene-card.show{opacity:1;transform:translate(-50%,-50%) scale(var(--cs,1));}
+  .scene-card .l1{font-size:27px;font-weight:800;letter-spacing:1px;line-height:1.35;}
+  .scene-card .l2{font-size:18px;font-weight:700;margin-top:2px;line-height:1.5;}
+  .scene-card.day{background:#fff;color:#1A1A1A;}
+  .scene-card.day .l2{color:var(--accent);}
+  .scene-card.night{border:1px solid transparent;}
+  .scene-card.night .l1,.scene-card.night .l2{font-size:21px;}
+  /* 早安畫面後面的「今天要做的事」卡片,底色也用配色的淡色,跟早安畫面接得起來 */
+  #dailyBriefOverlay:not(.plain-mode){background:var(--accent-soft);}
 
   .daily-brief-modal{max-width:340px;opacity:0;transition:opacity .5s ease;}
   .daily-brief-modal.show-card{opacity:1;}
@@ -1109,37 +1074,16 @@
     </div>
   </div>
   <div id="recapGoodnightScreen" onclick="closeFromGoodnight()">
-    <div class="goodnight-sky">
-      <svg class="goodnight-moon-svg" viewBox="0 0 40 40">
-        <path d="M20 4 C11 4 4 11 4 20 C4 29 11 36 20 36 C16 32 13 27 13 20 C13 13 16 8 20 4 Z" fill="#F5F0E0"/>
-      </svg>
-      <span class="goodnight-twinkle t1"></span><span class="goodnight-twinkle t2"></span>
-      <span class="goodnight-twinkle t3"></span><span class="goodnight-twinkle t4"></span>
-      <span class="goodnight-twinkle t5"></span><span class="goodnight-twinkle t6"></span>
-      <span class="goodnight-twinkle t7"></span><span class="goodnight-twinkle t8"></span>
-      <span class="goodnight-shootingstar ss1"></span><span class="goodnight-shootingstar ss2"></span>
-    </div>
-    <svg class="goodnight-mountains" viewBox="0 0 400 100" preserveAspectRatio="none">
-      <path d="M0 100 L0 55 L55 25 L100 50 L150 10 L195 45 L235 30 L290 55 L340 35 L400 50 L400 100 Z" fill="#3A3168" opacity="0.85"/>
-      <path d="M0 100 L0 70 L70 60 L140 75 L210 55 L275 70 L330 60 L400 70 L400 100 Z" fill="#221C3E"/>
-      <path d="M0 100 L0 82 L90 77 L180 87 L260 77 L340 83 L400 80 L400 100 Z" fill="#120F24"/>
-    </svg>
-    <div class="goodnight-text">晚安，今天的你<br>又活下來了~</div>
+    <canvas class="scene-canvas" id="nightSceneCanvas"></canvas>
+    <div class="scene-card night" id="nightSceneCard"><div class="l1">晚安，今天的你</div><div class="l2">又活下來了~</div></div>
   </div>
 </div>
 
 <!-- ================= 每日提醒動畫 ================= -->
 <div id="dailyBriefOverlay" onclick="closeDailyBrief()">
   <div id="morningGreetingScreen" onclick="event.stopPropagation(); advanceFromMorningGreeting()">
-    <div class="sky-layer day"></div>
-    <div class="sky-layer white"></div>
-    <div class="sky-layer morning"></div>
-    <div class="morning-sun-el"></div>
-    <svg class="sunrise-mountains" viewBox="0 0 400 100" preserveAspectRatio="none">
-      <path d="M0,55.0 C10.0,52.8 40.0,42.5 60.0,42.0 C80.0,41.5 101.7,55.7 120.0,52.0 C138.3,48.3 153.3,22.3 170.0,20.0 C186.7,17.7 203.3,38.8 220.0,38.0 C236.7,37.2 253.3,13.3 270.0,15.0 C286.7,16.7 303.3,45.2 320.0,48.0 C336.7,50.8 356.7,32.5 370.0,32.0 C383.3,31.5 395.0,42.8 400.0,45.0 L400,100 L0,100 Z" fill="#E8956B" opacity=".85"/>
-      <path d="M0,72.0 C11.7,70.8 46.7,64.5 70.0,65.0 C93.3,65.5 116.7,76.2 140.0,75.0 C163.3,73.8 186.7,58.5 210.0,58.0 C233.3,57.5 258.3,71.3 280.0,72.0 C301.7,72.7 320.0,62.3 340.0,62.0 C360.0,61.7 390.0,68.7 400.0,70.0 L400,100 L0,100 Z" fill="#C9714F"/>
-    </svg>
-    <div class="morning-text">早安！<br>今天也加油</div>
+    <canvas class="scene-canvas" id="morningSceneCanvas"></canvas>
+    <div class="scene-card day" id="morningSceneCard"><div class="l1">早安！</div><div class="l2">今天也加油</div></div>
   </div>
   <div class="modal daily-brief-modal" id="dailyBriefContentCard" style="display:none" onclick="event.stopPropagation()">
     <div id="dailyBriefContent"></div>
@@ -2422,6 +2366,162 @@ const LoginBg = (function(){
   applyCachedTheme();
   function setBusy(b){ busy = !!b; }
   return { start, stop, saveTheme, setBusy, isRunning:()=>running, isActive:()=>active, stats:()=>({ busy, waves:waveSeq }) };
+})();
+
+/* ===== 早安／晚安動畫:跟登入畫面同一個風格(平面的圓、膠囊、半透明光圈),顏色跟著目前的配色 =====
+   早安 = 極簡日出:一顆太陽從三層山後面慢慢升起,雲慢慢飄。
+   晚安 = 海上新月:天空由黃昏暗下來,新月升起,海面有一道一格格閃動的倒影。
+   只在畫面顯示期間執行,關掉就停。流程(點一下進入下一步、關閉)完全沿用原本的函式。 */
+const SceneAnim = (function(){
+  const TAU = Math.PI*2;
+  const clamp=(x,a,b)=>Math.max(a,Math.min(b,x)), lerp=(a,b,t)=>a+(b-a)*t, inv=(a,b,t)=>clamp((t-a)/(b-a),0,1);
+  const smooth=(a,b,x)=>{ const t=inv(a,b,x); return t*t*(3-2*t); }, outCubic=t=>1-Math.pow(1-t,3);
+  function spring(t,f,z){ if(t<=0) return 0; const w=TAU*f, wd=w*Math.sqrt(1-z*z); return 1-Math.exp(-z*w*t)*(Math.cos(wd*t)+(z*w/wd)*Math.sin(wd*t)); }
+  function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+  const isHex = h=> /^#[0-9a-fA-F]{6}$/.test(h||'');
+  function hexToRgb(h){ h=h.replace('#',''); return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]; }
+  function rgbToHex(r,g,b){ return '#'+[r,g,b].map(v=>clamp(Math.round(v),0,255).toString(16).padStart(2,'0')).join(''); }
+  function rgbToHsl(r,g,b){ r/=255;g/=255;b/=255; const mx=Math.max(r,g,b),mn=Math.min(r,g,b); let h=0,s=0; const l=(mx+mn)/2,d=mx-mn; if(d){ s=l>.5?d/(2-mx-mn):d/(mx+mn); if(mx===r) h=(g-b)/d+(g<b?6:0); else if(mx===g) h=(b-r)/d+2; else h=(r-g)/d+4; h*=60; } return [h,s,l]; }
+  function hslToHex(h,s,l){ h=((h%360)+360)%360; const c=(1-Math.abs(2*l-1))*s,x=c*(1-Math.abs((h/60)%2-1)),m=l-c/2; let r=0,g=0,b=0; if(h<60){r=c;g=x;}else if(h<120){r=x;g=c;}else if(h<180){g=c;b=x;}else if(h<240){g=x;b=c;}else if(h<300){r=x;b=c;}else{r=c;b=x;} return rgbToHex((r+m)*255,(g+m)*255,(b+m)*255); }
+  function mixHex(a,b,t){ const A=hexToRgb(a),B=hexToRgb(b); return rgbToHex(lerp(A[0],B[0],t),lerp(A[1],B[1],t),lerp(A[2],B[2],t)); }
+  /* 全部從配色的強調色推算。夜色往藍紫偏約四成,暖色配色才不會變成咖啡色。 */
+  function derive(accent){
+    const [r,g,b]=hexToRgb(accent), [h,s0,l]=rgbToHsl(r,g,b), s=clamp(s0,.3,.82), sn=s*.62;
+    const hn = h+((((250-h)%360)+540)%360-180)*.38, sky = hslToHex(h,s*.5,.975);
+    return {
+      accent, deep:hslToHex(h,s,clamp(l*.6,.16,.32)), soft:hslToHex(h,s*.7,.84), sky, acc2:mixHex(accent,sky,.5),
+      n1:hslToHex(hn,sn,.19), n2:hslToHex(hn,sn,.235), n3:hslToHex(hn,sn*.9,.31), n4:hslToHex(hn,sn,.13), n5:hslToHex(hn,sn,.085),
+      moon:hslToHex(hn,s*.45,.94), star:hslToHex(hn,s*.55,.88)
+    };
+  }
+  function paletteAccent(){
+    try{ const a = effectivePalette().accent; if(isHex(a)) return a; }catch(e){}
+    return '#3A6B5E';
+  }
+  function disc(ctx,x,y,r,col,a){ if(r<=0) return; ctx.globalAlpha=a==null?1:a; ctx.fillStyle=col; ctx.beginPath(); ctx.arc(x,y,r,0,TAU); ctx.fill(); ctx.globalAlpha=1; }
+  function capsule(ctx,x,y,w,h,col,a){ const r=h/2; ctx.globalAlpha=a==null?1:a; ctx.fillStyle=col; ctx.beginPath(); ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.arc(x+w-r,y+r,r,-Math.PI/2,Math.PI/2); ctx.lineTo(x+r,y+h); ctx.arc(x+r,y+r,r,Math.PI/2,Math.PI*1.5); ctx.closePath(); ctx.fill(); ctx.globalAlpha=1; }
+  function crescent(ctx,x,y,R,col){
+    ctx.save(); ctx.beginPath(); ctx.arc(x,y,R,0,TAU); ctx.clip();
+    ctx.beginPath(); ctx.rect(x-R*2,y-R*2,R*4,R*4); ctx.arc(x+R*.5,y-R*.14,R*.86,0,TAU); ctx.fillStyle=col; ctx.fill('evenodd'); ctx.restore();
+  }
+  function sparkle(ctx,x,y,s){ ctx.beginPath(); ctx.moveTo(x,y-s); ctx.quadraticCurveTo(x,y,x+s,y); ctx.quadraticCurveTo(x,y,x,y+s); ctx.quadraticCurveTo(x,y,x-s,y); ctx.quadraticCurveTo(x,y,x,y-s); ctx.closePath(); ctx.fill(); }
+
+  const dbg = { noSun:false, noMoon:false };   /* 自動測試用:把太陽/月亮關掉,拿來比對「有沒有露餡」 */
+  /* ---------- 早安:極簡日出 ---------- */
+  function makeMorning(){
+    let L=null;
+    function build(w,h){
+      const U=Math.min(w,h*.56), R=.18*U;
+      const hills=[ {x:.2*w,y:.8*h,r:.42*U,col:'acc2',d:.35}, {x:.78*w,y:.84*h,r:.46*U,col:'accent',d:.5}, {x:.45*w,y:1.04*h,r:.42*U,col:'deep',d:.65} ];
+      /* 太陽要藏在「山完全長好之後」的山後面。山的輪廓不是平的,所以沿著太陽的整個寬度逐點檢查:
+         太陽在每個位置的上緣,都不能高過那個位置的山頭,取最嚴格的那個當起點,一開始就完全看不到 */
+      const ridge=x=>{ let y=h; for(const q of hills){ const dx=Math.abs(q.x-x); if(dx<q.r) y=Math.min(y,q.y-Math.sqrt(q.r*q.r-dx*dx)); } return y; };
+      let y0=0; for(let i=0;i<=60;i++){ const dx=-R+2*R*i/60; y0=Math.max(y0, ridge(w/2+dx)+Math.sqrt(Math.max(0,R*R-dx*dx))); }
+      y0+=6;
+      const y1=h*.3, hillsTop=Math.min(...hills.map(q=>q.y-q.r));
+      return {w,h,U,R,hills,y0,y1,cardY:((y1+R)+hillsTop)/2,cardSpace:hillsTop-(y1+R)};
+    }
+    return {
+      cardAt:3.4,
+      reset(w,h){ L=build(w,h); this.cardY=L.cardY; this.cardSpace=L.cardSpace; },
+      draw(ctx,t,C){
+        const {w,h,R}=L;
+        ctx.fillStyle=mixHex(C.n1,C.sky,smooth(.1,1.4,t)); ctx.fillRect(0,0,w,h);
+        for(let k=0;k<3;k++){ const cw=L.U*(.26-.03*k), span=w+cw*2, x=(((k*.41*w+t*(7+k*4))%span)+span)%span-cw; capsule(ctx,x,h*(.12+.1*k+.05*(k%2)),cw,h*.045,C.soft,.75*smooth(2.4,3.4,t)); }
+        /* 太陽:等山長好(約 1.5 秒)之後才開始升,升起前整個畫在山後面,不會露餡 */
+        if(t>=1.5 && !dbg.noSun){
+          const p=outCubic(inv(1.5,4.3,t)), sy=lerp(L.y0,L.y1,p);
+          disc(ctx,w/2,sy,R*2.6*p,C.accent,.07); disc(ctx,w/2,sy,R*1.8*p,C.accent,.1); disc(ctx,w/2,sy,R,C.accent);
+          if(t>4.3){ const u=((t-4.3)%3.4)/3.4; ctx.strokeStyle=C.accent; ctx.lineWidth=2; ctx.globalAlpha=.35*(1-u); ctx.beginPath(); ctx.arc(w/2,sy,R*(1.1+.6*u),0,TAU); ctx.stroke(); ctx.globalAlpha=1; }
+        }
+        for(const q of L.hills){ const o=(1-spring(t-q.d,2,.6))*h*.4; disc(ctx,q.x,q.y+o,q.r,C[q.col]); }
+      }
+    };
+  }
+
+  /* ---------- 晚安:海上新月 ---------- */
+  function makeNight(){
+    let L=null;
+    function build(w,h){
+      const U=Math.min(w,h*.56), hz=h*.56, R=.15*U, dy=h*.028, rs=mulberry32(5), stars=[];
+      for(let k=0;k<11;k++){ let x,y,n=0; do{ x=w*(.06+.88*rs()); y=hz*(.05+.7*rs()); n++; }while(n<40&&Math.hypot(x-w/2,y-h*.26)<R*3.1); stars.push({x,y,s:U*(.012+.014*rs()),ph:rs()*6.28,fr:1.2+rs()*1.4}); }
+      return {w,h,U,hz,R,dy,stars,cardY:(hz+dy*6+h)/2,cardSpace:h-(hz+dy*6)};
+    }
+    return {
+      cardAt:4.0,
+      reset(w,h){ L=build(w,h); this.cardY=L.cardY; this.cardSpace=L.cardSpace; },
+      draw(ctx,t,C){
+        const {w,h,hz,R,dy}=L, N=10, bh=hz/N;
+        ctx.fillStyle=C.sky; ctx.fillRect(0,0,w,h);
+        /* 天空色帶:由上往下,從黃昏的暖色一條一條暗成夜色 */
+        for(let k=0;k<N;k++){ const p=k/(N-1), a=smooth(.15+k*.1,.95+k*.1,t);
+          ctx.fillStyle=mixHex(mixHex(C.sky,C.acc2,Math.pow(p,1.6)),mixHex(C.n1,C.n3,Math.pow(p,1.4)*.9),a); ctx.fillRect(0,k*bh,w,bh+1); }
+        for(const s of L.stars){ const ap=3+s.ph*.3; if(t<ap) continue; const u=spring(t-ap,2.5,.5), tw=.8+.2*Math.sin(t*s.fr+s.ph); ctx.fillStyle=C.star; ctx.globalAlpha=.5+.5*tw; sparkle(ctx,s.x,s.y,s.s*u*tw*1.8); ctx.globalAlpha=1; }
+        /* 新月:從海平線下面升起(海面在後面才畫,所以一開始看不到) */
+        const p=outCubic(inv(1,4,t)), my=lerp(hz+R*1.7,h*.26,p);
+        if(!dbg.noMoon){ disc(ctx,w/2,my,R*2.4,C.moon,.05*p); disc(ctx,w/2,my,R*1.6,C.moon,.08*p); crescent(ctx,w/2,my,R,C.moon); }
+        const o=(1-spring(t-.3,2,.6))*h*.2;
+        disc(ctx,w*.14,hz+o,L.U*.13,C.n5); disc(ctx,w*.9,hz+o,L.U*.08,C.n5);
+        ctx.fillStyle=C.n4; ctx.fillRect(0,hz,w,h-hz);
+        /* 海面上的倒影:一格一格,輪流左右飄動 */
+        for(let k=0;k<6;k++){
+          const ap=3.4+k*.12; if(t<ap) continue; const u=spring(t-ap,2.2,.55);
+          const bw=2*R*(1.1-.13*k)*(1+.14*Math.sin(t*1.7+k*.9))*u, ox=Math.sin(t*1.1+k*1.3)*R*.12-R*.12;
+          capsule(ctx,w/2-bw/2+ox,hz+(k+1)*dy,bw,h*.013,C.moon,(.9-.12*k)*Math.min(1,u*1.4));
+        }
+      }
+    };
+  }
+
+  const ids = { morning:['morningSceneCanvas','morningSceneCard'], night:['nightSceneCanvas','nightSceneCard'] };
+  const cur = { morning:null, night:null };
+  function stop(kind){
+    const st = cur[kind]; if(!st) return;
+    cancelAnimationFrame(st.raf); cur[kind]=null;
+    try{ st.ctx.clearRect(0,0,st.canvas.width,st.canvas.height); }catch(e){}
+    if(st.card && st.card.classList) st.card.classList.remove('show');
+  }
+  function fit(st){
+    const w=st.canvas.clientWidth, h=st.canvas.clientHeight; if(!w||!h) return false;
+    const dpr=Math.min(window.devicePixelRatio||1,2);
+    if(!st.size || st.size.w!==w || st.size.h!==h || st.size.dpr!==dpr){
+      st.size={w,h,dpr}; st.canvas.width=Math.round(w*dpr); st.canvas.height=Math.round(h*dpr); st.inst.reset(w,h);
+    }
+    return true;
+  }
+  function paint(st,t){
+    if(!fit(st)) return;
+    st.ctx.setTransform(st.size.dpr,0,0,st.size.dpr,0,0); st.inst.draw(st.ctx,t,st.C);
+    if(st.card){
+      st.card.style.top = st.inst.cardY+'px';
+      if(st.inst.cardSpace) st.card.style.setProperty('--cs', Math.max(.68,Math.min(1,st.inst.cardSpace/128)));
+      st.card.classList.toggle('show', t>=st.inst.cardAt);
+    }
+  }
+  function make(kind){
+    const [cid,kid]=ids[kind], canvas=document.getElementById(cid), card=document.getElementById(kid);
+    if(!canvas || !canvas.getContext) return null;
+    const ctx=canvas.getContext('2d'); if(!ctx) return null;
+    const C=derive(paletteAccent());
+    if(kind==='night' && card && card.style){ card.style.background=C.n5; card.style.color=C.moon; card.style.borderColor=C.n3; }
+    const st={ kind, canvas, ctx, card, C, inst: kind==='morning'?makeMorning():makeNight(), size:null, raf:0, t0:performance.now() };
+    cur[kind]=st;
+    if(card && card.classList) card.classList.remove('show');
+    return st;
+  }
+  function snapshot(kind,t){ stop(kind); const st=make(kind); if(!st) return false; paint(st,t); return true; }   /* 自動測試用 */
+  function start(kind){
+    stop(kind);
+    const st=make(kind); if(!st) return;
+    if(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches){ paint(st,8); return; }   /* 減少動態效果:直接顯示畫面最後的樣子 */
+    const loop=(now)=>{ if(cur[kind]!==st) return; paint(st,(now-st.t0)/1000); st.raf=requestAnimationFrame(loop); };
+    st.raf=requestAnimationFrame(loop);
+  }
+  /* 晚安回顧的深色底(放回顧卡片的那一層),也改成跟著配色的夜色,跟後面的海上新月接得起來 */
+  function applyNightBackdrop(){
+    try{ const C=derive(paletteAccent()), o=document.getElementById('nightRecapOverlay'); if(o && o.style) o.style.background='linear-gradient(160deg,'+C.n2+','+C.n1+')'; }catch(e){}
+  }
+  return { start, stop, applyNightBackdrop, snapshot, dbg, isRunning:k=>!!cur[k], derive };
 })();
 
 function enterAppDirectly(){
@@ -5283,17 +5383,16 @@ function showDailyBrief(withGreeting, briefOff){
   greetScreen.classList.remove('fade-out');
   contentCard.classList.remove('show-card');
   overlay.classList.toggle('plain-mode', !withGreeting);
-  overlay.classList.remove('sky-cycle');
   if(withGreeting){
     greetScreen.style.display = 'flex';
     contentCard.style.display = 'none';
-    requestAnimationFrame(()=> requestAnimationFrame(()=> overlay.classList.add('sky-cycle')));
   }else{
     greetScreen.style.display = 'none';
     contentCard.style.display = 'block';
     requestAnimationFrame(()=> requestAnimationFrame(()=> contentCard.classList.add('show-card')));
   }
   overlay.classList.add('show');
+  if(withGreeting) SceneAnim.start('morning'); else SceneAnim.stop('morning');
 }
 function viewDailyBriefNow(){
   showDailyBrief(false);
@@ -5302,10 +5401,10 @@ function advanceFromMorningGreeting(){
   const greetScreen = document.getElementById('morningGreetingScreen');
   const overlay = document.getElementById('dailyBriefOverlay');
   greetScreen.classList.add('fade-out');
-  overlay.classList.remove('sky-cycle');
   if(dailyBriefContentSkipped){
     setTimeout(()=>{
       greetScreen.style.display = 'none';
+      SceneAnim.stop('morning');
       overlay.classList.remove('show');
     }, 500);
     return;
@@ -5313,6 +5412,7 @@ function advanceFromMorningGreeting(){
   const contentCard = document.getElementById('dailyBriefContentCard');
   setTimeout(()=>{
     greetScreen.style.display = 'none';
+    SceneAnim.stop('morning');
     contentCard.style.display = 'block';
     requestAnimationFrame(()=> requestAnimationFrame(()=> contentCard.classList.add('show-card')));
   }, 500);
@@ -5320,9 +5420,9 @@ function advanceFromMorningGreeting(){
 function closeDailyBrief(){
   const overlay = document.getElementById('dailyBriefOverlay');
   overlay.classList.add('fading-out');
-  overlay.classList.remove('sky-cycle');
   setTimeout(()=>{
     overlay.classList.remove('show','fading-out');
+    SceneAnim.stop('morning');
   }, 500);
 }
 
@@ -5411,6 +5511,8 @@ function showNightRecap(day, isManual, simple){
   card.style.transition = '';
   document.getElementById('recapGoodnightScreen').classList.remove('show');
   document.getElementById('recapGoodnightScreen').style.display = 'none';
+  SceneAnim.stop('night');
+  SceneAnim.applyNightBackdrop();
   overlay.classList.toggle('quick-transition', recapSimpleMode);
   overlay.classList.add('show');
 }
@@ -5475,6 +5577,7 @@ function showGoodnightScreen(){
     card.style.display = 'none';
     const screen = document.getElementById('recapGoodnightScreen');
     screen.style.display = 'flex';
+    SceneAnim.start('night');
     requestAnimationFrame(()=> requestAnimationFrame(()=> screen.classList.add('show')));
   }, 1000);
 }
@@ -5486,6 +5589,7 @@ function closeFromGoodnight(){
   setTimeout(()=>{
     overlay.classList.remove('show','fading-out');
     screen.style.display = 'none';
+    SceneAnim.stop('night');
     if(pendingMorningBriefAfterRecap){
       pendingMorningBriefAfterRecap = false;
       maybeShowDailyBrief();
