@@ -209,6 +209,9 @@
   .cal-dots{display:flex;gap:3px;margin-top:5px;flex-wrap:wrap;}
   .cal-dots span{width:6px;height:6px;border-radius:50%;display:inline-block;}
   .day-detail{margin-top:20px;border-top:1.5px solid var(--border);padding-top:16px;}
+  .sp-kinds{display:flex;gap:8px;}
+  .sp-kind-btn{flex:1 1 auto;min-width:0;padding:10px 6px;border:1.5px solid var(--border);border-radius:999px;background:#fff;font-size:12.5px;font-weight:700;color:var(--ink-soft);font-family:inherit;white-space:nowrap;transition:background .15s,border-color .15s,color .15s;}
+  .sp-kind-btn.on{background:var(--accent);border-color:var(--accent);color:#fff;}
   .sp-strip{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px;align-items:center;}
   .sp-chip{display:inline-flex;align-items:baseline;gap:7px;background:var(--accent-soft);color:#1A1A1A;border:1.5px solid transparent;border-radius:999px;padding:6px 13px;font-size:12px;font-family:inherit;max-width:100%;}
   .sp-chip .sp-name{max-width:8.5em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -1361,7 +1364,12 @@
     <input type="hidden" id="spId" value="">
     <div class="field">
       <label>類型</label>
-      <select id="spKind" onchange="updateSpecialForm(true)"><option value="festival">節日／紀念日</option><option value="together">在一起（算第幾天）</option><option value="raising">開始養（算第幾天）</option></select>
+      <input type="hidden" id="spKind" value="festival">
+      <div class="sp-kinds" id="spKinds">
+        <button type="button" class="sp-kind-btn on" data-kind="festival" onclick="setSpecialKind('festival')">節日</button>
+        <button type="button" class="sp-kind-btn" data-kind="together" onclick="setSpecialKind('together')">在一起</button>
+        <button type="button" class="sp-kind-btn" data-kind="raising" onclick="setSpecialKind('raising')">開始養</button>
+      </div>
       <div class="fee-hint" id="spKindHint"></div>
     </div>
     <div class="field"><label>名稱</label><input type="text" id="spName" maxlength="30"></div>
@@ -3700,9 +3708,9 @@ function allTimedItems(){
    節日/紀念日:標在月曆、周曆上(可以每年重複)。
    在一起/開始養:從起點那天算起是「第 1 天」,日曆上每一天都看得到那天是第幾天,整百天與週年會特別標出來。 */
 const SPECIAL_KINDS = {
-  festival:{ label:'節日／紀念日', namePh:'例如：媽媽生日、結婚紀念日', dateLabel:'日期', def:'' },
+  festival:{ label:'節日', namePh:'例如：媽媽生日、結婚紀念日', dateLabel:'日期', def:'' },
   together:{ label:'在一起', namePh:'例如：和 Amy 在一起', dateLabel:'在一起的第一天', def:'在一起' },
-  raising:{ label:'開始養', namePh:'例如：小白（貓）、多肉', dateLabel:'開始養的第一天', def:'' }
+  raising:{ label:'開始養', namePh:'例如：小白、多肉', dateLabel:'開始養的第一天', def:'' }
 };
 const pad2 = n=>String(n).padStart(2,'0');
 function ymdStr(y,m,d){ return y+'-'+pad2(m)+'-'+pad2(d); }
@@ -3812,13 +3820,18 @@ function renderSpecialDaysList(){
       num = n>=1 ? '第 '+n+' 天' : '還有 '+(1-n)+' 天';
       sub = '從 '+sd.date+' 起算';
     }
-    return `<button class="sp-row" onclick="openSpecialEdit('${sd.id}')"><span class="sp-kind">${SPECIAL_KINDS[sd.kind].label.split('／')[0]}</span><span class="sp-main"><div class="sp-title">${escapeHtml(sd.name)}</div><div class="sp-sub">${sub}</div></span><span class="sp-num">${num}</span></button>`;
+    return `<button class="sp-row" onclick="openSpecialEdit('${sd.id}')"><span class="sp-kind">${SPECIAL_KINDS[sd.kind].label}</span><span class="sp-main"><div class="sp-title">${escapeHtml(sd.name)}</div><div class="sp-sub">${sub}</div></span><span class="sp-num">${num}</span></button>`;
   });
   box.innerHTML = rows.join('');
 }
 /* 切換類型時,更新提示、名稱欄位提示、日期欄位標籤;換類型時才自動帶入預設名稱 */
+function setSpecialKind(kind){
+  document.getElementById('spKind').value = kind;
+  updateSpecialForm(true);
+}
 function updateSpecialForm(kindChanged){
   const kind = document.getElementById('spKind').value, k = SPECIAL_KINDS[kind];
+  document.querySelectorAll('#spKinds .sp-kind-btn').forEach(b=> b.classList.toggle('on', b.dataset.kind===kind));
   document.getElementById('spKindHint').textContent = kind==='festival' ? '生日、結婚紀念日、自訂的節日。可以設定每年重複。' : kind==='together' ? '從這天起算是第 1 天，日曆上每一天都會顯示第幾天。' : '養寵物、種植物、養成一件事：從這天起算第幾天。';
   document.getElementById('spName').placeholder = k.namePh;
   document.getElementById('spDateLabel').textContent = k.dateLabel;
