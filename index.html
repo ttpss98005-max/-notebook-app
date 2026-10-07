@@ -929,7 +929,7 @@
           <label style="margin:0;font-size:13px;">早晚安推播</label>
           <button class="switch" id="greetPushSwitch" onclick="toggleGreetPush()"></button>
         </div>
-        <div class="fee-hint" style="margin-top:6px;">早上 8:00 提醒今天的習慣，晚上 10:00 提醒你回顧今天。實際送出可能晚幾分鐘。</div>
+        <div class="fee-hint" style="margin-top:6px;">早上 8:00 提醒今天的習慣，晚上 9:30 提醒你回顧今天。實際送出可能晚幾分鐘。</div>
       </div>
       <div class="setting-block">
         <h3>每日提醒</h3>
@@ -1347,8 +1347,8 @@
     <div class="dev-group">推播測試</div>
     <div class="dev-btns">
       <button class="btn-ghost" onclick="devCheckPushStatus()">檢查推播狀態</button>
-      <button class="btn-ghost" onclick="devTestLocalNotification()">測試本機通知（立刻跳出）</button>
-      <button class="btn-ghost" onclick="devTestFullPush()">測試完整推播（約5分鐘內）</button>
+      <button class="btn-ghost" onclick="devTestLocalNotification()">測試本機通知（立刻跳出，不經過雲端）</button>
+      <button class="btn-ghost" onclick="devTestFullPush()">測試完整推播（經過雲端，約5分鐘內）</button>
       <button class="btn-ghost" onclick="devListScheduledNotifications()">查看已排入的通知</button>
     </div>
     <div class="fee-hint" id="devPushStatus" style="margin-top:10px;white-space:pre-line;"></div>
@@ -1667,7 +1667,7 @@ function defaultData(){
     incomeCategories: DEFAULT_INCOME_CATEGORIES.map(c=>({...c})),
     categoryBudgets: {},
     notifySettings: {
-      morning:{on:false, time:'08:00'}, night:{on:false, time:'22:00'}
+      morning:{on:false, time:'08:00'}, night:{on:false, time:NIGHT_START_TIME}
     },
     recurring: [],
     payroll: {
@@ -2417,9 +2417,14 @@ async function deleteReminderDoc(id){
    每次打開App、改設定、離開App時都會重新同步,內容用當下的資料重寫。
    文件ID固定(種類+日期+使用者),重寫只會覆蓋,不會重複;
    而且只寫「還沒到時間」的那幾筆,所以不會把已經送出的標記洗掉造成重複送。 */
+/* 「晚安時間」只有這一個:晚安通知、晚安動畫、晚安回顧、選心情,全部從這個時間開始。
+   以前通知的時間和動畫的時間是各寫各的(通知可以比動畫早),結果通知先跳出來,點進去卻還沒到晚安時間。 */
+const NIGHT_START_TIME = '21:30';
+const NIGHT_START_MINUTES = 21*60+30;
+function isNightStarted(now){ now = now || new Date(); return now.getHours()*60+now.getMinutes() >= NIGHT_START_MINUTES; }
 const NOTIFY_KINDS = {
   morning:{ time:'08:00' },
-  night:{ time:'22:00' }
+  night:{ time:NIGHT_START_TIME }
 };
 const NOTIFY_LEGACY_KINDS = ['list'];     /* 舊版的「清單通知」已經移除;只用來清掉雲端上舊的排程 */
 let legacyNotifyCleanup = false;
@@ -2436,6 +2441,7 @@ function ensureNotifySettings(){
       if(!/^\d{2}:\d{2}$/.test(cur.time||'')) cur.time = NOTIFY_KINDS[k].time;
     }
   });
+  data.notifySettings.night.time = NIGHT_START_TIME;     /* 晚安通知一律在晚安時間送出(以前可以自己改時間,舊資料裡的時間在這裡統一) */
 }
 function notifyDueAt(dateStr, timeStr){
   const [y,m,d] = dateStr.split('-').map(Number);
@@ -2515,7 +2521,7 @@ function renderNotifySettings(){
   const sw = document.getElementById('greetPushSwitch');
   if(sw) sw.classList.toggle('on', greetPushOn());
 }
-/* 「早晚安推播」:一個開關同時管早上 8:00 和晚上 10:00 兩則。
+/* 「早晚安推播」:一個開關同時管早上 8:00 和晚上 9:30 兩則。
    還沒打開「背景推播提醒」(沒有通知權限)的話,會先幫你走一次開啟推播的流程 */
 async function toggleGreetPush(){
   ensureNotifySettings();
@@ -3894,23 +3900,22 @@ function nextFestivalDate(sd, todayS){
 function spChipHtml(sd, numText){
   return `<button class="sp-chip" onclick="openSpecialEdit('${sd.id}')"><span class="sp-name">${escapeHtml(sd.name)}</span><b>${numText}</b></button>`;
 }
-/* 最上面要顯示的項目:每個「計算天數」今天是第幾天,以及 30 天內快到的日期(最多 2 個) */
+/* 最上面要顯示的項目:所有特別的日子都列出來。
+   「計算天數」:今天是第幾天。「日期」:下一次是哪天、還有幾天(一次性的、已經過去的,顯示已過幾天)。順序:計算天數 → 最近的日期 → 已過的 */
 function specialStripItems(){
-  const today = todayStr(), items = [];
+  const today = todayStr(), counters = [], dates = [];
   for(const sd of data.specialDays){
-    if(sd.kind==='festival') continue;
-    const n = counterN(sd, today);
-    items.push({ sd, num: n>=1 ? '第 '+n+' 天' : '還有 '+(1-n)+' 天' });
+    if(sd.kind!=='festival'){
+      const n = counterN(sd, today);
+      counters.push({ sd, num: n>=1 ? '第 '+n+' 天' : '還有 '+(1-n)+' 天' });
+      continue;
+    }
+    const nx = nextFestivalDate(sd, today);
+    if(nx){ const dd = daysBetween(today, nx); dates.push({ sd, key:dd, num: dd===0 ? '就是今天' : '還有 '+dd+' 天' }); }
+    else{ const past = daysBetween(sd.date, today); dates.push({ sd, key:100000+past, num:'已過 '+past+' 天' }); }
   }
-  const ups = [];
-  for(const sd of data.specialDays){
-    if(sd.kind!=='festival') continue;
-    const nx = nextFestivalDate(sd, today); if(!nx) continue;
-    const dd = daysBetween(today, nx); if(dd<=30) ups.push({ sd, dd });
-  }
-  ups.sort((a,b)=>a.dd-b.dd);
-  for(const u of ups.slice(0,2)) items.push({ sd:u.sd, num: u.dd===0 ? '就是今天' : '還有 '+u.dd+' 天' });
-  return items;
+  dates.sort((a,b)=>a.key-b.key);
+  return counters.concat(dates);
 }
 /* 月曆:小膠囊 */
 function renderSpecialStrip(){
@@ -4073,16 +4078,16 @@ function renderDayDetail(){
     </div>`).join('') : `<div class="empty-state" style="padding:14px">當日無事項</div>`);
 }
 
-/* 今天心情:改到週日期條的「今天」格子。若在晚安動畫時段(22:00~10:00)點擊,
+/* 今天心情:改到週日期條的「今天」格子。若在晚安動畫時段(21:30~10:00)點擊,
    開啟完整的晚安回顧動畫(跟自動彈出的一樣);若在這個時段之外點擊,
    只開一個簡單的心情選擇視窗,轉場速度跟早安動畫一致(0.5秒淡入淡出),不跑完整動畫。 */
-/* 今天在22:00~5:00(晚安時段)點擊 → 完整晚安動畫,存檔後會看到晚安動畫。
-   今天在5:00~22:00點擊 → 同樣是「今日完成＋選擇心情＋一句話」的卡片,但開關速度
+/* 今天在21:30~5:00(晚安時段)點擊 → 完整晚安動畫,存檔後會看到晚安動畫。
+   今天在5:00~21:30點擊 → 同樣是「今日完成＋選擇心情＋一句話」的卡片,但開關速度
    跟早安動畫一樣快(0.5秒),存檔後直接關閉,不會跑完整的晚安動畫。
    過去的日期:第一次點只是切換成看那一天的打卡頁面,已經在那天了、再點一次才會
    開心情編輯(用跟白天一樣的快速卡片,畢竟不是正在經歷那個晚上)。未來不能設定。 */
 /* 「晚安時段」是綁在「被點的那一天」本身,不是只看現在的時鐘:
-   10/1的晚安時段是10/1 22:00到10/2 5:00(跨過午夜算同一段)。
+   10/1的晚安時段是10/1 21:30到10/2 5:00(跨過午夜算同一段)。
    這段時間內點10/1 → 完整晚安動畫。
    這段過了之後,10/1變成「昨天」,單次點擊就能打開簡化卡片(今日完成＋心情＋一句話,
    速度跟早安動畫一樣)。再更早的日子,要先點一次切換頁面,點第二次才打開同一張簡化卡片。
@@ -4091,7 +4096,7 @@ function dayNightWindowActive(dayStr){
   const now = new Date();
   const hour = now.getHours();
   const nowStr = todayStr();
-  if(nowStr === dayStr && hour >= 22) return true;
+  if(nowStr === dayStr && isNightStarted(now)) return true;
   const next = new Date(dayStr+'T00:00:00');
   next.setDate(next.getDate()+1);
   const pad = n=>String(n).padStart(2,'0');
@@ -4145,7 +4150,7 @@ function openDayMoodFlow(dayStr){
   /* 切換到那天的打卡頁面,不管是過去、今天還是未來都可以點,跟以前一樣。
      「選心情」這件事:
      - 未來:永遠不能選,只切換頁面。
-     - 今天:只有在今天自己的晚安時段(22:00~5:00)正在進行時才能選,
+     - 今天:只有在今天自己的晚安時段(21:30~5:00)正在進行時才能選,
        這段時間之外,不管點幾次都不會打開,不是「點兩次」的問題。
        完整晚安動畫一天只會播一次:不管是自動跳出來播的,還是手動點兩次
        觸發播的,只要今天已經播過了(data.lastAutoRecapDate===today),
@@ -6198,16 +6203,15 @@ function closeDailyBrief(){
    今天總結（夜間回顧）
 ============================================================ */
 function getRecapDateStr(){
-  const hour = new Date().getHours();
-  return hour >= 22 ? todayStr() : dateStrOffset(-1);
+  return isNightStarted() ? todayStr() : dateStrOffset(-1);
 }
 function getRecapLabel(){
   const hour = new Date().getHours();
-  return (hour >= 22 || hour < 4) ? '今天' : '昨天';
+  return (isNightStarted() || hour < 4) ? '今天' : '昨天';
 }
 function isNightRecapWindow(){
   const hour = new Date().getHours();
-  return hour >= 22 || hour < 10;
+  return isNightStarted() || hour < 10;
 }
 function maybeShowNightRecap(){
   if(data.nightRecapDisabled) return false;
