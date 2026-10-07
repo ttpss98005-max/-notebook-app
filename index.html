@@ -218,6 +218,12 @@
   .sp-chip{display:inline-flex;align-items:baseline;gap:7px;background:var(--accent-soft);color:#1A1A1A;border:1.5px solid transparent;border-radius:999px;padding:6px 13px;font-size:12px;font-family:inherit;max-width:100%;}
   .sp-chip .sp-name{max-width:8.5em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .sp-chip b{font-size:13px;color:var(--accent);white-space:nowrap;}
+  .sp-boxes{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:0 0 16px;}
+  .sp-box{display:flex;flex-direction:column;gap:2px;min-width:0;text-align:left;font-family:inherit;background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:10px 13px;box-shadow:var(--shadow-sm);color:#1A1A1A;}
+  .sp-box .sp-name{font-size:11.5px;color:var(--ink-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .sp-box b{font-size:16px;line-height:1.3;color:var(--accent);white-space:nowrap;}
+  .sp-box-add{align-items:center;justify-content:center;background:#fff;border-style:dashed;box-shadow:none;color:var(--ink-soft);font-size:12.5px;font-weight:700;min-height:52px;}
+  .sp-box-wide{grid-column:1/-1;min-height:46px;}
   .sp-add{background:transparent;border:1.5px dashed var(--border);color:var(--ink-soft);border-radius:999px;padding:6px 13px;font-size:12px;font-family:inherit;}
   .cal-lunar.special{color:var(--accent);font-weight:700;}
   .cal-special-tag{position:absolute;right:6px;bottom:5px;font-size:10px;line-height:1;color:var(--accent);}
@@ -944,17 +950,6 @@
         </div>
       </div>
       <div class="setting-block">
-        <h3>特別的日子</h3>
-        <div class="fee-hint" style="margin:0 0 10px;">記下特別的日期，或計算從某天起已經過了幾天（例如在一起、養寵物），會標在月曆和周曆上。</div>
-        <button class="btn-ghost" onclick="openSpecialDays()">管理特別的日子</button>
-        <div class="fee-hint" id="spSummary" style="margin-top:6px;"></div>
-        <div class="row-inline" style="max-width:300px;margin-top:14px;">
-          <label style="margin:0;font-size:13px;">月曆顯示農曆與內建節日</label>
-          <button class="switch" id="calLunarSwitch" onclick="toggleCalLunar()"></button>
-        </div>
-        <div class="fee-hint" style="margin-top:6px;">關閉後只隱藏農曆日期和節日名稱，國定假日的「休」標示會保留。</div>
-      </div>
-      <div class="setting-block">
         <h3>回顧小結</h3>
         <button class="btn-ghost" onclick="openSummary('week')">本週小結</button>
         <button class="btn-ghost" style="margin-left:8px;" onclick="openSummary('month')">本月小結</button>
@@ -963,7 +958,8 @@
         <h3>資料備份</h3>
         <div class="data-size-text" id="dataSizeText"></div>
         <div class="data-size-bar"><div class="data-size-fill" id="dataSizeFill"></div></div>
-        <div class="fee-hint" id="dataSizeHint" style="margin:6px 0 12px;"></div>
+        <div class="fee-hint" id="dataSizeHint" style="margin:6px 0 4px;"></div>
+        <div class="fee-hint" id="dataArchiveInfo" style="margin:0 0 12px;"></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
           <button class="btn-ghost" onclick="exportBackup()">匯出備份檔</button>
           <button class="btn-ghost" onclick="document.getElementById('restoreFileInput').click()">從備份檔還原</button>
@@ -1687,7 +1683,6 @@ function defaultData(){
     leaveByMonth: {},
     salaryRecorded: {},
     specialDays: [],
-    calShowLunar: true,
     schemaVersion: SCHEMA_VERSION
   };
 }
@@ -1821,15 +1816,17 @@ async function loadData(storageKey, opts){
   opts = opts || {};
   const res = await storageGet(storageKey);
   const raw = res ? res.value : null;
+  archiveCache = {};
   let parsed = raw ? JSON.parse(raw) : defaultData();
+  await inflateArchives(parsed);    /* 收納的舊資料解開併回來;任何一個解不開就丟出錯誤,登入中止,不會用缺了一塊的資料去覆蓋雲端 */
   let useLocal = false;
   /* 登入時:如果這支手機上有一份「還沒同步到雲端」的修改,問你要用哪一份。兩邊都不會直接丟掉,沒選到的那份會備份起來 */
   if(opts.checkUnsynced){
     const un = readLocalCopy(storageKey);
-    if(un && un.json && un.json!==raw){
+    if(un && un.json && un.json!==raw && !sameContent(un.json, parsed)){     /* 跟雲端內容一樣(不管有沒有收納、排列順序有沒有不同)就不用問 */
       const when = new Date(un.ts).toLocaleString('zh-TW',{hour12:false});
       useLocal = window.confirm('這支手機上有一份還沒同步到雲端的修改（'+when+'），可能是離線或儲存失敗時留下的。\n\n按「確定」：使用手機上這份修改，並覆蓋雲端（雲端現在的資料會先備份）。\n按「取消」：保留雲端目前的資料（手機上這份修改會另外備份，不會直接丟掉）。');
-      if(useLocal){ await backupRaw(storageKey, 'before-unsynced-'+Date.now(), raw); parsed = JSON.parse(un.json); }
+      if(useLocal){ await backupRaw(storageKey, 'before-unsynced-'+Date.now(), raw); parsed = JSON.parse(un.json); await inflateArchives(parsed); }
       else{ await backupRaw(storageKey, 'unsynced-'+un.ts, un.json); dropLocalCopy(storageKey); }
     }
   }
@@ -1848,8 +1845,8 @@ async function loadData(storageKey, opts){
     const last = data.expenses.filter(e=>e.type==='income' && e.category==='salary' && e.date<=today).map(e=>e.date).sort().pop();
     data.payroll.autoFrom = last ? (last>floor ? last : floor) : today;
     persist();
-  }else if(migrated || useLocal){
-    persist();
+  }else if(migrated || useLocal || (!hasArchives && raw && canCompress() && utf8Bytes(raw)>=ARCHIVE_TRIGGER_BYTES)){
+    persist();     /* 超過 700 KB 還沒收納過:登入後馬上存一次,把舊資料收納起來 */
   }
 }
 /* 所有「資料進入記憶體」的入口(載入、雲端即時同步)都必須經過這裡,確保舊格式資料補齊新欄位 */
@@ -1875,7 +1872,7 @@ function normalizeData(){
   data.specialDays.forEach(x=>{ if(x.kind==='together' || x.kind==='raising') x.kind = 'count'; });   /* 舊版分成「在一起」「開始養」,現在合併成「計算天數」(名稱、日期都保留) */
   data.specialDays = data.specialDays.filter(x=> SPECIAL_KINDS[x.kind] && typeof x.name==='string' && x.name.trim() && validYmd(x.date));
   data.specialDays.forEach(x=>{ x.name = x.name.trim().slice(0,30); if(!/^[\w-]+$/.test(String(x.id||''))) x.id = uid(); x.yearly = x.kind==='festival' ? x.yearly!==false : false; });
-  if(typeof data.calShowLunar!=='boolean') data.calShowLunar = true;
+  delete data.calShowLunar;     /* 舊版有「月曆顯示農曆」的開關,已經拿掉,農曆固定顯示 */
   delete data.theme;
   if(!data.globalPaletteId) data.globalPaletteId = 'p01';
   if(!data.customPalettes) data.customPalettes = [];
@@ -1982,7 +1979,7 @@ let lastPersistedCounts = {tasks:0, habits:0, quickNotes:0, dayRecaps:0};
    - 整份資料存在 Firestore 單一文件(上限約 1 MiB),接近上限時會提醒,超過會停止儲存並說明原因
    - 本機有還沒存完的修改時,不會用雲端收到的版本蓋掉它(先留著,存完後把那份備份起來)
 ============================================================ */
-const SCHEMA_VERSION = 9;                               /* 資料結構每改一次就加 1。升版時會先把「升版前」的原始資料備份起來 */
+const SCHEMA_VERSION = 11;                               /* 資料結構每改一次就加 1。升版時會先把「升版前」的原始資料備份起來 */
 const SIZE_WARN_BYTES = 700*1024, SIZE_DANGER_BYTES = 900*1024, SIZE_BLOCK_BYTES = 1000*1024;   /* Firestore 單一文件上限 1,048,576 位元組 */
 const UNSYNCED_PREFIX = 'jishibu_unsynced_';
 let pendingSave = null, saveInFlight = false, saveFailed = null /* null | 'network' | 'size' */;
@@ -2006,6 +2003,116 @@ function compactHabitLogs(logs){
   return out;
 }
 function serializeData(d){ return JSON.stringify(Object.assign({}, d, { habitLogs: compactHabitLogs(d.habitLogs || {}) })); }
+/* ===== 舊資料收納:整份資料超過 700 KB 後,把「最近 3 個月以前」的舊資料按年份壓縮收起來 =====
+   - 只收納:習慣打卡紀錄、記帳、每日回顧(資料量最大、也最少被修改的三種)。最近 3 個月的資料永遠維持原樣(不壓縮)。
+   - 登入時把壓縮檔解開放進記憶體,所以統計、日曆、圖表看起來跟沒收納一樣。
+   - 任何一個壓縮檔解不開,就中止登入,不會用缺了一塊的資料去覆蓋雲端。
+   - 舊版 App 打開時會看不到舊資料,但存回去時壓縮檔原封不動保留,不會遺失。
+   - 瀏覽器不支援壓縮功能時,不收納(維持原本的存法)。 */
+const ARCHIVE_TRIGGER_BYTES = 700*1024;
+const ARCHIVE_KEEP_MONTHS = 3;   /* 最近幾個月永遠不壓縮。不管資料是在第幾個月到達 700 KB,這幾個月之前的才會被收納 */
+let archiveCache = {};          /* 年份 → { raw:'那一年的內容', b64:'壓縮後的文字' }。內容沒變就不重新壓縮 */
+let hasArchives = false;        /* 雲端這份資料已經有收納過(之後每次存檔都繼續收納) */
+function canCompress(){ return typeof CompressionStream!=='undefined' && typeof DecompressionStream!=='undefined'; }
+async function gzipToB64(str){
+  const stream = new Blob([new TextEncoder().encode(str)]).stream().pipeThrough(new CompressionStream('gzip'));
+  const buf = new Uint8Array(await new Response(stream).arrayBuffer());
+  let bin = ''; for(let i=0;i<buf.length;i+=8192) bin += String.fromCharCode.apply(null, buf.subarray(i,i+8192));
+  return btoa(bin);
+}
+async function gunzipFromB64(b64){
+  const bin = atob(b64), buf = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) buf[i] = bin.charCodeAt(i);
+  const stream = new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'));
+  return await new Response(stream).text();
+}
+/* 3 個月前那個月的 1 號。比這天更早的資料才收納(以月為單位:永遠有「3 個整月 + 本月」是沒壓縮的,而且不會每天都有資料在邊界上搬來搬去) */
+function archiveCutoff(){ const t = new Date(), d = new Date(t.getFullYear(), t.getMonth()-ARCHIVE_KEEP_MONTHS, 1); return ymdStr(d.getFullYear(), d.getMonth()+1, 1); }
+const isDay = k => /^\d{4}-\d{2}-\d{2}$/.test(String(k));
+/* 把「早於 cutoff 的資料」按年份分出來;回傳 { rest:不含舊資料的淺拷貝, years:{ '2024':{ habitLogs, expenses, dayRecaps } } } */
+function splitOldData(d, cutoff){
+  const years = {}, slot = y => years[y] || (years[y] = {}), rest = Object.assign({}, d);
+  const hl = {};
+  for(const hid of Object.keys(d.habitLogs||{})){
+    const keep = {}, src = d.habitLogs[hid];
+    for(const day of Object.keys(src)){
+      if(isDay(day) && day<cutoff){ const sl = slot(day.slice(0,4)); sl.habitLogs = sl.habitLogs || {}; (sl.habitLogs[hid] = sl.habitLogs[hid] || {})[day] = src[day]; }
+      else keep[day] = src[day];
+    }
+    hl[hid] = keep;
+  }
+  rest.habitLogs = hl;
+  rest.expenses = (d.expenses||[]).filter(e=>{
+    if(e && isDay(e.date) && e.date<cutoff){ const sl = slot(e.date.slice(0,4)); (sl.expenses = sl.expenses || []).push(e); return false; }
+    return true;
+  });
+  const dr = {};
+  for(const k of Object.keys(d.dayRecaps||{})){
+    if(isDay(k) && k<cutoff){ const sl = slot(k.slice(0,4)); (sl.dayRecaps = sl.dayRecaps || {})[k] = d.dayRecaps[k]; }
+    else dr[k] = d.dayRecaps[k];
+  }
+  rest.dayRecaps = dr;
+  return { rest, years };
+}
+/* 同樣的內容永遠輸出同樣的文字(排序固定),這樣內容沒變時就能沿用上次壓縮好的結果 */
+function stableChunk(sl){
+  const out = {};
+  if(sl.habitLogs){ const o = {}; for(const hid of Object.keys(sl.habitLogs).sort()){ const days = {}; for(const day of Object.keys(sl.habitLogs[hid]).sort()) days[day] = sl.habitLogs[hid][day]; o[hid] = days; } out.habitLogs = compactHabitLogs(o); }
+  if(sl.expenses) out.expenses = sl.expenses.slice().sort((a,b)=> a.date<b.date ? -1 : a.date>b.date ? 1 : (String(a.id)<String(b.id) ? -1 : 1));
+  if(sl.dayRecaps){ const o = {}; for(const k of Object.keys(sl.dayRecaps).sort()) o[k] = sl.dayRecaps[k]; out.dayRecaps = o; }
+  return out;
+}
+/* 要寫進雲端的文字。plain 是完整的(沒收納)版本。
+   沒超過 700 KB 且還沒收納過 → 直接用 plain。否則把舊資料壓縮收起來。 */
+async function buildStoredValue(d, plain){
+  plain = plain || serializeData(d);
+  if(!canCompress() || (utf8Bytes(plain) < ARCHIVE_TRIGGER_BYTES && !hasArchives)) return { json:plain, archived:false, years:[] };
+  const { rest, years } = splitOldData(d, archiveCutoff());
+  const ys = Object.keys(years).sort();
+  if(!ys.length) return { json:plain, archived:false, years:[] };
+  const raws = {}; ys.forEach(y=>{ raws[y] = JSON.stringify(stableChunk(years[y])); });     /* 先同步把每一年的內容固定下來,再開始(非同步的)壓縮 */
+  const archives = {};
+  for(const y of ys){
+    const c = archiveCache[y];
+    if(c && c.raw===raws[y]) archives[y] = c.b64;
+    else{ const b64 = await gzipToB64(raws[y]); archiveCache[y] = { raw:raws[y], b64 }; archives[y] = b64; }
+  }
+  for(const y of Object.keys(archiveCache)) if(!years[y]) delete archiveCache[y];
+  const out = Object.assign({}, rest, { habitLogs: compactHabitLogs(rest.habitLogs||{}), archives });
+  return { json:JSON.stringify(out), archived:true, years:ys };
+}
+/* 把雲端資料裡的壓縮檔解開,併回主資料(併進去的是「缺的」,不會蓋掉現有的)。任何一個解不開就丟出錯誤。 */
+async function inflateArchives(obj){
+  const arc = obj && obj.archives;
+  hasArchives = false;
+  if(arc===undefined || arc===null) return;
+  if(typeof arc!=='object' || Array.isArray(arc)) throw new Error('資料欄位格式不正確：archives');
+  const ys = Object.keys(arc);
+  if(!ys.length){ delete obj.archives; return; }
+  if(!canCompress()) throw new Error('這個瀏覽器不支援解壓縮，請改用較新的瀏覽器開啟，才不會看到缺少舊資料的版本');
+  for(const y of ys){
+    const raw = await gunzipFromB64(arc[y]);
+    const ch = JSON.parse(raw);
+    if(ch.habitLogs){ obj.habitLogs = obj.habitLogs || {}; for(const hid of Object.keys(ch.habitLogs)){ const dst = obj.habitLogs[hid] = obj.habitLogs[hid] || {}; for(const day of Object.keys(ch.habitLogs[hid])) if(!(day in dst)) dst[day] = ch.habitLogs[hid][day]; } }
+    if(Array.isArray(ch.expenses)){ obj.expenses = obj.expenses || []; const have = new Set(obj.expenses.map(e=>e && e.id)); obj.expenses = ch.expenses.filter(e=>!have.has(e.id)).concat(obj.expenses); }
+    if(ch.dayRecaps){ obj.dayRecaps = obj.dayRecaps || {}; for(const k of Object.keys(ch.dayRecaps)) if(!(k in obj.dayRecaps)) obj.dayRecaps[k] = ch.dayRecaps[k]; }
+    archiveCache[y] = { raw, b64:arc[y] };
+  }
+  delete obj.archives;
+  hasArchives = true;
+}
+/* 比較兩份資料「內容」是不是一樣:忽略欄位排列的先後、記帳排列的先後(收納舊資料之後,記帳的排列順序會跟原本不同) */
+function canonicalJson(obj){
+  return JSON.stringify(obj, (k, v)=>{
+    if(Array.isArray(v) && k==='expenses') return v.slice().sort((a,b)=> String(a&&a.id)<String(b&&b.id) ? -1 : 1);
+    if(v && typeof v==='object' && !Array.isArray(v)){ const r = {}; Object.keys(v).sort().forEach(x=>{ r[x]=v[x]; }); return r; }
+    return v;
+  });
+}
+function sameContent(localJson, remoteObj){
+  try{ return localJson===serializeData(remoteObj) || canonicalJson(JSON.parse(localJson))===canonicalJson(JSON.parse(serializeData(remoteObj))); }
+  catch(e){ return false; }
+}
 function utf8Bytes(str){
   try{ return new TextEncoder().encode(str).length; }catch(e){ return str.length*3; }
 }
@@ -2082,12 +2189,18 @@ async function runSave(key, d){
     }catch(e){ console.error('保護機制重新讀取失敗', e); }
     return;
   }
-  const json = serializeData(d), bytes = utf8Bytes(json);
-  noteDataSize(bytes);
-  keepLocalCopy(key, json);
-  if(bytes>SIZE_BLOCK_BYTES){ markSaveFailed('size'); return; }
-  lastWrittenValue = json;
+  /* 手機上的未同步副本:存的是完整(沒收納)的版本,而且在任何非同步的事之前就先同步寫好,頁面這時被關掉也不會丟 */
+  const plain = serializeData(d);
+  keepLocalCopy(key, plain);
   saveInFlight = true;
+  const archivedBefore = hasArchives;
+  let built;
+  try{ built = await buildStoredValue(d, plain); }
+  catch(e){ console.error('整理存檔內容(舊資料收納)失敗,改用完整版本存檔', e); built = { json:plain, archived:false, years:[] }; }
+  const json = built.json, bytes = utf8Bytes(json);
+  noteDataSize(bytes);
+  if(bytes>SIZE_BLOCK_BYTES){ saveInFlight = false; markSaveFailed('size'); return; }
+  lastWrittenValue = json;
   /* Firestore 在離線或訊號很差時,寫入不會「失敗」,而是一直等到連上線才完成。所以超過 10 秒還沒存完,就先提示「尚未同步」 */
   clearTimeout(slowTimer);
   slowTimer = setTimeout(()=>{ if(saveInFlight){ slowSave = true; updateSyncBadge(); } }, 10000);
@@ -2100,9 +2213,11 @@ async function runSave(key, d){
     lastPersistedCount = currentCount; lastPersistedCounts = cats;
     const wasFailed = saveFailed;
     saveFailed = null; retryDelay = 3000; clearTimeout(retryTimer); retryTimer = null;
-    clearLocalCopy(key, json);
+    clearLocalCopy(key, plain);
+    hasArchives = built.archived;
     updateSyncBadge();
-    if(wasFailed) flashToast('已同步到雲端');
+    if(built.archived && !archivedBefore) flashToast('資料量超過 700 KB，已自動把 3 個月前的舊資料壓縮收納，查看時一樣正常');
+    else if(wasFailed) flashToast('已同步到雲端');
     maybeBackupHistory(key, json);
     if(skippedRemote){ const r = skippedRemote; skippedRemote = null; if(r!==json) backupRaw(key, 'conflict-'+Date.now(), r); }
   }else{
@@ -2132,7 +2247,7 @@ let unsubscribeSnapshot = null;
 function startRealtimeSync(storageKey){
   if(!fbDb) return;
   if(unsubscribeSnapshot){ unsubscribeSnapshot(); unsubscribeSnapshot = null; }
-  unsubscribeSnapshot = fbDb.collection('userdata').doc(storageKey).onSnapshot((snap)=>{
+  unsubscribeSnapshot = fbDb.collection('userdata').doc(storageKey).onSnapshot(async (snap)=>{
     if(!snap.exists) return;
     if(snap.metadata && snap.metadata.hasPendingWrites) return;   /* 這是自己剛寫、還沒被雲端確認的版本,不用處理 */
     const remote = snap.data().value;
@@ -2142,6 +2257,8 @@ function startRealtimeSync(storageKey){
     if(saveTimer || saveInFlight || saveFailed){ skippedRemote = remote; return; }
     try{
       const incoming = JSON.parse(remote);
+      await inflateArchives(incoming);
+      if(saveTimer || saveInFlight || saveFailed){ skippedRemote = remote; return; }     /* 解壓縮的這段時間,本機又有新的修改了 */
       const prev = data; data = incoming;
       try{ normalizeData(); }catch(e){ data = prev; throw e; }
       lastWrittenValue = remote;
@@ -2911,11 +3028,12 @@ function renderDataInfo(){
   if(lastDataBytes) text.textContent = '目前資料量：約 '+Math.round(lastDataBytes/1024)+' KB';
   clearTimeout(dataInfoTimer);
   /* 要把整份資料轉成文字才算得出大小,資料多的時候要幾十毫秒,所以等畫面切換完再算,不卡住切換 */
-  dataInfoTimer = setTimeout(()=>{
+  dataInfoTimer = setTimeout(async ()=>{
     if(!data) return;
-    let bytes = 0, parts = [];
+    let bytes = 0, parts = [], arch = [];
     try{
-      bytes = utf8Bytes(serializeData(data));
+      const built = await buildStoredValue(data, serializeData(data));
+      bytes = utf8Bytes(built.json); arch = built.years;
       const label = { expenses:'記帳', habitLogs:'習慣打卡紀錄', tasks:'事項', quickNotes:'隨手記', dayRecaps:'每日回顧' };
       parts = Object.keys(label).map(k=>({ name:label[k], n:utf8Bytes(JSON.stringify(k==='habitLogs' ? compactHabitLogs(data.habitLogs||{}) : (data[k]||[]))) })).sort((a,b)=>b.n-a.n).filter(x=>x.n>0).slice(0,3);
     }catch(e){}
@@ -2927,6 +3045,7 @@ function renderDataInfo(){
     fill.classList.toggle('warn', bytes>=SIZE_WARN_BYTES && bytes<SIZE_DANGER_BYTES);
     fill.classList.toggle('danger', bytes>=SIZE_DANGER_BYTES);
     const total = parts.reduce((t,x)=>t+x.n,0) || 1, shown = parts.filter(x=>Math.round(x.n/total*100)>=1);
+    const ai = document.getElementById('dataArchiveInfo'); if(ai) ai.textContent = arch.length ? '已把 '+arch.join('、')+' 年的舊資料壓縮收納，查看時一樣正常。' : '';
     document.getElementById('dataSizeHint').textContent = shown.length ? '佔最多的是：'+shown.map(x=>x.name+' '+Math.round(x.n/total*100)+'%').join('、') : '';
   }, 120);
 }
@@ -2975,7 +3094,7 @@ function restoreBackupFromFile(input){
 }
 async function applyRestore(cand){
   const key = currentStorageKey; if(!key || !data) return;
-  await backupRaw(key, 'pre-restore-'+Date.now(), serializeData(data));
+  await backupRaw(key, 'pre-restore-'+Date.now(), (await buildStoredValue(data, serializeData(data))).json);
   data = cand; normalizeData(); data.schemaVersion = SCHEMA_VERSION;
   lastPersistedCount = totalContentCount(data); lastPersistedCounts = categoryCounts(data);   /* 這是使用者主動還原,不要被「資料驟降」誤判擋下 */
   skippedRemote = null; ui.catId = 'overview';
@@ -3775,13 +3894,13 @@ function nextFestivalDate(sd, todayS){
 function spChipHtml(sd, numText){
   return `<button class="sp-chip" onclick="openSpecialEdit('${sd.id}')"><span class="sp-name">${escapeHtml(sd.name)}</span><b>${numText}</b></button>`;
 }
-/* 月曆、周曆最上面:每個「計算天數」今天是第幾天,以及 30 天內快到的日期 */
-function renderSpecialStrip(){
-  const today = todayStr(), chips = [];
+/* 最上面要顯示的項目:每個「計算天數」今天是第幾天,以及 30 天內快到的日期(最多 2 個) */
+function specialStripItems(){
+  const today = todayStr(), items = [];
   for(const sd of data.specialDays){
     if(sd.kind==='festival') continue;
     const n = counterN(sd, today);
-    chips.push(spChipHtml(sd, n>=1 ? '第 '+n+' 天' : '還有 '+(1-n)+' 天'));
+    items.push({ sd, num: n>=1 ? '第 '+n+' 天' : '還有 '+(1-n)+' 天' });
   }
   const ups = [];
   for(const sd of data.specialDays){
@@ -3790,9 +3909,20 @@ function renderSpecialStrip(){
     const dd = daysBetween(today, nx); if(dd<=30) ups.push({ sd, dd });
   }
   ups.sort((a,b)=>a.dd-b.dd);
-  for(const u of ups.slice(0,2)) chips.push(spChipHtml(u.sd, u.dd===0 ? '就是今天' : '還有 '+u.dd+' 天'));
+  for(const u of ups.slice(0,2)) items.push({ sd:u.sd, num: u.dd===0 ? '就是今天' : '還有 '+u.dd+' 天' });
+  return items;
+}
+/* 月曆:小膠囊 */
+function renderSpecialStrip(){
+  const chips = specialStripItems().map(it=> spChipHtml(it.sd, it.num));
   if(!chips.length) return `<div class="sp-strip"><button class="sp-add" onclick="openSpecialDays()">＋ 加入日期或計算天數</button></div>`;
   return `<div class="sp-strip">${chips.join('')}<button class="sp-add" onclick="openSpecialDays()" title="管理特別的日子">＋</button></div>`;
+}
+/* 周曆:白底有框的方塊,放在周曆最上面。上面是名稱、下面是大大的天數 */
+function renderSpecialBoxes(){
+  const boxes = specialStripItems().map(it=>`<button class="sp-box" onclick="openSpecialEdit('${it.sd.id}')"><span class="sp-name">${escapeHtml(it.sd.name)}</span><b>${it.num}</b></button>`);
+  if(!boxes.length) return `<div class="sp-boxes"><button class="sp-box sp-box-add sp-box-wide" onclick="openSpecialDays()">＋ 加入日期或計算天數</button></div>`;
+  return `<div class="sp-boxes">${boxes.join('')}<button class="sp-box sp-box-add" onclick="openSpecialDays()">＋ 新增或管理</button></div>`;
 }
 /* 某一天的詳細頁:當天的節日,以及每個計數器那天是第幾天 */
 function specialDetailHtml(dateStr){
@@ -3806,18 +3936,7 @@ function specialDetailHtml(dateStr){
   }
   return lines.length ? `<div class="sp-detail">${lines.join('')}</div>` : '';
 }
-function renderSpecialSettings(){
-  if(!data) return;
-  const sw = document.getElementById('calLunarSwitch'); if(sw) sw.classList.toggle('on', data.calShowLunar!==false);
-  const sum = document.getElementById('spSummary'); if(!sum) return;
-  const c = { festival:0, count:0 }; data.specialDays.forEach(x=>{ c[x.kind]++; });
-  sum.textContent = data.specialDays.length ? '目前有：日期 '+c.festival+' 個、計算天數 '+c.count+' 個' : '還沒有任何特別的日子';
-}
-function toggleCalLunar(){
-  data.calShowLunar = !(data.calShowLunar!==false);
-  persist(); renderSpecialSettings(); renderCalendar(); renderWeek();
-}
-function refreshSpecialViews(){ renderSpecialDaysList(); renderSpecialSettings(); renderCalendar(); renderWeek(); }
+function refreshSpecialViews(){ renderSpecialDaysList(); renderCalendar(); renderWeek(); }
 function openSpecialDays(){ renderSpecialDaysList(); document.getElementById('specialDaysModal').classList.add('show'); }
 function renderSpecialDaysList(){
   const box = document.getElementById('specialDaysList'); if(!box) return;
@@ -3893,7 +4012,6 @@ function renderCalendar(){
   const daysInMonth = new Date(y,m+1,0).getDate();
   const items = allTimedItems();
   const today = new Date();
-  const showLunar = data.calShowLunar!==false;
   const isSameDay=(a,b)=> a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
 
   let cells='';
@@ -3906,7 +4024,7 @@ function renderCalendar(){
     const isSel = ui.selectedDate && isSameDay(cellDate, ui.selectedDate);
     const info = getDayInfo(y, m+1, d);
     const sp = specialsOn(ymdStr(y, m+1, d));
-    let lunarLabel = showLunar ? (info.festival || info.lunarText) : '';
+    let lunarLabel = info.festival || info.lunarText;
     let lunarClass = info.festival ? 'cal-lunar festival' : (info.holiday ? 'cal-lunar holiday-day' : 'cal-lunar');
     if(sp.festivals.length){ lunarLabel = sp.festivals.map(f=>f.name).join('、'); lunarClass = 'cal-lunar special'; }   /* 自己設定的節日優先顯示 */
     const spTag = sp.marks.length ? `<div class="cal-special-tag" title="${escapeAttr(sp.marks.map(x=>x.text).join('、'))}">★</div>` : '';
@@ -3929,7 +4047,7 @@ function renderCalendar(){
       ${['日','一','二','三','四','五','六'].map(d=>`<div class="cal-dow">${d}</div>`).join('')}
       ${cells}
     </div>
-    ${showLunar ? '<div style="font-size:10.5px;color:var(--ink-soft);margin-top:10px;">農曆與節日僅供參考，國定假日以政府公告為準</div>' : ''}
+    <div style="font-size:10.5px;color:var(--ink-soft);margin-top:10px;">農曆與節日僅供參考，國定假日以政府公告為準</div>
     <div class="day-detail" id="dayDetail"></div>
   `;
   renderDayDetail();
@@ -3947,8 +4065,7 @@ function renderDayDetail(){
   }).sort((a,b)=>a.time.localeCompare(b.time));
   const label = `${ui.selectedDate.getMonth()+1}/${ui.selectedDate.getDate()}`;
   const info = getDayInfo(ui.selectedDate.getFullYear(), ui.selectedDate.getMonth()+1, ui.selectedDate.getDate());
-  const showLunar = data.calShowLunar!==false;
-  const infoLine = [showLunar?info.lunarText:null, showLunar?info.festival:null, info.holiday?'放假':null].filter(Boolean).join(' · ');
+  const infoLine = [info.lunarText, info.festival, info.holiday?'放假':null].filter(Boolean).join(' · ');
   const selStr = ymdStr(ui.selectedDate.getFullYear(), ui.selectedDate.getMonth()+1, ui.selectedDate.getDate());
   box.innerHTML = `<h3>${label} 的事項<span style="font-weight:400;color:var(--ink-soft);font-size:11.5px;margin-left:8px;">${escapeHtml(infoLine)}</span></h3>` + specialDetailHtml(selStr) + (items.length? items.map(i=>`
     <div class="item-line" style="border-left-color:${i.color}">
@@ -4082,10 +4199,10 @@ function renderWeek(){
     }).sort((a,b)=>a.time.localeCompare(b.time));
     const isToday = d.toDateString()===today.toDateString();
     const dayStr = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-    const info = getDayInfo(d.getFullYear(), d.getMonth()+1, d.getDate()), sp = specialsOn(dayStr), showLunar = data.calShowLunar!==false;
+    const info = getDayInfo(d.getFullYear(), d.getMonth()+1, d.getDate()), sp = specialsOn(dayStr);
     const tags = [];
     sp.festivals.forEach(f=> tags.push(`<div class="week-special fest" title="${escapeAttr(f.name)}">${escapeHtml(f.name)}</div>`));
-    if(showLunar && info.festival) tags.push(`<div class="week-special" title="${escapeAttr(info.festival)}">${escapeHtml(info.festival)}</div>`);
+    if(info.festival) tags.push(`<div class="week-special" title="${escapeAttr(info.festival)}">${escapeHtml(info.festival)}</div>`);
     sp.marks.forEach(mk=> tags.push(`<div class="week-special mark" title="${escapeAttr(mk.text)}">★ ${escapeHtml(mk.text)}</div>`));
     cols += `<div class="week-col">
       <div class="week-col-head ${isToday?'today':''}">
@@ -4096,12 +4213,12 @@ function renderWeek(){
   }
   const endLabel = new Date(start); endLabel.setDate(start.getDate()+6);
   el.innerHTML = `
+    ${renderSpecialBoxes()}
     <div class="cal-header">
       <button class="cal-nav-btn" onclick="changeWeek(-1)">‹</button>
       <div class="cal-title">${start.getMonth()+1}/${start.getDate()} - ${endLabel.getMonth()+1}/${endLabel.getDate()}</div>
       <button class="cal-nav-btn" onclick="changeWeek(1)">›</button>
     </div>
-    ${renderSpecialStrip()}
     <div class="week-grid">${cols}</div>
   `;
 }
@@ -6417,7 +6534,6 @@ function applyTheme(){
 }
 function renderSettings(){
   renderNotifySettings();
-  renderSpecialSettings();
   renderDataInfo();
   const allPalettes = PRESET_PALETTES.concat(data.customPalettes||[]);
   const grid = document.getElementById('paletteGrid');

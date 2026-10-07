@@ -24,7 +24,7 @@ try{
   });
 }catch(e){ /* 沒有推播也沒關係 */ }
 
-const CACHE_NAME = 'jishibu-cache-v141';
+const CACHE_NAME = 'jishibu-cache-v145';
 const CORE_ASSETS = ['./index.html', './manifest.json', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './icon-notification.png'];
 
 self.addEventListener('install', (event) => {
