@@ -192,7 +192,8 @@
   .cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
   .cal-nav-btn{background:#fff;border:1.5px solid var(--border);width:32px;height:32px;border-radius:50%;font-size:13px;box-shadow:var(--shadow-sm);}
   .cal-title{font-size:14.5px;font-weight:700;}
-  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;}   /* minmax(0,…):格子裡的字太長時縮成「…」,不會把整欄撐寬、擠掉旁邊的欄 */
+  .cal-cell{min-width:0;}
   .cal-dow{text-align:center;font-size:11px;color:var(--ink-soft);font-weight:700;padding:6px 0;}
   .cal-cell{min-height:74px;padding:6px;font-size:11.5px;background:#FDFDFB;border:1.5px solid var(--border);border-radius:16px;box-shadow:var(--shadow-sm);cursor:pointer;transition:.15s;position:relative;color:#1A1A1A;}
   .cal-cell:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);}
@@ -208,6 +209,26 @@
   .cal-dots{display:flex;gap:3px;margin-top:5px;flex-wrap:wrap;}
   .cal-dots span{width:6px;height:6px;border-radius:50%;display:inline-block;}
   .day-detail{margin-top:20px;border-top:1.5px solid var(--border);padding-top:16px;}
+  .sp-strip{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px;align-items:center;}
+  .sp-chip{display:inline-flex;align-items:baseline;gap:7px;background:var(--accent-soft);color:#1A1A1A;border:1.5px solid transparent;border-radius:999px;padding:6px 13px;font-size:12px;font-family:inherit;max-width:100%;}
+  .sp-chip .sp-name{max-width:8.5em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .sp-chip b{font-size:13px;color:var(--accent);white-space:nowrap;}
+  .sp-add{background:transparent;border:1.5px dashed var(--border);color:var(--ink-soft);border-radius:999px;padding:6px 13px;font-size:12px;font-family:inherit;}
+  .cal-lunar.special{color:var(--accent);font-weight:700;}
+  .cal-special-tag{position:absolute;right:6px;bottom:5px;font-size:10px;line-height:1;color:var(--accent);}
+  .week-holiday{font-size:8px;color:#fff;background:var(--danger);border-radius:5px;padding:0 3px;line-height:1.5;}
+  .week-special{font-size:9.5px;line-height:1.35;color:var(--ink-soft);margin:-3px 0 7px 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .week-special.fest,.week-special.mark{color:var(--accent);font-weight:700;}
+  .sp-detail{margin:10px 0 12px;display:flex;flex-direction:column;gap:6px;}
+  .sp-line{display:flex;align-items:baseline;gap:8px;font-size:12.5px;background:var(--accent-soft);border-radius:12px;padding:8px 12px;color:#1A1A1A;}
+  .sp-line b{color:var(--accent);}
+  .sp-line .sp-badge{margin-left:auto;font-size:10.5px;font-weight:700;color:#fff;background:var(--accent);border-radius:999px;padding:1px 8px;white-space:nowrap;}
+  .sp-row{display:flex;align-items:center;gap:10px;width:100%;text-align:left;font-family:inherit;padding:11px 14px;border:1.5px solid var(--border);border-radius:14px;background:#FDFDFB;margin-bottom:8px;color:#1A1A1A;}
+  .sp-row .sp-kind{font-size:10.5px;font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:1px 8px;white-space:nowrap;}
+  .sp-row .sp-main{flex:1;min-width:0;}
+  .sp-row .sp-title{font-size:13.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .sp-row .sp-sub{font-size:11px;color:var(--ink-soft);margin-top:2px;}
+  .sp-row .sp-num{font-size:13px;font-weight:700;color:var(--accent);white-space:nowrap;}
   .day-detail h3{font-size:13.5px;margin:0 0 10px;}
   .item-line{font-size:12.5px;padding:9px 12px;border-radius:12px;background:#FDFDFB;border:1.5px solid var(--border);border-left:4px solid var(--border);margin-bottom:6px;color:#1A1A1A;}
 
@@ -932,6 +953,17 @@
         </div>
       </div>
       <div class="setting-block">
+        <h3>特別的日子</h3>
+        <div class="fee-hint" style="margin:0 0 10px;">自己的節日、紀念日，以及「在一起」「開始養」的天數，會標在月曆和周曆上。</div>
+        <button class="btn-ghost" onclick="openSpecialDays()">管理特別的日子</button>
+        <div class="fee-hint" id="spSummary" style="margin-top:6px;"></div>
+        <div class="row-inline" style="max-width:300px;margin-top:14px;">
+          <label style="margin:0;font-size:13px;">月曆顯示農曆與內建節日</label>
+          <button class="switch" id="calLunarSwitch" onclick="toggleCalLunar()"></button>
+        </div>
+        <div class="fee-hint" style="margin-top:6px;">關閉後只隱藏農曆日期和節日名稱，國定假日的「休」標示會保留。</div>
+      </div>
+      <div class="setting-block">
         <h3>回顧小結</h3>
         <button class="btn-ghost" onclick="openSummary('week')">本週小結</button>
         <button class="btn-ghost" style="margin-left:8px;" onclick="openSummary('month')">本月小結</button>
@@ -1312,6 +1344,40 @@
   </div>
 </div>
 
+<div class="overlay" id="specialDaysModal">
+  <div class="modal">
+    <h3>特別的日子</h3>
+    <div id="specialDaysList"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="openSpecialEdit()">＋ 新增</button>
+      <button class="btn-primary" onclick="closeModal('specialDaysModal')">完成</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="specialEditModal">
+  <div class="modal">
+    <h3 id="specialEditTitle">新增特別的日子</h3>
+    <input type="hidden" id="spId" value="">
+    <div class="field">
+      <label>類型</label>
+      <select id="spKind" onchange="updateSpecialForm(true)"><option value="festival">節日／紀念日</option><option value="together">在一起（算第幾天）</option><option value="raising">開始養（算第幾天）</option></select>
+      <div class="fee-hint" id="spKindHint"></div>
+    </div>
+    <div class="field"><label>名稱</label><input type="text" id="spName" maxlength="30"></div>
+    <div class="field"><label id="spDateLabel">日期</label><input type="date" id="spDate" min="1900-01-01" max="2200-12-31"></div>
+    <div class="row-inline" id="spYearlyRow" style="max-width:300px;margin-bottom:6px;">
+      <label style="margin:0;font-size:13px;">每年重複</label>
+      <button class="switch on" id="spYearlySwitch" onclick="this.classList.toggle('on')"></button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="spDeleteBtn" style="color:var(--danger);margin-right:auto;" onclick="deleteSpecial()">刪除</button>
+      <button class="btn-ghost" onclick="closeModal('specialEditModal')">取消</button>
+      <button class="btn-primary" onclick="saveSpecial()">儲存</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="accountsModal">
   <div class="modal">
     <h3>我的存款</h3>
@@ -1598,6 +1664,8 @@ function defaultData(){
     },
     leaveByMonth: {},
     salaryRecorded: {},
+    specialDays: [],
+    calShowLunar: true,
     schemaVersion: SCHEMA_VERSION
   };
 }
@@ -1780,6 +1848,11 @@ function normalizeData(){
   needArr('bookmarks', ()=> defaultData().bookmarks); needArr('recurring', ()=>[]); needArr('customPalettes', ()=>[]);
   needObj('habitLogs'); needObj('dayRecaps'); needObj('categoryBudgets'); needObj('leaveByMonth'); needObj('salaryRecorded');
   data.tasks.forEach(t=>{ if(!Array.isArray(t.subtasks)) t.subtasks = []; });
+  /* 特別的日子:格式不對的(沒有名稱、日期不是正確格式、類型不認得)濾掉,id 只允許安全字元(會放進按鈕的 onclick 裡) */
+  needArr('specialDays', ()=>[]);
+  data.specialDays = data.specialDays.filter(x=> SPECIAL_KINDS[x.kind] && typeof x.name==='string' && x.name.trim() && validYmd(x.date));
+  data.specialDays.forEach(x=>{ x.name = x.name.trim().slice(0,30); if(!/^[\w-]+$/.test(String(x.id||''))) x.id = uid(); x.yearly = x.kind==='festival' ? x.yearly!==false : false; });
+  if(typeof data.calShowLunar!=='boolean') data.calShowLunar = true;
   delete data.theme;
   if(!data.globalPaletteId) data.globalPaletteId = 'p01';
   if(!data.customPalettes) data.customPalettes = [];
@@ -1886,7 +1959,7 @@ let lastPersistedCounts = {tasks:0, habits:0, quickNotes:0, dayRecaps:0};
    - 整份資料存在 Firestore 單一文件(上限約 1 MiB),接近上限時會提醒,超過會停止儲存並說明原因
    - 本機有還沒存完的修改時,不會用雲端收到的版本蓋掉它(先留著,存完後把那份備份起來)
 ============================================================ */
-const SCHEMA_VERSION = 7;                               /* 資料結構每改一次就加 1。升版時會先把「升版前」的原始資料備份起來 */
+const SCHEMA_VERSION = 8;                               /* 資料結構每改一次就加 1。升版時會先把「升版前」的原始資料備份起來 */
 const SIZE_WARN_BYTES = 700*1024, SIZE_DANGER_BYTES = 900*1024, SIZE_BLOCK_BYTES = 1000*1024;   /* Firestore 單一文件上限 1,048,576 位元組 */
 const UNSYNCED_PREFIX = 'jishibu_unsynced_';
 let pendingSave = null, saveInFlight = false, saveFailed = null /* null | 'network' | 'size' */;
@@ -2651,6 +2724,23 @@ const SceneAnim = (function(){
     ctx.save(); ctx.beginPath(); ctx.arc(x,y,R,0,TAU); ctx.clip();
     ctx.beginPath(); ctx.rect(x-R*2,y-R*2,R*4,R*4); ctx.arc(x+R*.5,y-R*.14,R*.86,0,TAU); ctx.fillStyle=col; ctx.fill('evenodd'); ctx.restore();
   }
+  /* 山:大圓角三角形。(ax,ay)是「尖角」的位置,r 是頂端的圓角半徑,baseY 是底邊(放在畫面外面,所以不會有角落露出來)。
+     斜邊是 45° 的直線,頂端用圓弧接起來。 */
+  function mountain(ctx,ax,ay,r,baseY,col,oy){
+    const hb=baseY-ay, P=[[ax,ay+oy],[ax+hb,baseY+oy],[ax-hb,baseY+oy]];
+    ctx.fillStyle=col; ctx.beginPath(); ctx.moveTo((P[2][0]+P[0][0])/2,(P[2][1]+P[0][1])/2);
+    for(let i=0;i<3;i++){ const a=P[i], b=P[(i+1)%3]; ctx.arcTo(a[0],a[1],b[0],b[1],r); }
+    ctx.closePath(); ctx.fill();
+  }
+  /* 一組山的輪廓高度(畫面上每個 x 位置,最高的那座山的邊緣在哪個 y),用來把太陽藏在山後面 */
+  function ridgeOf(mts,x,floor){
+    let y=floor;
+    for(const q of mts){
+      const dx=Math.abs(x-q.x), top=dx<=.7071*q.r ? q.ay+1.4142*q.r-Math.sqrt(q.r*q.r-dx*dx) : q.ay+dx;
+      if(top<y) y=top;
+    }
+    return y;
+  }
   function sparkle(ctx,x,y,s){ ctx.beginPath(); ctx.moveTo(x,y-s); ctx.quadraticCurveTo(x,y,x+s,y); ctx.quadraticCurveTo(x,y,x,y+s); ctx.quadraticCurveTo(x,y,x-s,y); ctx.quadraticCurveTo(x,y,x,y-s); ctx.closePath(); ctx.fill(); }
 
   const dbg = { noSun:false, noMoon:false };   /* 自動測試用:把太陽/月亮關掉,拿來比對「有沒有露餡」 */
@@ -2659,25 +2749,23 @@ const SceneAnim = (function(){
     let L=null;
     function build(w,h){
       const U=Math.min(w,h*.56), R=.18*U;
-      /* 山的位置原本是用「螢幕寬度的比例」算的,螢幕一變寬(電腦),三座山就被拉得各自孤立、散開。
-         改成:手機是整個畫面當一塊舞台(跟以前完全一樣);大螢幕只用中間一塊(寬度 U)當舞台,
-         兩邊用同一組山一塊一塊往外接,山脈才會連在一起 */
+      /* 三層大圓角三角形的山(淺 → 中 → 深)。手機是整個畫面當一塊舞台;大螢幕只用中間一塊(寬度 U),
+         兩邊用同一組山一塊一塊往外接,山脈才會連在一起。山的底邊在畫面外面,所以任何螢幕大小,
+         左右下角都不會露出背景(原本用圓形的山,在長螢幕手機的左下角會露出一小塊空白) */
       const phone = w <= U*1.02, Ws = phone ? w : U;
-      const baseHills = [ {fx:.2,y:.8,r:.42,col:'acc2',d:.35,o:0}, {fx:.78,y:.84,r:.46,col:'accent',d:.5,o:1}, {fx:.45,y:1.04,r:.42,col:'deep',d:.65,o:2} ];
-      const hills = [];
-      for(let rep=phone?0:-8; rep<=(phone?0:8); rep++) for(const q of baseHills){
-        const x = w/2+(q.fx-.5)*Ws+rep*Ws, r = q.r*U;
-        if(x+r<0 || x-r>w) continue;
-        hills.push({ x, y:q.y*h, r, col:q.col, d:q.d+Math.abs(rep)*.1, o:q.o });
+      const base = [ {fx:.14,fy:.60,r:.15,col:'acc2',d:.35,o:0}, {fx:.82,fy:.64,r:.15,col:'accent',d:.5,o:1}, {fx:.46,fy:.76,r:.13,col:'deep',d:.65,o:2} ];
+      const mts = [];
+      for(let rep=phone?0:-8; rep<=(phone?0:8); rep++) for(const q of base){
+        const x = w/2+(q.fx-.5)*Ws+rep*Ws, ay = q.fy*h, hb = h*1.6-ay;
+        if(x+hb<0 || x-hb>w) continue;
+        mts.push({ x, ay, r:q.r*U, col:q.col, d:q.d+Math.abs(rep)*.1, o:q.o });
       }
-      hills.sort((a,b)=>a.o-b.o);     /* 由後(淺色)往前(深色)畫 */
-      /* 太陽要藏在「山完全長好之後」的山後面。山的輪廓不是平的,所以沿著太陽的整個寬度逐點檢查:
-         太陽在每個位置的上緣,都不能高過那個位置的山頭,取最嚴格的那個當起點,一開始就完全看不到 */
-      const ridge=x=>{ let y=h; for(const q of hills){ const dx=Math.abs(q.x-x); if(dx<q.r) y=Math.min(y,q.y-Math.sqrt(q.r*q.r-dx*dx)); } return y; };
-      let y0=0; for(let i=0;i<=60;i++){ const dx=-R+2*R*i/60; y0=Math.max(y0, ridge(w/2+dx)+Math.sqrt(Math.max(0,R*R-dx*dx))); }
+      mts.sort((a,b)=>a.o-b.o);     /* 由後(淺色)往前(深色)畫 */
+      /* 太陽要藏在「山完全長好之後」的山後面:沿著太陽的整個寬度逐點檢查,太陽在每個位置的上緣都不能高過那裡的山頭 */
+      let y0=0; for(let i=0;i<=60;i++){ const dx=-R+2*R*i/60; y0=Math.max(y0, ridgeOf(mts,w/2+dx,h*3)+Math.sqrt(Math.max(0,R*R-dx*dx))); }
       y0+=6;
-      const y1=h*.3, hillsTop=Math.min(...hills.map(q=>q.y-q.r));
-      return {w,h,U,R,hills,phone,y0,y1,cardY:((y1+R)+hillsTop)/2,cardSpace:hillsTop-(y1+R)};
+      const y1=h*.3, hillsTop=Math.min(...mts.map(q=>q.ay+.4142*q.r));
+      return {w,h,U,R,mts,phone,y0,y1,cardY:((y1+R)+hillsTop)/2,cardSpace:hillsTop-(y1+R)};
     }
     return {
       cardAt:3.4,
@@ -2692,8 +2780,8 @@ const SceneAnim = (function(){
           disc(ctx,w/2,sy,R*2.6*p,C.accent,.07); disc(ctx,w/2,sy,R*1.8*p,C.accent,.1); disc(ctx,w/2,sy,R,C.accent);
           if(t>4.3){ const u=((t-4.3)%3.4)/3.4; ctx.strokeStyle=C.accent; ctx.lineWidth=2; ctx.globalAlpha=.35*(1-u); ctx.beginPath(); ctx.arc(w/2,sy,R*(1.1+.6*u),0,TAU); ctx.stroke(); ctx.globalAlpha=1; }
         }
-        for(const q of L.hills){ const o=(1-spring(t-q.d,2,.6))*h*.4; disc(ctx,q.x,q.y+o,q.r,C[q.col]); }
-        if(!L.phone){ ctx.fillStyle=C.deep; ctx.fillRect(0,h*.92+(1-spring(t-.65,2,.6))*h*.4,w,h); }   /* 大螢幕:最前面一層山之間補一條地面,底部才不會露出縫 */
+        /* 山從畫面下面平順地升起(不用會彈跳的彈簧:彈起來時山的底邊會離開畫面底部,露出後面的空白) */
+        for(const q of L.mts){ const o=(1-outCubic(inv(q.d,q.d+1.1,t)))*h*.6; mountain(ctx,q.x,q.ay,q.r,h*1.6,C[q.col],o); }
       }
     };
   }
@@ -2704,14 +2792,13 @@ const SceneAnim = (function(){
     function build(w,h){
       const U=Math.min(w,h*.56), hz=h*.56, R=.15*U, dy=h*.028, rs=mulberry32(5), stars=[];
       for(let k=0;k<11;k++){ let x,y,n=0; do{ x=w*(.06+.88*rs()); y=hz*(.05+.7*rs()); n++; }while(n<40&&Math.hypot(x-w/2,y-h*.26)<R*3.1); stars.push({x,y,s:U*(.012+.014*rs()),ph:rs()*6.28,fr:1.2+rs()*1.4}); }
-      /* 小島:手機維持原本(左右各一座)。大螢幕改成沿著整條海平線分布、大小不一、比較扁,不要只剩兩座貼在最左最右的小凸起 */
-      const phone = w <= U*1.02;
-      let islands;
-      if(phone) islands = [ { x:w*.14, rx:U*.13, ry:U*.13 }, { x:w*.9, rx:U*.08, ry:U*.08 } ];
-      else{
-        const ri = mulberry32(11), n = Math.max(3, Math.round(w/(U*.7)));
-        islands = Array.from({length:n},(_,i)=>{ const r=U*(.05+.09*ri()); return { x:(i+.25+.5*ri())/n*w, rx:r*1.8, ry:r*.75 }; });
-      }
+      /* 小島:放在畫面「左右兩側」,每一側一座大的、旁邊挨著一座小的(小的在後面、顏色淺一點),都是大圓角三角形。
+         大小跟著 U 走(不是跟螢幕寬度),所以手機、電腦看起來比例一樣;位置在兩側,中間留給月亮和倒影 */
+      const mk = (x,th,col)=>({ x, ay:hz-th, r:th*.3, baseY:hz+th+12, col });
+      const islands = [
+        mk(w*.10+U*.19, U*.12, 'mid'), mk(w*.10, U*.22, 'dark'),
+        mk(w*.90-U*.16, U*.10, 'mid'), mk(w*.90, U*.19, 'dark')
+      ];
       return {w,h,U,hz,R,dy,stars,islands,cardY:(hz+dy*6+h)/2,cardSpace:h-(hz+dy*6)};
     }
     return {
@@ -2730,8 +2817,8 @@ const SceneAnim = (function(){
         const p=outCubic(inv(1,4,t)), my=lerp(hz+R*1.7,h*.26,p);
         if(!dbg.noMoon){ disc(ctx,w/2,my,R*2.4,C.moon,.05*p); disc(ctx,w/2,my,R*1.6,C.moon,.08*p); crescent(ctx,w/2,my,R,C.moon); }
         const o=(1-outCubic(inv(.3,1.5,t)))*h*.2;     /* 小島從海平線下面平順地浮上來(不用會彈跳的彈簧,不會「跳一下」) */
-        ctx.fillStyle=C.n5;
-        for(const is of L.islands){ ctx.beginPath(); ctx.ellipse(is.x,hz+o,is.rx,is.ry,0,0,TAU); ctx.fill(); }
+        const mid=mixHex(C.n4,C.n5,.45);
+        for(const is of L.islands) mountain(ctx,is.x,is.ay,is.r,is.baseY,is.col==='dark'?C.n5:mid,o);
         ctx.fillStyle=C.n4; ctx.fillRect(0,hz,w,h-hz);
         /* 海面上的倒影:一格一格,輪流左右飄動 */
         for(let k=0;k<6;k++){
@@ -3609,6 +3696,170 @@ function allTimedItems(){
   return items;
 }
 
+/* ===== 特別的日子:自訂節日/紀念日,以及「在一起」「開始養」的天數計算 =====
+   節日/紀念日:標在月曆、周曆上(可以每年重複)。
+   在一起/開始養:從起點那天算起是「第 1 天」,日曆上每一天都看得到那天是第幾天,整百天與週年會特別標出來。 */
+const SPECIAL_KINDS = {
+  festival:{ label:'節日／紀念日', namePh:'例如：媽媽生日、結婚紀念日', dateLabel:'日期', def:'' },
+  together:{ label:'在一起', namePh:'例如：和 Amy 在一起', dateLabel:'在一起的第一天', def:'在一起' },
+  raising:{ label:'開始養', namePh:'例如：小白（貓）、多肉', dateLabel:'開始養的第一天', def:'' }
+};
+const pad2 = n=>String(n).padStart(2,'0');
+function ymdStr(y,m,d){ return y+'-'+pad2(m)+'-'+pad2(d); }
+/* 嚴格檢查日期:必須是真的存在的日子。Date.UTC 遇到 13 月、2/30 這種會自動「進位」成別的日子而不會報錯,所以要轉回來比對 */
+function validYmd(str){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(str))) return false;
+  const y=+str.slice(0,4), m=+str.slice(5,7), d=+str.slice(8,10);
+  if(y<1900 || y>2200) return false;
+  const dt=new Date(Date.UTC(y,m-1,d));
+  return dt.getUTCFullYear()===y && dt.getUTCMonth()===m-1 && dt.getUTCDate()===d;
+}
+function ymdUTC(str){ const p=String(str).split('-'); return Date.UTC(+p[0],+p[1]-1,+p[2]); }     /* 用 UTC 算天數,不會被夏令時間或時區差一天 */
+function daysBetween(a,b){ return Math.round((ymdUTC(b)-ymdUTC(a))/86400000); }
+function isLeapYear(y){ return (y%4===0 && y%100!==0) || y%400===0; }
+/* 同月同日。2/29 的紀念日,在沒有 2/29 的年份算在 2/28 */
+function sameMonthDay(startStr, dateStr){
+  const sm=+startStr.slice(5,7), sd=+startStr.slice(8,10), y=+dateStr.slice(0,4), m=+dateStr.slice(5,7), d=+dateStr.slice(8,10);
+  if(sm===2 && sd===29 && !isLeapYear(y)) return m===2 && d===28;
+  return sm===m && sd===d;
+}
+function counterN(sd, dateStr){ return daysBetween(sd.date, dateStr)+1; }
+function specialsOn(dateStr){
+  const out = { festivals:[], marks:[] };
+  for(const sd of data.specialDays){
+    if(sd.kind==='festival'){
+      if(sd.yearly ? (dateStr>=sd.date && sameMonthDay(sd.date,dateStr)) : sd.date===dateStr) out.festivals.push(sd);
+    }else{
+      const n = counterN(sd, dateStr);
+      if(n===1) out.marks.push({ sd, type:'start', n, text:sd.name+' 起點' });
+      else if(n>1 && sameMonthDay(sd.date,dateStr)){ const yrs=+dateStr.slice(0,4)-+sd.date.slice(0,4); out.marks.push({ sd, type:'anniv', n, text:sd.name+' '+yrs+' 週年' }); }
+      else if(n>1 && n%100===0) out.marks.push({ sd, type:'hundred', n, text:sd.name+' 第 '+n+' 天' });
+    }
+  }
+  return out;
+}
+/* 節日下一次是哪天(今天算);已經過去的一次性節日回傳 null */
+function nextFestivalDate(sd, todayS){
+  if(!sd.yearly) return sd.date>=todayS ? sd.date : null;
+  const y=+todayS.slice(0,4), m=+sd.date.slice(5,7), d=+sd.date.slice(8,10);
+  for(const yy of [y,y+1]){
+    const c = ymdStr(yy, m, (m===2 && d===29 && !isLeapYear(yy)) ? 28 : d);
+    if(c>=todayS && c>=sd.date) return c;
+  }
+  return null;
+}
+
+/* ----- 畫面:計數條、設定頁、管理清單、新增/編輯 ----- */
+function spChipHtml(sd, numText){
+  return `<button class="sp-chip" onclick="openSpecialEdit('${sd.id}')"><span class="sp-name">${escapeHtml(sd.name)}</span><b>${numText}</b></button>`;
+}
+/* 月曆、周曆最上面:每個「在一起/開始養」今天是第幾天,以及 30 天內快到的節日 */
+function renderSpecialStrip(){
+  const today = todayStr(), chips = [];
+  for(const sd of data.specialDays){
+    if(sd.kind==='festival') continue;
+    const n = counterN(sd, today);
+    chips.push(spChipHtml(sd, n>=1 ? '第 '+n+' 天' : '還有 '+(1-n)+' 天'));
+  }
+  const ups = [];
+  for(const sd of data.specialDays){
+    if(sd.kind!=='festival') continue;
+    const nx = nextFestivalDate(sd, today); if(!nx) continue;
+    const dd = daysBetween(today, nx); if(dd<=30) ups.push({ sd, dd });
+  }
+  ups.sort((a,b)=>a.dd-b.dd);
+  for(const u of ups.slice(0,2)) chips.push(spChipHtml(u.sd, u.dd===0 ? '就是今天' : '還有 '+u.dd+' 天'));
+  if(!chips.length) return `<div class="sp-strip"><button class="sp-add" onclick="openSpecialDays()">＋ 加入節日、在一起、開始養的天數</button></div>`;
+  return `<div class="sp-strip">${chips.join('')}<button class="sp-add" onclick="openSpecialDays()" title="管理特別的日子">＋</button></div>`;
+}
+/* 某一天的詳細頁:當天的節日,以及每個計數器那天是第幾天 */
+function specialDetailHtml(dateStr){
+  const sp = specialsOn(dateStr), lines = [];
+  sp.festivals.forEach(f=> lines.push(`<div class="sp-line"><b>${escapeHtml(f.name)}</b></div>`));
+  for(const sd of data.specialDays){
+    if(sd.kind==='festival') continue;
+    const n = counterN(sd, dateStr), mk = sp.marks.find(m=>m.sd===sd);
+    const badge = !mk ? '' : mk.type==='start' ? '起點' : mk.type==='anniv' ? (+dateStr.slice(0,4)-+sd.date.slice(0,4))+' 週年' : '整百天';
+    lines.push(`<div class="sp-line"><span>${escapeHtml(sd.name)}</span><b>${n>=1 ? '第 '+n+' 天' : '還有 '+(1-n)+' 天開始'}</b>${badge?`<span class="sp-badge">${badge}</span>`:''}</div>`);
+  }
+  return lines.length ? `<div class="sp-detail">${lines.join('')}</div>` : '';
+}
+function renderSpecialSettings(){
+  if(!data) return;
+  const sw = document.getElementById('calLunarSwitch'); if(sw) sw.classList.toggle('on', data.calShowLunar!==false);
+  const sum = document.getElementById('spSummary'); if(!sum) return;
+  const c = { festival:0, together:0, raising:0 }; data.specialDays.forEach(x=>{ c[x.kind]++; });
+  sum.textContent = data.specialDays.length ? '目前有：節日 '+c.festival+' 個、在一起 '+c.together+' 個、開始養 '+c.raising+' 個' : '還沒有任何特別的日子';
+}
+function toggleCalLunar(){
+  data.calShowLunar = !(data.calShowLunar!==false);
+  persist(); renderSpecialSettings(); renderCalendar(); renderWeek();
+}
+function refreshSpecialViews(){ renderSpecialDaysList(); renderSpecialSettings(); renderCalendar(); renderWeek(); }
+function openSpecialDays(){ renderSpecialDaysList(); document.getElementById('specialDaysModal').classList.add('show'); }
+function renderSpecialDaysList(){
+  const box = document.getElementById('specialDaysList'); if(!box) return;
+  if(!data.specialDays.length){ box.innerHTML = `<div class="empty-state" style="padding:18px 8px;">還沒有特別的日子。<br>按下方「＋ 新增」，可以加生日、紀念日，或是「在一起」「開始養」的天數。</div>`; return; }
+  const today = todayStr(), order = { together:0, raising:1, festival:2 };
+  const rows = data.specialDays.slice().sort((a,b)=> order[a.kind]-order[b.kind]).map(sd=>{
+    let num, sub;
+    if(sd.kind==='festival'){
+      const nx = nextFestivalDate(sd, today);
+      num = nx ? (daysBetween(today,nx)===0 ? '今天' : '還有 '+daysBetween(today,nx)+' 天') : '已過';
+      sub = sd.date + (sd.yearly ? '・每年' : '');
+    }else{
+      const n = counterN(sd, today);
+      num = n>=1 ? '第 '+n+' 天' : '還有 '+(1-n)+' 天';
+      sub = '從 '+sd.date+' 起算';
+    }
+    return `<button class="sp-row" onclick="openSpecialEdit('${sd.id}')"><span class="sp-kind">${SPECIAL_KINDS[sd.kind].label.split('／')[0]}</span><span class="sp-main"><div class="sp-title">${escapeHtml(sd.name)}</div><div class="sp-sub">${sub}</div></span><span class="sp-num">${num}</span></button>`;
+  });
+  box.innerHTML = rows.join('');
+}
+/* 切換類型時,更新提示、名稱欄位提示、日期欄位標籤;換類型時才自動帶入預設名稱 */
+function updateSpecialForm(kindChanged){
+  const kind = document.getElementById('spKind').value, k = SPECIAL_KINDS[kind];
+  document.getElementById('spKindHint').textContent = kind==='festival' ? '生日、結婚紀念日、自訂的節日。可以設定每年重複。' : kind==='together' ? '從這天起算是第 1 天，日曆上每一天都會顯示第幾天。' : '養寵物、種植物、養成一件事：從這天起算第幾天。';
+  document.getElementById('spName').placeholder = k.namePh;
+  document.getElementById('spDateLabel').textContent = k.dateLabel;
+  document.getElementById('spYearlyRow').style.display = kind==='festival' ? 'flex' : 'none';
+  const nameEl = document.getElementById('spName');
+  if(kindChanged){ const defs = Object.values(SPECIAL_KINDS).map(x=>x.def); if(!nameEl.value.trim() || defs.includes(nameEl.value.trim())) nameEl.value = k.def; }
+}
+function openSpecialEdit(id){
+  const sd = id ? data.specialDays.find(x=>x.id===id) : null;
+  document.getElementById('spId').value = sd ? sd.id : '';
+  document.getElementById('specialEditTitle').textContent = sd ? '編輯特別的日子' : '新增特別的日子';
+  document.getElementById('spKind').value = sd ? sd.kind : 'festival';
+  document.getElementById('spName').value = sd ? sd.name : '';
+  document.getElementById('spDate').value = sd ? sd.date : todayStr();
+  document.getElementById('spYearlySwitch').classList.toggle('on', sd ? sd.yearly!==false : true);
+  document.getElementById('spDeleteBtn').style.display = sd ? '' : 'none';
+  updateSpecialForm(false);
+  document.getElementById('specialEditModal').classList.add('show');
+}
+function saveSpecial(){
+  const id = document.getElementById('spId').value, kind = document.getElementById('spKind').value;
+  const name = document.getElementById('spName').value.trim().slice(0,30), date = document.getElementById('spDate').value;
+  if(!SPECIAL_KINDS[kind]) return;
+  if(!name){ notify('請輸入名稱。'); return; }
+  if(!validYmd(date)){ notify('請選擇正確的日期。'); return; }
+  const yearly = kind==='festival' ? document.getElementById('spYearlySwitch').classList.contains('on') : false;
+  const sd = id ? data.specialDays.find(x=>x.id===id) : null;
+  if(sd){ sd.kind = kind; sd.name = name; sd.date = date; sd.yearly = yearly; }
+  else data.specialDays.push({ id:uid(), kind, name, date, yearly });
+  persist();
+  closeModal('specialEditModal');
+  refreshSpecialViews();
+}
+function deleteSpecial(){
+  const id = document.getElementById('spId').value, sd = data.specialDays.find(x=>x.id===id); if(!sd) return;
+  showConfirm('確定要刪除「'+sd.name+'」嗎？', ()=>{
+    data.specialDays = data.specialDays.filter(x=>x.id!==id);
+    persist(); closeModal('specialEditModal'); refreshSpecialViews();
+  });
+}
+
 function renderCalendar(){
   const el = document.getElementById('view-cal');
   const y = ui.calDate.getFullYear(), m = ui.calDate.getMonth();
@@ -3617,6 +3868,7 @@ function renderCalendar(){
   const daysInMonth = new Date(y,m+1,0).getDate();
   const items = allTimedItems();
   const today = new Date();
+  const showLunar = data.calShowLunar!==false;
   const isSameDay=(a,b)=> a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
 
   let cells='';
@@ -3628,12 +3880,15 @@ function renderCalendar(){
     const isToday = isSameDay(cellDate, today);
     const isSel = ui.selectedDate && isSameDay(cellDate, ui.selectedDate);
     const info = getDayInfo(y, m+1, d);
-    const lunarLabel = info.festival || info.lunarText;
-    const lunarClass = info.festival ? 'cal-lunar festival' : (info.holiday ? 'cal-lunar holiday-day' : 'cal-lunar');
+    const sp = specialsOn(ymdStr(y, m+1, d));
+    let lunarLabel = showLunar ? (info.festival || info.lunarText) : '';
+    let lunarClass = info.festival ? 'cal-lunar festival' : (info.holiday ? 'cal-lunar holiday-day' : 'cal-lunar');
+    if(sp.festivals.length){ lunarLabel = sp.festivals.map(f=>f.name).join('、'); lunarClass = 'cal-lunar special'; }   /* 自己設定的節日優先顯示 */
+    const spTag = sp.marks.length ? `<div class="cal-special-tag" title="${escapeAttr(sp.marks.map(x=>x.text).join('、'))}">${sp.marks.some(x=>x.sd.kind==='together') ? '♥' : '★'}</div>` : '';
     cells += `<div class="cal-cell ${isSel?'selected':''} ${isToday?'today':''}" onclick="selectDate(${y},${m},${d})">
       <div class="num">${d}</div>
       <div class="${lunarClass}">${escapeHtml(lunarLabel)}</div>
-      ${info.holiday? '<div class="cal-holiday-tag">休</div>' : ''}
+      ${info.holiday? '<div class="cal-holiday-tag">休</div>' : ''}${spTag}
       <div class="cal-dots">${colors.map(c=>`<span style="background:${c}"></span>`).join('')}</div>
     </div>`;
   }
@@ -3644,11 +3899,12 @@ function renderCalendar(){
       <div class="cal-title">${y}年 ${m+1}月</div>
       <button class="cal-nav-btn" onclick="changeMonth(1)">›</button>
     </div>
+    ${renderSpecialStrip()}
     <div class="cal-grid">
       ${['日','一','二','三','四','五','六'].map(d=>`<div class="cal-dow">${d}</div>`).join('')}
       ${cells}
     </div>
-    <div style="font-size:10.5px;color:var(--ink-soft);margin-top:10px;">農曆與節日僅供參考，國定假日以政府公告為準</div>
+    ${showLunar ? '<div style="font-size:10.5px;color:var(--ink-soft);margin-top:10px;">農曆與節日僅供參考，國定假日以政府公告為準</div>' : ''}
     <div class="day-detail" id="dayDetail"></div>
   `;
   renderDayDetail();
@@ -3666,8 +3922,10 @@ function renderDayDetail(){
   }).sort((a,b)=>a.time.localeCompare(b.time));
   const label = `${ui.selectedDate.getMonth()+1}/${ui.selectedDate.getDate()}`;
   const info = getDayInfo(ui.selectedDate.getFullYear(), ui.selectedDate.getMonth()+1, ui.selectedDate.getDate());
-  const infoLine = [info.lunarText, info.festival, info.holiday?'放假':null].filter(Boolean).join(' · ');
-  box.innerHTML = `<h3>${label} 的事項<span style="font-weight:400;color:var(--ink-soft);font-size:11.5px;margin-left:8px;">${escapeHtml(infoLine)}</span></h3>` + (items.length? items.map(i=>`
+  const showLunar = data.calShowLunar!==false;
+  const infoLine = [showLunar?info.lunarText:null, showLunar?info.festival:null, info.holiday?'放假':null].filter(Boolean).join(' · ');
+  const selStr = ymdStr(ui.selectedDate.getFullYear(), ui.selectedDate.getMonth()+1, ui.selectedDate.getDate());
+  box.innerHTML = `<h3>${label} 的事項<span style="font-weight:400;color:var(--ink-soft);font-size:11.5px;margin-left:8px;">${escapeHtml(infoLine)}</span></h3>` + specialDetailHtml(selStr) + (items.length? items.map(i=>`
     <div class="item-line" style="border-left-color:${i.color}">
       <span class="t">${i.isDate? '截止' : fmtTime(i.time).split(' ')[1]}</span>${i.parent? `${escapeHtml(i.parent)} · `:''}${escapeHtml(i.title)}
     </div>`).join('') : `<div class="empty-state" style="padding:14px">當日無事項</div>`);
@@ -3799,10 +4057,15 @@ function renderWeek(){
     }).sort((a,b)=>a.time.localeCompare(b.time));
     const isToday = d.toDateString()===today.toDateString();
     const dayStr = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    const info = getDayInfo(d.getFullYear(), d.getMonth()+1, d.getDate()), sp = specialsOn(dayStr), showLunar = data.calShowLunar!==false;
+    const tags = [];
+    sp.festivals.forEach(f=> tags.push(`<div class="week-special fest" title="${escapeAttr(f.name)}">${escapeHtml(f.name)}</div>`));
+    if(showLunar && info.festival) tags.push(`<div class="week-special" title="${escapeAttr(info.festival)}">${escapeHtml(info.festival)}</div>`);
+    sp.marks.forEach(mk=> tags.push(`<div class="week-special mark" title="${escapeAttr(mk.text)}">${mk.sd.kind==='together'?'♥':'★'} ${escapeHtml(mk.text)}</div>`));
     cols += `<div class="week-col">
       <div class="week-col-head ${isToday?'today':''}">
-        <span class="week-col-date">${dows[i]} ${d.getMonth()+1}/${d.getDate()}</span>
-      </div>
+        <span class="week-col-date">${dows[i]} ${d.getMonth()+1}/${d.getDate()}</span>${info.holiday?'<span class="week-holiday">休</span>':''}
+      </div>${tags.join('')}
       ${dayItems.length? dayItems.map(it=>`<div class="week-item" style="border-left-color:${it.color}"><span class="t">${it.isDate? '截止' : fmtTime(it.time).split(' ')[1]}</span>${escapeHtml(it.title)}</div>`).join('') : `<div class="no-item">無事項</div>`}
     </div>`;
   }
@@ -3813,6 +4076,7 @@ function renderWeek(){
       <div class="cal-title">${start.getMonth()+1}/${start.getDate()} - ${endLabel.getMonth()+1}/${endLabel.getDate()}</div>
       <button class="cal-nav-btn" onclick="changeWeek(1)">›</button>
     </div>
+    ${renderSpecialStrip()}
     <div class="week-grid">${cols}</div>
   `;
 }
@@ -6128,6 +6392,7 @@ function applyTheme(){
 }
 function renderSettings(){
   renderNotifySettings();
+  renderSpecialSettings();
   renderDataInfo();
   const allPalettes = PRESET_PALETTES.concat(data.customPalettes||[]);
   const grid = document.getElementById('paletteGrid');
