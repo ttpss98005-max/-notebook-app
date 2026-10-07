@@ -209,6 +209,8 @@
   .cal-dots{display:flex;gap:3px;margin-top:5px;flex-wrap:wrap;}
   .cal-dots span{width:6px;height:6px;border-radius:50%;display:inline-block;}
   .day-detail{margin-top:20px;border-top:1.5px solid var(--border);padding-top:16px;}
+  .dev-group{font-size:12px;font-weight:700;color:var(--ink-soft);margin:18px 0 8px;}
+  .dev-btns{display:flex;flex-direction:column;gap:8px;}
   .sp-kinds{display:flex;gap:8px;}
   .sp-kind-btn{flex:1 1 auto;min-width:0;padding:10px 6px;border:1.5px solid var(--border);border-radius:999px;background:#fff;font-size:12.5px;font-weight:700;color:var(--ink-soft);font-family:inherit;white-space:nowrap;transition:background .15s,border-color .15s,color .15s;}
   .sp-kind-btn.on{background:var(--accent);border-color:var(--accent);color:#fff;}
@@ -906,24 +908,10 @@
           <div class="mail" id="accEmail"></div>
           <button class="side-logout" onclick="logout()">登出／切換帳號</button>
         </div>
-      </div>
-      <div class="setting-block" id="devToolsBlock" style="display:none;">
-        <h3>開發者工具</h3>
-        <p class="fee-hint" style="margin-bottom:10px;">只有這個帳號看得到,用來手動測試需要等特定時間才會自動出現的動畫</p>
-        <div style="display:flex;flex-direction:column;gap:8px;">
-          <button class="btn-ghost" onclick="devTriggerMorning()">立即觸發早安動畫</button>
-          <button class="btn-ghost" onclick="devTriggerNight()">立即觸發晚安動畫</button>
-          <button class="btn-ghost" onclick="devResetShownFlags()">重置今天的顯示標記</button>
+        <div id="devToolsEntry" style="display:none;margin-top:14px;">
+          <button class="btn-ghost" onclick="openDevTools()">開發者工具</button>
+          <div class="fee-hint" style="margin-top:6px;">只有開發者帳號看得到，一般使用者的設定頁沒有這個按鈕。</div>
         </div>
-        <h3 style="margin-top:18px;">推播測試</h3>
-        <div style="display:flex;flex-direction:column;gap:8px;">
-          <button class="btn-ghost" onclick="devCheckPushStatus()">檢查推播狀態</button>
-          <button class="btn-ghost" onclick="devTestLocalNotification()">測試本機通知（立刻跳出）</button>
-          <button class="btn-ghost" onclick="devTestFullPush()">測試完整推播（約5分鐘內）</button>
-          <button class="btn-ghost" onclick="devListScheduledNotifications()">查看已排入的通知</button>
-        </div>
-        <div class="fee-hint" id="devPushStatus" style="margin-top:10px;white-space:pre-line;"></div>
-        <div class="fee-hint" style="margin-top:6px;">完整推播測試：送出後請把 App 切到背景或關閉。App 開在畫面上時，推播只會變成畫面內的提示，不會跳系統通知。</div>
       </div>
       <div class="setting-block">
         <h3>推播通知</h3>
@@ -957,7 +945,7 @@
       </div>
       <div class="setting-block">
         <h3>特別的日子</h3>
-        <div class="fee-hint" style="margin:0 0 10px;">自己的節日、紀念日，以及「在一起」「開始養」的天數，會標在月曆和周曆上。</div>
+        <div class="fee-hint" style="margin:0 0 10px;">記下特別的日期，或計算從某天起已經過了幾天（例如在一起、養寵物），會標在月曆和周曆上。</div>
         <button class="btn-ghost" onclick="openSpecialDays()">管理特別的日子</button>
         <div class="fee-hint" id="spSummary" style="margin-top:6px;"></div>
         <div class="row-inline" style="max-width:300px;margin-top:14px;">
@@ -1347,6 +1335,33 @@
   </div>
 </div>
 
+<div class="overlay" id="devToolsModal">
+  <div class="modal">
+    <h3>開發者工具</h3>
+    <p class="fee-hint" style="margin:0 0 6px;">這裡是開發、測試用的功能，只有開發者帳號看得到。</p>
+
+    <div class="dev-group">動畫測試</div>
+    <div class="dev-btns">
+      <button class="btn-ghost" onclick="devTriggerMorning()">立即觸發早安動畫</button>
+      <button class="btn-ghost" onclick="devTriggerNight()">立即觸發晚安動畫</button>
+      <button class="btn-ghost" onclick="devResetShownFlags()">重置今天的顯示標記</button>
+    </div>
+    <div class="fee-hint">平常要等特定時間才會自動出現的動畫，可以在這裡直接看。觸發時這個視窗會先關掉。</div>
+
+    <div class="dev-group">推播測試</div>
+    <div class="dev-btns">
+      <button class="btn-ghost" onclick="devCheckPushStatus()">檢查推播狀態</button>
+      <button class="btn-ghost" onclick="devTestLocalNotification()">測試本機通知（立刻跳出）</button>
+      <button class="btn-ghost" onclick="devTestFullPush()">測試完整推播（約5分鐘內）</button>
+      <button class="btn-ghost" onclick="devListScheduledNotifications()">查看已排入的通知</button>
+    </div>
+    <div class="fee-hint" id="devPushStatus" style="margin-top:10px;white-space:pre-line;"></div>
+    <div class="fee-hint" style="margin-top:6px;">完整推播測試：送出後請把 App 切到背景或關閉。App 開在畫面上時，推播只會變成畫面內的提示，不會跳系統通知。</div>
+
+    <div class="modal-actions"><button class="btn-primary" onclick="closeModal('devToolsModal')">關閉</button></div>
+  </div>
+</div>
+
 <div class="overlay" id="specialDaysModal">
   <div class="modal">
     <h3>特別的日子</h3>
@@ -1366,9 +1381,8 @@
       <label>類型</label>
       <input type="hidden" id="spKind" value="festival">
       <div class="sp-kinds" id="spKinds">
-        <button type="button" class="sp-kind-btn on" data-kind="festival" onclick="setSpecialKind('festival')">節日</button>
-        <button type="button" class="sp-kind-btn" data-kind="together" onclick="setSpecialKind('together')">在一起</button>
-        <button type="button" class="sp-kind-btn" data-kind="raising" onclick="setSpecialKind('raising')">開始養</button>
+        <button type="button" class="sp-kind-btn on" data-kind="festival" onclick="setSpecialKind('festival')">日期</button>
+        <button type="button" class="sp-kind-btn" data-kind="count" onclick="setSpecialKind('count')">計算天數</button>
       </div>
       <div class="fee-hint" id="spKindHint"></div>
     </div>
@@ -1858,6 +1872,7 @@ function normalizeData(){
   data.tasks.forEach(t=>{ if(!Array.isArray(t.subtasks)) t.subtasks = []; });
   /* 特別的日子:格式不對的(沒有名稱、日期不是正確格式、類型不認得)濾掉,id 只允許安全字元(會放進按鈕的 onclick 裡) */
   needArr('specialDays', ()=>[]);
+  data.specialDays.forEach(x=>{ if(x.kind==='together' || x.kind==='raising') x.kind = 'count'; });   /* 舊版分成「在一起」「開始養」,現在合併成「計算天數」(名稱、日期都保留) */
   data.specialDays = data.specialDays.filter(x=> SPECIAL_KINDS[x.kind] && typeof x.name==='string' && x.name.trim() && validYmd(x.date));
   data.specialDays.forEach(x=>{ x.name = x.name.trim().slice(0,30); if(!/^[\w-]+$/.test(String(x.id||''))) x.id = uid(); x.yearly = x.kind==='festival' ? x.yearly!==false : false; });
   if(typeof data.calShowLunar!=='boolean') data.calShowLunar = true;
@@ -1967,7 +1982,7 @@ let lastPersistedCounts = {tasks:0, habits:0, quickNotes:0, dayRecaps:0};
    - 整份資料存在 Firestore 單一文件(上限約 1 MiB),接近上限時會提醒,超過會停止儲存並說明原因
    - 本機有還沒存完的修改時,不會用雲端收到的版本蓋掉它(先留著,存完後把那份備份起來)
 ============================================================ */
-const SCHEMA_VERSION = 8;                               /* 資料結構每改一次就加 1。升版時會先把「升版前」的原始資料備份起來 */
+const SCHEMA_VERSION = 9;                               /* 資料結構每改一次就加 1。升版時會先把「升版前」的原始資料備份起來 */
 const SIZE_WARN_BYTES = 700*1024, SIZE_DANGER_BYTES = 900*1024, SIZE_BLOCK_BYTES = 1000*1024;   /* Firestore 單一文件上限 1,048,576 位元組 */
 const UNSYNCED_PREFIX = 'jishibu_unsynced_';
 let pendingSave = null, saveInFlight = false, saveFailed = null /* null | 'network' | 'size' */;
@@ -3704,13 +3719,12 @@ function allTimedItems(){
   return items;
 }
 
-/* ===== 特別的日子:自訂節日/紀念日,以及「在一起」「開始養」的天數計算 =====
-   節日/紀念日:標在月曆、周曆上(可以每年重複)。
-   在一起/開始養:從起點那天算起是「第 1 天」,日曆上每一天都看得到那天是第幾天,整百天與週年會特別標出來。 */
-const SPECIAL_KINDS = {
-  festival:{ label:'節日', namePh:'例如：媽媽生日、結婚紀念日', dateLabel:'日期', def:'' },
-  together:{ label:'在一起', namePh:'例如：和 Amy 在一起', dateLabel:'在一起的第一天', def:'在一起' },
-  raising:{ label:'開始養', namePh:'例如：小白、多肉', dateLabel:'開始養的第一天', def:'' }
+/* ===== 特別的日子:兩種 =====
+   日期:節日、生日、紀念日,標在月曆、周曆上(可以每年重複)。
+   計算天數:從起算日算起是「第 1 天」(例如在一起、養寵物),日曆上每一天都看得到那天是第幾天,整百天與週年會特別標出來。 */
+const SPECIAL_KINDS = {     /* festival = 「日期」(節日、生日、紀念日);count = 「計算天數」(在一起、養寵物…從某天起算過了幾天) */
+  festival:{ label:'日期', namePh:'例如：媽媽生日、結婚紀念日', dateLabel:'哪一天' },
+  count:{ label:'計算天數', namePh:'例如：在一起、養小白', dateLabel:'起算日' }
 };
 const pad2 = n=>String(n).padStart(2,'0');
 function ymdStr(y,m,d){ return y+'-'+pad2(m)+'-'+pad2(d); }
@@ -3761,7 +3775,7 @@ function nextFestivalDate(sd, todayS){
 function spChipHtml(sd, numText){
   return `<button class="sp-chip" onclick="openSpecialEdit('${sd.id}')"><span class="sp-name">${escapeHtml(sd.name)}</span><b>${numText}</b></button>`;
 }
-/* 月曆、周曆最上面:每個「在一起/開始養」今天是第幾天,以及 30 天內快到的節日 */
+/* 月曆、周曆最上面:每個「計算天數」今天是第幾天,以及 30 天內快到的日期 */
 function renderSpecialStrip(){
   const today = todayStr(), chips = [];
   for(const sd of data.specialDays){
@@ -3777,7 +3791,7 @@ function renderSpecialStrip(){
   }
   ups.sort((a,b)=>a.dd-b.dd);
   for(const u of ups.slice(0,2)) chips.push(spChipHtml(u.sd, u.dd===0 ? '就是今天' : '還有 '+u.dd+' 天'));
-  if(!chips.length) return `<div class="sp-strip"><button class="sp-add" onclick="openSpecialDays()">＋ 加入節日、在一起、開始養的天數</button></div>`;
+  if(!chips.length) return `<div class="sp-strip"><button class="sp-add" onclick="openSpecialDays()">＋ 加入日期或計算天數</button></div>`;
   return `<div class="sp-strip">${chips.join('')}<button class="sp-add" onclick="openSpecialDays()" title="管理特別的日子">＋</button></div>`;
 }
 /* 某一天的詳細頁:當天的節日,以及每個計數器那天是第幾天 */
@@ -3796,8 +3810,8 @@ function renderSpecialSettings(){
   if(!data) return;
   const sw = document.getElementById('calLunarSwitch'); if(sw) sw.classList.toggle('on', data.calShowLunar!==false);
   const sum = document.getElementById('spSummary'); if(!sum) return;
-  const c = { festival:0, together:0, raising:0 }; data.specialDays.forEach(x=>{ c[x.kind]++; });
-  sum.textContent = data.specialDays.length ? '目前有：節日 '+c.festival+' 個、在一起 '+c.together+' 個、開始養 '+c.raising+' 個' : '還沒有任何特別的日子';
+  const c = { festival:0, count:0 }; data.specialDays.forEach(x=>{ c[x.kind]++; });
+  sum.textContent = data.specialDays.length ? '目前有：日期 '+c.festival+' 個、計算天數 '+c.count+' 個' : '還沒有任何特別的日子';
 }
 function toggleCalLunar(){
   data.calShowLunar = !(data.calShowLunar!==false);
@@ -3807,8 +3821,8 @@ function refreshSpecialViews(){ renderSpecialDaysList(); renderSpecialSettings()
 function openSpecialDays(){ renderSpecialDaysList(); document.getElementById('specialDaysModal').classList.add('show'); }
 function renderSpecialDaysList(){
   const box = document.getElementById('specialDaysList'); if(!box) return;
-  if(!data.specialDays.length){ box.innerHTML = `<div class="empty-state" style="padding:18px 8px;">還沒有特別的日子。<br>按下方「＋ 新增」，可以加生日、紀念日，或是「在一起」「開始養」的天數。</div>`; return; }
-  const today = todayStr(), order = { together:0, raising:1, festival:2 };
+  if(!data.specialDays.length){ box.innerHTML = `<div class="empty-state" style="padding:18px 8px;">還沒有特別的日子。<br>按下方「＋ 新增」，可以加生日、紀念日，或是計算在一起、養寵物已經過了幾天。</div>`; return; }
+  const today = todayStr(), order = { count:0, festival:1 };
   const rows = data.specialDays.slice().sort((a,b)=> order[a.kind]-order[b.kind]).map(sd=>{
     let num, sub;
     if(sd.kind==='festival'){
@@ -3824,20 +3838,18 @@ function renderSpecialDaysList(){
   });
   box.innerHTML = rows.join('');
 }
-/* 切換類型時,更新提示、名稱欄位提示、日期欄位標籤;換類型時才自動帶入預設名稱 */
+/* 切換類型時,更新說明、名稱欄位提示、日期欄位標籤 */
 function setSpecialKind(kind){
   document.getElementById('spKind').value = kind;
-  updateSpecialForm(true);
+  updateSpecialForm();
 }
-function updateSpecialForm(kindChanged){
+function updateSpecialForm(){
   const kind = document.getElementById('spKind').value, k = SPECIAL_KINDS[kind];
   document.querySelectorAll('#spKinds .sp-kind-btn').forEach(b=> b.classList.toggle('on', b.dataset.kind===kind));
-  document.getElementById('spKindHint').textContent = kind==='festival' ? '生日、結婚紀念日、自訂的節日。可以設定每年重複。' : kind==='together' ? '從這天起算是第 1 天，日曆上每一天都會顯示第幾天。' : '養寵物、種植物、養成一件事：從這天起算第幾天。';
+  document.getElementById('spKindHint').textContent = kind==='festival' ? '生日、紀念日、節日。可以設定每年重複。' : '從起算日開始算第幾天，例如在一起、養寵物。起算日那天是第 1 天。';
   document.getElementById('spName').placeholder = k.namePh;
   document.getElementById('spDateLabel').textContent = k.dateLabel;
   document.getElementById('spYearlyRow').style.display = kind==='festival' ? 'flex' : 'none';
-  const nameEl = document.getElementById('spName');
-  if(kindChanged){ const defs = Object.values(SPECIAL_KINDS).map(x=>x.def); if(!nameEl.value.trim() || defs.includes(nameEl.value.trim())) nameEl.value = k.def; }
 }
 function openSpecialEdit(id){
   const sd = id ? data.specialDays.find(x=>x.id===id) : null;
@@ -3848,7 +3860,7 @@ function openSpecialEdit(id){
   document.getElementById('spDate').value = sd ? sd.date : todayStr();
   document.getElementById('spYearlySwitch').classList.toggle('on', sd ? sd.yearly!==false : true);
   document.getElementById('spDeleteBtn').style.display = sd ? '' : 'none';
-  updateSpecialForm(false);
+  updateSpecialForm();
   document.getElementById('specialEditModal').classList.add('show');
 }
 function saveSpecial(){
@@ -3897,7 +3909,7 @@ function renderCalendar(){
     let lunarLabel = showLunar ? (info.festival || info.lunarText) : '';
     let lunarClass = info.festival ? 'cal-lunar festival' : (info.holiday ? 'cal-lunar holiday-day' : 'cal-lunar');
     if(sp.festivals.length){ lunarLabel = sp.festivals.map(f=>f.name).join('、'); lunarClass = 'cal-lunar special'; }   /* 自己設定的節日優先顯示 */
-    const spTag = sp.marks.length ? `<div class="cal-special-tag" title="${escapeAttr(sp.marks.map(x=>x.text).join('、'))}">${sp.marks.some(x=>x.sd.kind==='together') ? '♥' : '★'}</div>` : '';
+    const spTag = sp.marks.length ? `<div class="cal-special-tag" title="${escapeAttr(sp.marks.map(x=>x.text).join('、'))}">★</div>` : '';
     cells += `<div class="cal-cell ${isSel?'selected':''} ${isToday?'today':''}" onclick="selectDate(${y},${m},${d})">
       <div class="num">${d}</div>
       <div class="${lunarClass}">${escapeHtml(lunarLabel)}</div>
@@ -4074,7 +4086,7 @@ function renderWeek(){
     const tags = [];
     sp.festivals.forEach(f=> tags.push(`<div class="week-special fest" title="${escapeAttr(f.name)}">${escapeHtml(f.name)}</div>`));
     if(showLunar && info.festival) tags.push(`<div class="week-special" title="${escapeAttr(info.festival)}">${escapeHtml(info.festival)}</div>`);
-    sp.marks.forEach(mk=> tags.push(`<div class="week-special mark" title="${escapeAttr(mk.text)}">${mk.sd.kind==='together'?'♥':'★'} ${escapeHtml(mk.text)}</div>`));
+    sp.marks.forEach(mk=> tags.push(`<div class="week-special mark" title="${escapeAttr(mk.text)}">★ ${escapeHtml(mk.text)}</div>`));
     cols += `<div class="week-col">
       <div class="week-col-head ${isToday?'today':''}">
         <span class="week-col-date">${dows[i]} ${d.getMonth()+1}/${d.getDate()}</span>${info.holiday?'<span class="week-holiday">休</span>':''}
@@ -6426,19 +6438,26 @@ function renderSettings(){
       </select>
     </div>`).join('');
 
-  const devBlock = document.getElementById('devToolsBlock');
-  if(devBlock) devBlock.style.display = isDevUser() ? 'block' : 'none';
+  const devEntry = document.getElementById('devToolsEntry');
+  if(devEntry) devEntry.style.display = isDevUser() ? 'block' : 'none';
 }
 
-/* ============ 開發者工具:只有 DEV_EMAIL 這個帳號登入時看得到,
-   用來手動觸發「需要等特定時間才會自動出現」的動畫,不用真的等到那個時間 ============ */
+/* ============ 開發者工具:只有 DEV_EMAIL 這個帳號登入時看得到。
+   設定頁的「帳戶」區塊底下只有一個入口按鈕,所有開發者專用的功能都收在按下去跳出的視窗裡(devToolsModal),
+   不會混在一般的設定項目中 ============ */
+function openDevTools(){
+  if(!isDevUser()) return;
+  document.getElementById('devToolsModal').classList.add('show');
+}
 function devTriggerMorning(){
   if(!isDevUser()) return;
+  closeModal('devToolsModal');
   showDailyBrief(true);
   flashToast('已手動觸發早安動畫');
 }
 function devTriggerNight(){
   if(!isDevUser()) return;
+  closeModal('devToolsModal');
   showNightRecap(getRecapDateStr());
   flashToast('已手動觸發晚安動畫');
 }
