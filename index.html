@@ -25,7 +25,7 @@
     --bg:#FAFAFA;
     --surface:#FFFFFF;
     --ink:#1A1A1A;
-    --ink-soft:#8A8A8A;
+    --ink-soft:#6B6B6B;      /* 淺色背景上的灰字:對 #FFF 約 5.3:1、對 #FAFAFA 約 5.0:1(WCAG AA 要求 4.5:1)。深色配色在 applyTheme 裡改用較亮的灰 */
     --accent:#3A6B5E;
     --accent-soft:#EAF1EF;
     --border:#E4E4E4;
@@ -784,6 +784,10 @@
   .bm-card img{width:18px;height:18px;flex-shrink:0;border-radius:4px;}
   .bm-title{font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .bm-del{position:absolute;top:8px;right:8px;background:none;border:none;color:var(--ink-soft);font-size:11px;}
+  /* 小按鈕(×、關閉、刪除…)外觀不變,但可點的範圍往外擴到至少 44×44 像素,手機上比較好點中 */
+  .quicknote-del,.bm-del,.recap-close,.habit-sidebar-close,.ex-del,.sd-x,.acc-btn.del,.habit-week-arrow,.expand-arrow,.cal-nav-btn,.drag-handle{position:relative;}
+  .quicknote-del,.bm-del,.recap-close{position:absolute;}
+  .quicknote-del::after,.bm-del::after,.recap-close::after,.habit-sidebar-close::after,.ex-del::after,.sd-x::after,.acc-btn.del::after,.habit-week-arrow::after,.expand-arrow::after,.cal-nav-btn::after,.drag-handle::after{content:'';position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%);}
   .bm-add-card{background:#fff;border:1.5px dashed var(--border);border-radius:16px;display:flex;align-items:center;justify-content:center;color:var(--ink-soft);font-size:12.5px;min-height:50px;}
 </style>
 </head>
@@ -816,12 +820,12 @@
   <div class="top-bar">
     <div class="brand">記事簿</div>
     <div class="top-bar-actions">
-      <button class="sync-badge" id="syncBadge" onclick="showSyncDetail()" style="display:none" title="同步狀態"></button>
-      <button class="search-trigger-btn" onclick="openSearch()" title="搜尋">
-        <svg viewBox="0 0 24 24" width="19" height="19"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><line x1="15.5" y1="15.5" x2="21" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <button class="sync-badge" id="syncBadge" onclick="showSyncDetail()" style="display:none" title="同步狀態" aria-label="同步狀態，點一下看詳情"></button>
+      <button class="search-trigger-btn" onclick="openSearch()" title="搜尋" aria-label="搜尋">
+        <svg aria-hidden="true" viewBox="0 0 24 24" width="19" height="19"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><line x1="15.5" y1="15.5" x2="21" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       </button>
-      <button class="search-trigger-btn" onclick="switchMainView('settings')" title="設定">
-        <svg viewBox="0 0 24 24" width="19" height="19"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/><line x1="12" y1="2.5" x2="12" y2="5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="18.5" x2="12" y2="21.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="2.5" y1="12" x2="5.5" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="18.5" y1="12" x2="21.5" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="5.1" y1="5.1" x2="7.2" y2="7.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="16.8" y1="16.8" x2="18.9" y2="18.9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="5.1" y1="18.9" x2="7.2" y2="16.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="16.8" y1="7.2" x2="18.9" y2="5.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <button class="search-trigger-btn" onclick="switchMainView('settings')" title="設定" aria-label="設定">
+        <svg aria-hidden="true" viewBox="0 0 24 24" width="19" height="19"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/><line x1="12" y1="2.5" x2="12" y2="5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="18.5" x2="12" y2="21.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="2.5" y1="12" x2="5.5" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="18.5" y1="12" x2="21.5" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="5.1" y1="5.1" x2="7.2" y2="7.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="16.8" y1="16.8" x2="18.9" y2="18.9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="5.1" y1="18.9" x2="7.2" y2="16.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="16.8" y1="7.2" x2="18.9" y2="5.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
       </button>
     </div>
   </div>
@@ -870,8 +874,8 @@
         <div id="habitWeekStripContent"></div>
       </div>
       <div class="toolbar" style="margin-bottom:16px;">
-        <button class="habit-sidebar-toggle" onclick="openHabitSidebar()" title="習慣總覽">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="14" y2="17"/></svg>
+        <button class="habit-sidebar-toggle" onclick="openHabitSidebar()" title="習慣總覽" aria-label="習慣總覽">
+          <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="14" y2="17"/></svg>
         </button>
         <div class="pill-tabs" id="habitTabSeg">
           <button id="habitCheckinBtn" class="pill-tab active" onclick="setHabitTab('checkin')">打卡</button>
@@ -887,7 +891,7 @@
       <div class="habit-sidebar-panel" onclick="event.stopPropagation()">
         <div class="habit-sidebar-head">
           <h3>習慣總覽</h3>
-          <button class="habit-sidebar-close" onclick="closeHabitSidebar()">×</button>
+          <button class="habit-sidebar-close" onclick="closeHabitSidebar()" aria-label="關閉">×</button>
         </div>
         <div id="habitSidebarList"></div>
       </div>
@@ -923,11 +927,11 @@
         <h3>推播通知</h3>
         <div class="row-inline" style="max-width:300px;">
           <label style="margin:0;font-size:13px;">背景推播提醒（App沒開也會響）</label>
-          <button class="switch" id="pushSwitch" onclick="togglePushSwitch()"></button>
+          <button class="switch" id="pushSwitch" role="switch" aria-label="背景推播提醒" onclick="togglePushSwitch()"></button>
         </div>
         <div class="row-inline" style="max-width:300px;margin-top:14px;">
           <label style="margin:0;font-size:13px;">早晚安推播</label>
-          <button class="switch" id="greetPushSwitch" onclick="toggleGreetPush()"></button>
+          <button class="switch" id="greetPushSwitch" role="switch" aria-label="早晚安推播" onclick="toggleGreetPush()"></button>
         </div>
         <div class="fee-hint" style="margin-top:6px;">早上 8:00 提醒今天的習慣，晚上 9:00 提醒你回顧今天。實際送出可能晚幾分鐘。</div>
       </div>
@@ -937,16 +941,16 @@
           <label style="margin:0;font-size:13px;">今天顯示每日提醒</label>
           <div style="display:flex;align-items:center;gap:10px;">
             <button class="text-btn" style="padding:4px 10px;color:var(--accent);font-weight:700;" onclick="viewDailyBriefNow()">查看</button>
-            <button class="switch" id="dailyBriefSwitch" onclick="toggleDailyBriefSwitch()"></button>
+            <button class="switch" id="dailyBriefSwitch" role="switch" aria-label="今天顯示每日提醒" onclick="toggleDailyBriefSwitch()"></button>
           </div>
         </div>
         <div class="row-inline" style="max-width:300px;margin-top:10px;">
           <label style="margin:0;font-size:13px;">早上自動顯示早安動畫</label>
-          <button class="switch" id="morningGreetingSwitch" onclick="toggleMorningGreetingSwitch()"></button>
+          <button class="switch" id="morningGreetingSwitch" role="switch" aria-label="早上自動顯示早安動畫" onclick="toggleMorningGreetingSwitch()"></button>
         </div>
         <div class="row-inline" style="max-width:300px;margin-top:10px;">
           <label style="margin:0;font-size:13px;">晚上自動顯示回顧動畫</label>
-          <button class="switch" id="nightRecapSwitch" onclick="toggleNightRecapSwitch()"></button>
+          <button class="switch" id="nightRecapSwitch" role="switch" aria-label="晚上自動顯示回顧動畫" onclick="toggleNightRecapSwitch()"></button>
         </div>
       </div>
       <div class="setting-block">
@@ -990,9 +994,9 @@
       </div>
       <div id="expenseMainView">
       <div class="expense-month-nav">
-        <button class="cal-nav-btn" onclick="expenseMonthNav(-1)">‹</button>
+        <button class="cal-nav-btn" onclick="expenseMonthNav(-1)" aria-label="上個月">‹</button>
         <span id="expenseMonthLabel">-</span>
-        <button class="cal-nav-btn" onclick="expenseMonthNav(1)">›</button>
+        <button class="cal-nav-btn" onclick="expenseMonthNav(1)" aria-label="下個月">›</button>
         <button class="btn-ghost" onclick="openCategoryManageModal()">分類設定</button>
         <button class="btn-ghost" style="margin-left:auto;" onclick="openPayrollModal()">薪資設定</button>
       </div>
@@ -1059,20 +1063,20 @@
 <!-- ================= 底部導覽列 ================= -->
 <div id="bottomNav">
   <span class="bottom-nav-indicator" id="bottomNavIndicator"></span>
-  <button class="bottom-nav-item" data-view="habits" title="習慣" onclick="switchMainView('habits')">
-    <svg viewBox="0 0 24 24" width="21" height="21"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M7.5 12.5l3 3 6-6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <button class="bottom-nav-item" data-view="habits" title="習慣" aria-label="習慣" onclick="switchMainView('habits')">
+    <svg aria-hidden="true" viewBox="0 0 24 24" width="21" height="21"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M7.5 12.5l3 3 6-6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
   </button>
-  <button class="bottom-nav-item" data-view="list" title="清單" onclick="switchMainView('list')">
-    <svg viewBox="0 0 24 24" width="21" height="21"><rect x="3" y="5" width="3.2" height="3.2" rx="0.6" fill="currentColor"/><rect x="3" y="10.4" width="3.2" height="3.2" rx="0.6" fill="currentColor"/><rect x="3" y="15.8" width="3.2" height="3.2" rx="0.6" fill="currentColor"/><line x1="9" y1="6.6" x2="21" y2="6.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="9" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="9" y1="17.4" x2="21" y2="17.4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+  <button class="bottom-nav-item" data-view="list" title="清單" aria-label="清單" onclick="switchMainView('list')">
+    <svg aria-hidden="true" viewBox="0 0 24 24" width="21" height="21"><rect x="3" y="5" width="3.2" height="3.2" rx="0.6" fill="currentColor"/><rect x="3" y="10.4" width="3.2" height="3.2" rx="0.6" fill="currentColor"/><rect x="3" y="15.8" width="3.2" height="3.2" rx="0.6" fill="currentColor"/><line x1="9" y1="6.6" x2="21" y2="6.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="9" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="9" y1="17.4" x2="21" y2="17.4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
   </button>
-  <button class="bottom-nav-item" data-view="cal" data-view-alt="week" title="行事曆" onclick="openCalendarTab()">
-    <svg viewBox="0 0 24 24" width="21" height="21"><rect x="3" y="4.5" width="18" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" stroke-width="1.8"/><circle cx="7.5" cy="13" r="1.3" fill="currentColor"/><circle cx="12" cy="13" r="1.3" fill="currentColor"/><circle cx="16.5" cy="13" r="1.3" fill="currentColor"/><circle cx="7.5" cy="17" r="1.3" fill="currentColor"/><circle cx="12" cy="17" r="1.3" fill="currentColor"/></svg>
+  <button class="bottom-nav-item" data-view="cal" data-view-alt="week" title="行事曆" aria-label="行事曆" onclick="openCalendarTab()">
+    <svg aria-hidden="true" viewBox="0 0 24 24" width="21" height="21"><rect x="3" y="4.5" width="18" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" stroke-width="1.8"/><circle cx="7.5" cy="13" r="1.3" fill="currentColor"/><circle cx="12" cy="13" r="1.3" fill="currentColor"/><circle cx="16.5" cy="13" r="1.3" fill="currentColor"/><circle cx="7.5" cy="17" r="1.3" fill="currentColor"/><circle cx="12" cy="17" r="1.3" fill="currentColor"/></svg>
   </button>
-  <button class="bottom-nav-item" data-view="quicknotes" title="隨手記" onclick="switchMainView('quicknotes')">
-    <svg viewBox="0 0 24 24" width="21" height="21"><path d="M4 20l1-4 10-10 3 3-10 10z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/><line x1="15" y1="6" x2="18" y2="9" stroke="currentColor" stroke-width="1.8"/></svg>
+  <button class="bottom-nav-item" data-view="quicknotes" title="隨手記" aria-label="隨手記" onclick="switchMainView('quicknotes')">
+    <svg aria-hidden="true" viewBox="0 0 24 24" width="21" height="21"><path d="M4 20l1-4 10-10 3 3-10 10z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/><line x1="15" y1="6" x2="18" y2="9" stroke="currentColor" stroke-width="1.8"/></svg>
   </button>
-  <button class="bottom-nav-item" data-view="expense" title="記帳" onclick="switchMainView('expense')">
-    <svg viewBox="0 0 24 24" width="21" height="21"><rect x="3.5" y="6" width="17" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 10h17" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="14.2" r="2.3" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+  <button class="bottom-nav-item" data-view="expense" title="記帳" aria-label="記帳" onclick="switchMainView('expense')">
+    <svg aria-hidden="true" viewBox="0 0 24 24" width="21" height="21"><rect x="3.5" y="6" width="17" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 10h17" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="14.2" r="2.3" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
   </button>
 </div>
 
@@ -1083,7 +1087,7 @@
     <span class="recap-star s4"></span><span class="recap-star s5"></span>
   </div>
   <div class="recap-card" id="recapCard">
-    <button class="recap-close" onclick="closeNightRecap()">×</button>
+    <button class="recap-close" onclick="closeNightRecap()" aria-label="關閉">×</button>
     <div id="recapStep1" class="recap-step">
       <div class="recap-title" id="recapTitle">今天總結</div>
       <div id="recapSummaryContent"></div>
@@ -1386,7 +1390,7 @@
     <div class="field"><label id="spDateLabel">日期</label><input type="date" id="spDate" min="1900-01-01" max="2200-12-31"></div>
     <div class="row-inline" id="spYearlyRow" style="max-width:300px;margin-bottom:6px;">
       <label style="margin:0;font-size:13px;">每年重複</label>
-      <button class="switch on" id="spYearlySwitch" onclick="this.classList.toggle('on')"></button>
+      <button class="switch on" id="spYearlySwitch" role="switch" aria-label="每年重複" onclick="this.classList.toggle('on')"></button>
     </div>
     <div class="modal-actions">
       <button class="btn-ghost" id="spDeleteBtn" style="color:var(--danger);margin-right:auto;" onclick="deleteSpecial()">刪除</button>
@@ -1584,7 +1588,7 @@
     <div class="field"><label>時間</label><input type="time" id="subTime" value="08:00"></div>
     <div class="field row-inline">
       <label style="margin:0">開啟提醒</label>
-      <button class="switch" id="subReminderSwitch" onclick="this.classList.toggle('on')"></button>
+      <button class="switch" id="subReminderSwitch" role="switch" aria-label="開啟提醒" onclick="this.classList.toggle('on')"></button>
     </div>
     <div class="modal-actions">
       <button class="btn-ghost" onclick="closeModal('subModal')">取消</button>
@@ -3475,12 +3479,12 @@ function buildTaskHtml(list){
     return `
     <div class="task ${t.status==='done'?'done':''}">
       <div class="task-row">
-        <button class="check ${t.status==='done'?'done':''}" data-check-id="task:${t.id}" onclick="toggleTask('${t.id}')"></button>
+        <button class="check ${t.status==='done'?'done':''}" data-check-id="task:${t.id}" aria-label="完成：${escapeAttr(t.title)}" aria-pressed="${t.status==='done'}" onclick="toggleTask('${t.id}')"></button>
         ${ui.catId==='overview' && cat ? `<span class="cat-dot" style="background:${cat.color}"></span>`:''}
         <span class="task-title">${escapeHtml(t.title)}</span>
         ${subs.length? `<span class="progress-chip">${doneSub}/${subs.length}</span>`:''}
         ${t.dueDate? `<span class="${taskOverdue?'overdue-tag':'time-chip'}">${taskOverdue?'延誤 ':''}${fmtDate(t.dueDate)}</span>`:''}
-        <button class="expand-arrow ${expanded?'expanded':''}" onclick="toggleExpand('${t.id}')"><span class="arrow-glyph">▸</span></button>
+        <button class="expand-arrow ${expanded?'expanded':''}" aria-label="${expanded?'收合':'展開'}細項" aria-expanded="${!!expanded}" onclick="toggleExpand('${t.id}')"><span class="arrow-glyph">▸</span></button>
         <button class="text-btn note-btn ${t.note?'has-note':''}" onclick="openNoteModal('task','${t.id}')">備註</button>
         <button class="text-btn" onclick="openTaskModal('${t.id}')">編輯</button>
         <button class="text-btn" onclick="deleteTask('${t.id}')">刪除</button>
@@ -3492,7 +3496,7 @@ function buildTaskHtml(list){
           const subOverdue = isOverdueTime(s.time, s.status);
           return `
           <div class="subtask-row ${s.status==='done'?'done':''}">
-            <button class="check ${s.status==='done'?'done':''}" style="width:15px;height:15px" data-check-id="sub:${t.id}:${s.id}" onclick="toggleSubtask('${t.id}','${s.id}')"></button>
+            <button class="check ${s.status==='done'?'done':''}" style="width:15px;height:15px" data-check-id="sub:${t.id}:${s.id}" aria-label="完成：${escapeAttr(s.title)}" aria-pressed="${s.status==='done'}" onclick="toggleSubtask('${t.id}','${s.id}')"></button>
             <span class="subtask-title">${escapeHtml(s.title)}</span>
             <span class="${subOverdue?'overdue-tag':'time-chip'}">${subOverdue?'延誤 ':''}${fmtTime(s.time)}</span>
             <span class="reminder-toggle">提醒<button class="switch ${s.reminder?'on':''}" onclick="toggleReminder('${t.id}','${s.id}')"></button></span>
@@ -3923,7 +3927,7 @@ function specialStripItems(){
 function renderSpecialStrip(){
   const chips = specialStripItems().map(it=> spChipHtml(it.sd, it.num));
   if(!chips.length) return `<div class="sp-strip"><button class="sp-add" onclick="openSpecialDays()">＋ 加入日期或計算天數</button></div>`;
-  return `<div class="sp-strip">${chips.join('')}<button class="sp-add" onclick="openSpecialDays()" title="管理特別的日子">＋</button></div>`;
+  return `<div class="sp-strip">${chips.join('')}<button class="sp-add" onclick="openSpecialDays()" title="管理特別的日子" aria-label="新增或管理特別的日子">＋</button></div>`;
 }
 /* 周曆:白底有框的方塊,放在周曆最上面。上面是名稱、下面是大大的天數 */
 function renderSpecialBoxes(){
@@ -4045,9 +4049,9 @@ function renderCalendar(){
 
   el.innerHTML = `
     <div class="cal-header">
-      <button class="cal-nav-btn" onclick="changeMonth(-1)">‹</button>
+      <button class="cal-nav-btn" onclick="changeMonth(-1)" aria-label="上個月">‹</button>
       <div class="cal-title">${y}年 ${m+1}月</div>
-      <button class="cal-nav-btn" onclick="changeMonth(1)">›</button>
+      <button class="cal-nav-btn" onclick="changeMonth(1)" aria-label="下個月">›</button>
     </div>
     ${renderSpecialStrip()}
     <div class="cal-grid">
@@ -4222,9 +4226,9 @@ function renderWeek(){
   el.innerHTML = `
     ${renderSpecialBoxes()}
     <div class="cal-header">
-      <button class="cal-nav-btn" onclick="changeWeek(-1)">‹</button>
+      <button class="cal-nav-btn" onclick="changeWeek(-1)" aria-label="上一週">‹</button>
       <div class="cal-title">${start.getMonth()+1}/${start.getDate()} - ${endLabel.getMonth()+1}/${endLabel.getDate()}</div>
-      <button class="cal-nav-btn" onclick="changeWeek(1)">›</button>
+      <button class="cal-nav-btn" onclick="changeWeek(1)" aria-label="下一週">›</button>
     </div>
     <div class="week-grid">${cols}</div>
   `;
@@ -4510,9 +4514,9 @@ function renderHabitWeekStrip(){
   const start = new Date(base); start.setDate(base.getDate()-base.getDay());
   const end = new Date(start); end.setDate(start.getDate()+6);
   let html = `<div class="habit-week-nav">
-    <button class="habit-week-arrow" onclick="changeHabitWeek(-1)">‹</button>
+    <button class="habit-week-arrow" onclick="changeHabitWeek(-1)" aria-label="上一週">‹</button>
     <span class="habit-week-range">${start.getMonth()+1}/${start.getDate()} - ${end.getMonth()+1}/${end.getDate()}</span>
-    <button class="habit-week-arrow" ${ui.habitWeekOffset>=0?'disabled':''} onclick="changeHabitWeek(1)">›</button>
+    <button class="habit-week-arrow" ${ui.habitWeekOffset>=0?'disabled':''} onclick="changeHabitWeek(1)" aria-label="下一週">›</button>
   </div><div class="habit-week-days">`;
   for(let i=0;i<7;i++){
     const d = new Date(start); d.setDate(start.getDate()+i);
@@ -4611,20 +4615,20 @@ function renderHabitCheckin(){
       inputHtml = `<input type="number" step="any" class="habit-value-input" value="${val!==undefined?val:''}" ${disabled?'disabled':''}
         onchange="setHabitValue('${h.id}','${day}', this.value, 'quantity')">
         <span class="habit-unit-label">${escapeHtml(h.unit)}</span>`;
-      checkBtn = `<button class="check ${checked?'done':''}" data-check-id="habit:${h.id}:${day}" ${disabled?'disabled':''} onclick="setHabitChecked('${h.id}','${day}')"></button>`;
+      checkBtn = `<button class="check ${checked?'done':''}" data-check-id="habit:${h.id}:${day}" aria-label="打卡：${escapeAttr(h.name)}" aria-pressed="${!!checked}" ${disabled?'disabled':''} onclick="setHabitChecked('${h.id}','${day}')"></button>`;
     }else if(h.type==='time'){
       inputHtml = `<input type="time" class="habit-value-input" value="${val||''}" ${disabled?'disabled':''}
         onchange="setHabitValue('${h.id}','${day}', this.value, 'time')">`;
-      checkBtn = `<button class="check ${checked?'done':''}" data-check-id="habit:${h.id}:${day}" ${disabled?'disabled':''} onclick="setHabitChecked('${h.id}','${day}')"></button>`;
+      checkBtn = `<button class="check ${checked?'done':''}" data-check-id="habit:${h.id}:${day}" aria-label="打卡：${escapeAttr(h.name)}" aria-pressed="${!!checked}" ${disabled?'disabled':''} onclick="setHabitChecked('${h.id}','${day}')"></button>`;
     }else{
-      checkBtn = `<button class="check ${checked?'done':''}" data-check-id="habit:${h.id}:${day}" ${disabled?'disabled':''} onclick="setHabitBoolean('${h.id}','${day}')"></button>`;
+      checkBtn = `<button class="check ${checked?'done':''}" data-check-id="habit:${h.id}:${day}" aria-label="打卡：${escapeAttr(h.name)}" aria-pressed="${!!checked}" ${disabled?'disabled':''} onclick="setHabitBoolean('${h.id}','${day}')"></button>`;
     }
     if(!scheduled){
       inputHtml = `<span class="habit-schedule-note">非排定日</span>`;
     }
     return `<div class="habit-grid-row ${!scheduled?'not-scheduled':''}" data-habit-id="${h.id}">
       <div class="habit-grid-num">
-        <button type="button" class="drag-handle" onpointerdown="habitHandlePointerDown(event,'${h.id}')"><span></span><span></span><span></span></button>
+        <button type="button" class="drag-handle" aria-label="拖曳排序" onpointerdown="habitHandlePointerDown(event,'${h.id}')"><span></span><span></span><span></span></button>
         <span>${idx+1}</span>
       </div>
       <div class="habit-grid-name ${checked?'checked':''}">
@@ -4808,7 +4812,7 @@ function quickNoteCardHtml(n, entering){
   return `<div class="quicknote-card" data-note-id="${n.id}" style="width:${widthPct}%">
     <div class="quicknote-inner" style="${innerStyle}">
       <span class="quicknote-pin"></span>
-      <button class="quicknote-del" onclick="deleteQuickNote('${n.id}')">×</button>
+      <button class="quicknote-del" aria-label="刪除這則隨手記" onclick="deleteQuickNote('${n.id}')">×</button>
       <button class="quicknote-move" onclick="openMoveNoteModal('${n.id}')">移至</button>
       <div class="quicknote-text">${escapeHtml(n.text)}</div>
       <div class="quicknote-time">${label}</div>
@@ -5181,7 +5185,7 @@ function updateSalaryDetailNet(){
 }
 function renderSdItems(){
   document.getElementById('sdItems').innerHTML = expenseUi.sd.items.map(x=>
-    `<div class="sd-row"><label>${escapeHtml(x.name)}</label><input type="number" value="${Number(x.amount)||0}" oninput="setSdItem('${x.id}', this.value)"><button class="sd-x" onclick="removeSdItem('${x.id}')">×</button></div>`).join('');
+    `<div class="sd-row"><label>${escapeHtml(x.name)}</label><input type="number" value="${Number(x.amount)||0}" oninput="setSdItem('${x.id}', this.value)"><button class="sd-x" aria-label="刪除這個項目" onclick="removeSdItem('${x.id}')">×</button></div>`).join('');
 }
 function fillSalaryDetail(dt){
   const set = (id,v)=>{ document.getElementById(id).value = v; };
@@ -5229,7 +5233,7 @@ function addSdItem(){
 }
 function renderSdAdds(){
   document.getElementById('sdAdds').innerHTML = expenseUi.sd.adds.map(x=>
-    `<div class="sd-row"><label>${escapeHtml(x.name)}</label><input type="number" value="${Number(x.amount)||0}" oninput="setSdAdd('${x.id}', this.value)"><button class="sd-x" onclick="removeSdAdd('${x.id}')">×</button></div>`).join('');
+    `<div class="sd-row"><label>${escapeHtml(x.name)}</label><input type="number" value="${Number(x.amount)||0}" oninput="setSdAdd('${x.id}', this.value)"><button class="sd-x" aria-label="刪除這個項目" onclick="removeSdAdd('${x.id}')">×</button></div>`).join('');
 }
 function setSdAdd(id, v){
   const it = expenseUi.sd.adds.find(x=>x.id===id);
@@ -5339,7 +5343,7 @@ function renderCategoryManageList(){
       <span class="cat-manage-icon">${iconSvg(c.icon,20)}</span>
       <input value="${escapeAttr(c.name)}" onchange="renameCategory('${type}','${c.id}', this.value)">
       ${type==='expense' ? `<input type="number" class="cat-budget-input" placeholder="預算" value="${data.categoryBudgets[c.id]||''}" onchange="setCategoryBudget('${c.id}', this.value)">` : ''}
-      <button class="acc-btn del" onclick="deleteCategory('${type}','${c.id}')">×</button>
+      <button class="acc-btn del" aria-label="刪除分類" onclick="deleteCategory('${type}','${c.id}')">×</button>
     </div>`).join('');
 }
 function setCategoryBudget(catId, value){
@@ -5376,7 +5380,7 @@ function deleteCategory(type, id){
 }
 function renderNewCatIconPicker(){
   document.getElementById('newCatIconPicker').innerHTML = CATEGORY_ICON_CHOICES.map(key=>
-    `<button type="button" class="${catManageUi.newIcon===key?'selected':''}" onclick="selectNewCatIcon('${key}')">${iconSvg(key,18)}</button>`
+    `<button type="button" class="${catManageUi.newIcon===key?'selected':''}" aria-label="圖示 ${key}" aria-pressed="${catManageUi.newIcon===key}" onclick="selectNewCatIcon('${key}')">${iconSvg(key,18)}</button>`
   ).join('');
 }
 function selectNewCatIcon(key){
@@ -5409,7 +5413,7 @@ function renderAccountsList(){
       <input class="acc-name" value="${escapeAttr(a.name)}" onchange="renameAccount('${a.id}', this.value)">
       <span class="acc-bal ${bal<0?'neg':''}">${fmtMoney(bal)}</span>
       <button class="acc-btn" onclick="openAdjustModal('${a.id}')">調整誤差</button>
-      <button class="acc-btn del" onclick="deleteAccount('${a.id}')">×</button>
+      <button class="acc-btn del" aria-label="刪除帳戶" onclick="deleteAccount('${a.id}')">×</button>
     </div>`;
   }).join('');
 }
@@ -5754,7 +5758,7 @@ function renderExpensePage(){
           <div class="ex-note">${escapeHtml(noteText)}</div>
         </div>
         <div class="ex-amt ${e.type}">${amtText}</div>
-        <button class="ex-del" onclick="event.stopPropagation();deleteExpense('${e.id}')">×</button>
+        <button class="ex-del" aria-label="刪除這筆記帳" onclick="event.stopPropagation();deleteExpense('${e.id}')">×</button>
       </div>`;
     });
     html += `</div>`;
@@ -6536,6 +6540,9 @@ function applyTheme(){
   document.documentElement.style.setProperty('--ink', p.ink);
   document.documentElement.style.setProperty('--accent', p.accent);
   document.documentElement.style.setProperty('--accent-soft', p.accent+'22');
+  /* 灰色次要文字:淺色背景用深一點的灰(對比夠);深色背景的配色用中間亮度的灰(頂欄、導覽列、卡片是白色,所以不能太亮,對深色背景與白色各約 4.3:1) */
+  { const [r,g,b] = hexToRgb(p.bg), lum = (0.2126*r+0.7152*g+0.0722*b)/255;
+    document.documentElement.style.setProperty('--ink-soft', lum < 0.4 ? '#7B7B7B' : '#6B6B6B'); }
   /* 手機瀏覽器的狀態列／網址列顏色也跟著目前配色的強調色走(原本是寫死的綠色) */
   const tc = document.querySelector('meta[name="theme-color"]');
   if(tc) tc.setAttribute('content', p.accent);
@@ -6701,6 +6708,18 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&'
 function escapeAttr(s){ return escapeHtml(s); }
 /* 只允許一般的網頁、信箱、電話連結;資料從雲端或備份檔來的話不會經過輸入時的檢查,所以顯示時再擋一次 */
 function safeUrl(u){ const t = String(u||'').trim(); return /^(https?:|mailto:|tel:)/i.test(t) ? t : '#'; }
+
+/* 開關(.switch)的「開／關」狀態同步給螢幕閱讀器:各處用 classList 切換 .on,這裡統一轉成 aria-checked,不必每個開關各改一次 */
+(function(){
+  const sync = el=> el.setAttribute('aria-checked', el.classList.contains('on') ? 'true' : 'false');
+  const all = ()=> document.querySelectorAll('.switch[role="switch"]').forEach(sync);
+  const start = ()=>{
+    all();
+    try{ new MutationObserver(ms=>ms.forEach(m=>{ if(m.target.matches && m.target.matches('.switch[role="switch"]')) sync(m.target); }))
+      .observe(document.body,{subtree:true,attributes:true,attributeFilter:['class']}); }catch(e){}
+  };
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
 
 function renderAll(){
   renderTabs();
