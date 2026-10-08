@@ -929,7 +929,7 @@
           <label style="margin:0;font-size:13px;">早晚安推播</label>
           <button class="switch" id="greetPushSwitch" onclick="toggleGreetPush()"></button>
         </div>
-        <div class="fee-hint" style="margin-top:6px;">早上 8:00 提醒今天的習慣，晚上 9:30 提醒你回顧今天。實際送出可能晚幾分鐘。</div>
+        <div class="fee-hint" style="margin-top:6px;">早上 8:00 提醒今天的習慣，晚上 9:00 提醒你回顧今天。實際送出可能晚幾分鐘。</div>
       </div>
       <div class="setting-block">
         <h3>每日提醒</h3>
@@ -1667,7 +1667,7 @@ function defaultData(){
     incomeCategories: DEFAULT_INCOME_CATEGORIES.map(c=>({...c})),
     categoryBudgets: {},
     notifySettings: {
-      morning:{on:false, time:'08:00'}, night:{on:false, time:NIGHT_START_TIME}
+      morning:{on:false, time:MORNING_START_TIME}, night:{on:false, time:NIGHT_START_TIME}
     },
     recurring: [],
     payroll: {
@@ -2419,11 +2419,15 @@ async function deleteReminderDoc(id){
    而且只寫「還沒到時間」的那幾筆,所以不會把已經送出的標記洗掉造成重複送。 */
 /* 「晚安時間」只有這一個:晚安通知、晚安動畫、晚安回顧、選心情,全部從這個時間開始。
    以前通知的時間和動畫的時間是各寫各的(通知可以比動畫早),結果通知先跳出來,點進去卻還沒到晚安時間。 */
-const NIGHT_START_TIME = '21:30';
-const NIGHT_START_MINUTES = 21*60+30;
+const MORNING_START_TIME = '08:00';     /* 「早安時間」也只有這一個:早安通知、早安動畫、今天要做的事,全部從這個時間開始 */
+const MORNING_START_MINUTES = 8*60;
+const MORNING_END_HOUR = 12;            /* 中午 12:00 之後不再自動跳早安動畫(只剩手動看「今天要做的事」) */
+function isMorningStarted(now){ now = now || new Date(); return now.getHours()*60+now.getMinutes() >= MORNING_START_MINUTES; }
+const NIGHT_START_TIME = '21:00';
+const NIGHT_START_MINUTES = 21*60;
 function isNightStarted(now){ now = now || new Date(); return now.getHours()*60+now.getMinutes() >= NIGHT_START_MINUTES; }
 const NOTIFY_KINDS = {
-  morning:{ time:'08:00' },
+  morning:{ time:MORNING_START_TIME },
   night:{ time:NIGHT_START_TIME }
 };
 const NOTIFY_LEGACY_KINDS = ['list'];     /* 舊版的「清單通知」已經移除;只用來清掉雲端上舊的排程 */
@@ -2441,6 +2445,7 @@ function ensureNotifySettings(){
       if(!/^\d{2}:\d{2}$/.test(cur.time||'')) cur.time = NOTIFY_KINDS[k].time;
     }
   });
+  data.notifySettings.morning.time = MORNING_START_TIME;  /* 早安通知一律在早安時間送出 */
   data.notifySettings.night.time = NIGHT_START_TIME;     /* 晚安通知一律在晚安時間送出(以前可以自己改時間,舊資料裡的時間在這裡統一) */
 }
 function notifyDueAt(dateStr, timeStr){
@@ -2521,7 +2526,7 @@ function renderNotifySettings(){
   const sw = document.getElementById('greetPushSwitch');
   if(sw) sw.classList.toggle('on', greetPushOn());
 }
-/* 「早晚安推播」:一個開關同時管早上 8:00 和晚上 9:30 兩則。
+/* 「早晚安推播」:一個開關同時管早上 8:00 和晚上 9:00 兩則。
    還沒打開「背景推播提醒」(沒有通知權限)的話,會先幫你走一次開啟推播的流程 */
 async function toggleGreetPush(){
   ensureNotifySettings();
@@ -2711,19 +2716,22 @@ async function proceedLogin(name, email, storageKey){
   document.getElementById('accEmail').textContent = email;
 }
 
+/* 兩個畫面動畫(登入背景、早晚安場景)共用的小工具:彈簧曲線、顏色轉換 */
+const TAU = Math.PI*2, clamp = (x,a,b)=> Math.max(a, Math.min(b,x));
+function spring(t,f,z){ if(t<=0) return 0; const w=TAU*f, wd=w*Math.sqrt(1-z*z); return 1-Math.exp(-z*w*t)*(Math.cos(wd*t)+(z*w/wd)*Math.sin(wd*t)); }
+function hexToRgb(h){ h=h.replace('#',''); return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]; }
+function rgbToHex(r,g,b){ return '#'+[r,g,b].map(v=>clamp(Math.round(v),0,255).toString(16).padStart(2,'0')).join(''); }
+function rgbToHsl(r,g,b){ r/=255;g/=255;b/=255; const mx=Math.max(r,g,b),mn=Math.min(r,g,b); let h=0,s=0; const l=(mx+mn)/2,d=mx-mn; if(d){ s=l>.5?d/(2-mx-mn):d/(mx+mn); if(mx===r) h=(g-b)/d+(g<b?6:0); else if(mx===g) h=(b-r)/d+2; else h=(r-g)/d+4; h*=60; } return [h,s,l]; }
+function hslToHex(h,s,l){ h=((h%360)+360)%360; const c=(1-Math.abs(2*l-1))*s,x=c*(1-Math.abs((h/60)%2-1)),m=l-c/2; let r=0,g=0,b=0; if(h<60){r=c;g=x;}else if(h<120){r=x;g=c;}else if(h<180){g=c;b=x;}else if(h<240){g=x;b=c;}else if(h<300){r=x;b=c;}else{r=c;b=x;} return rgbToHex((r+m)*255,(g+m)*255,(b+m)*255); }
+
 /* ===== 登入等待畫面的背景動畫:方磚一波一波翻面(P05-A 大磚) =====
    顏色跟著「上次使用的配色」(記在這支手機上)；第一次登入、還沒有記錄時，用預設配色(簡約白的綠色)。
    只在登入畫面顯示期間執行，進到主畫面就停掉，不耗電。 */
 const LoginBg = (function(){
-  const TAU = Math.PI*2, THEME_KEY = 'jishibu_login_theme', DEFAULT_ACCENT = '#3A6B5E';
-  const clamp = (x,a,b)=> Math.max(a, Math.min(b,x)), lerp = (a,b,t)=> a+(b-a)*t;
+  const THEME_KEY = 'jishibu_login_theme', DEFAULT_ACCENT = '#3A6B5E';
+  const lerp = (a,b,t)=> a+(b-a)*t;
   const isHex = h=> /^#[0-9a-fA-F]{6}$/.test(h||'');
-  function spring(t,f,z){ if(t<=0) return 0; const w=TAU*f, wd=w*Math.sqrt(1-z*z); return 1-Math.exp(-z*w*t)*(Math.cos(wd*t)+(z*w/wd)*Math.sin(wd*t)); }
   function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
-  function hexToRgb(h){ h=h.replace('#',''); return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]; }
-  function rgbToHex(r,g,b){ return '#'+[r,g,b].map(v=>clamp(Math.round(v),0,255).toString(16).padStart(2,'0')).join(''); }
-  function rgbToHsl(r,g,b){ r/=255;g/=255;b/=255; const mx=Math.max(r,g,b),mn=Math.min(r,g,b); let h=0,s=0; const l=(mx+mn)/2,d=mx-mn; if(d){ s=l>.5?d/(2-mx-mn):d/(mx+mn); if(mx===r) h=(g-b)/d+(g<b?6:0); else if(mx===g) h=(b-r)/d+2; else h=(r-g)/d+4; h*=60; } return [h,s,l]; }
-  function hslToHex(h,s,l){ h=((h%360)+360)%360; const c=(1-Math.abs(2*l-1))*s,x=c*(1-Math.abs((h/60)%2-1)),m=l-c/2; let r=0,g=0,b=0; if(h<60){r=c;g=x;}else if(h<120){r=x;g=c;}else if(h<180){g=c;b=x;}else if(h<240){g=x;b=c;}else if(h<300){r=x;b=c;}else{r=c;b=x;} return rgbToHex((r+m)*255,(g+m)*255,(b+m)*255); }
   function derive(accent){
     const [r,g,b] = hexToRgb(accent), [h,s0,l] = rgbToHsl(r,g,b), s = clamp(s0,.3,.82);
     return { accent, deep:hslToHex(h,s,clamp(l*.6,.16,.32)), soft:hslToHex(h,s*.7,.84), paper:hslToHex(h,s*.5,.975) };
@@ -2839,16 +2847,10 @@ const LoginBg = (function(){
    晚安 = 海上新月:天空由黃昏暗下來,新月升起,海面有一道一格格閃動的倒影。
    只在畫面顯示期間執行,關掉就停。流程(點一下進入下一步、關閉)完全沿用原本的函式。 */
 const SceneAnim = (function(){
-  const TAU = Math.PI*2;
-  const clamp=(x,a,b)=>Math.max(a,Math.min(b,x)), lerp=(a,b,t)=>a+(b-a)*t, inv=(a,b,t)=>clamp((t-a)/(b-a),0,1);
+  const lerp=(a,b,t)=>a+(b-a)*t, inv=(a,b,t)=>clamp((t-a)/(b-a),0,1);
   const smooth=(a,b,x)=>{ const t=inv(a,b,x); return t*t*(3-2*t); }, outCubic=t=>1-Math.pow(1-t,3);
-  function spring(t,f,z){ if(t<=0) return 0; const w=TAU*f, wd=w*Math.sqrt(1-z*z); return 1-Math.exp(-z*w*t)*(Math.cos(wd*t)+(z*w/wd)*Math.sin(wd*t)); }
   function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
   const isHex = h=> /^#[0-9a-fA-F]{6}$/.test(h||'');
-  function hexToRgb(h){ h=h.replace('#',''); return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]; }
-  function rgbToHex(r,g,b){ return '#'+[r,g,b].map(v=>clamp(Math.round(v),0,255).toString(16).padStart(2,'0')).join(''); }
-  function rgbToHsl(r,g,b){ r/=255;g/=255;b/=255; const mx=Math.max(r,g,b),mn=Math.min(r,g,b); let h=0,s=0; const l=(mx+mn)/2,d=mx-mn; if(d){ s=l>.5?d/(2-mx-mn):d/(mx+mn); if(mx===r) h=(g-b)/d+(g<b?6:0); else if(mx===g) h=(b-r)/d+2; else h=(r-g)/d+4; h*=60; } return [h,s,l]; }
-  function hslToHex(h,s,l){ h=((h%360)+360)%360; const c=(1-Math.abs(2*l-1))*s,x=c*(1-Math.abs((h/60)%2-1)),m=l-c/2; let r=0,g=0,b=0; if(h<60){r=c;g=x;}else if(h<120){r=x;g=c;}else if(h<180){g=c;b=x;}else if(h<240){g=x;b=c;}else if(h<300){r=x;b=c;}else{r=c;b=x;} return rgbToHex((r+m)*255,(g+m)*255,(b+m)*255); }
   function mixHex(a,b,t){ const A=hexToRgb(a),B=hexToRgb(b); return rgbToHex(lerp(A[0],B[0],t),lerp(A[1],B[1],t),lerp(A[2],B[2],t)); }
   /* 全部從配色的強調色推算。夜色往藍紫偏約四成,暖色配色才不會變成咖啡色。 */
   function derive(accent){
@@ -4078,16 +4080,16 @@ function renderDayDetail(){
     </div>`).join('') : `<div class="empty-state" style="padding:14px">當日無事項</div>`);
 }
 
-/* 今天心情:改到週日期條的「今天」格子。若在晚安動畫時段(21:30~10:00)點擊,
+/* 今天心情:改到週日期條的「今天」格子。若在晚安動畫時段(21:00~10:00)點擊,
    開啟完整的晚安回顧動畫(跟自動彈出的一樣);若在這個時段之外點擊,
    只開一個簡單的心情選擇視窗,轉場速度跟早安動畫一致(0.5秒淡入淡出),不跑完整動畫。 */
-/* 今天在21:30~5:00(晚安時段)點擊 → 完整晚安動畫,存檔後會看到晚安動畫。
-   今天在5:00~21:30點擊 → 同樣是「今日完成＋選擇心情＋一句話」的卡片,但開關速度
+/* 今天在21:00~5:00(晚安時段)點擊 → 完整晚安動畫,存檔後會看到晚安動畫。
+   今天在5:00~21:00點擊 → 同樣是「今日完成＋選擇心情＋一句話」的卡片,但開關速度
    跟早安動畫一樣快(0.5秒),存檔後直接關閉,不會跑完整的晚安動畫。
    過去的日期:第一次點只是切換成看那一天的打卡頁面,已經在那天了、再點一次才會
    開心情編輯(用跟白天一樣的快速卡片,畢竟不是正在經歷那個晚上)。未來不能設定。 */
 /* 「晚安時段」是綁在「被點的那一天」本身,不是只看現在的時鐘:
-   10/1的晚安時段是10/1 21:30到10/2 5:00(跨過午夜算同一段)。
+   10/1的晚安時段是10/1 21:00到10/2 5:00(跨過午夜算同一段)。
    這段時間內點10/1 → 完整晚安動畫。
    這段過了之後,10/1變成「昨天」,單次點擊就能打開簡化卡片(今日完成＋心情＋一句話,
    速度跟早安動畫一樣)。再更早的日子,要先點一次切換頁面,點第二次才打開同一張簡化卡片。
@@ -4150,7 +4152,7 @@ function openDayMoodFlow(dayStr){
   /* 切換到那天的打卡頁面,不管是過去、今天還是未來都可以點,跟以前一樣。
      「選心情」這件事:
      - 未來:永遠不能選,只切換頁面。
-     - 今天:只有在今天自己的晚安時段(21:30~5:00)正在進行時才能選,
+     - 今天:只有在今天自己的晚安時段(21:00~5:00)正在進行時才能選,
        這段時間之外,不管點幾次都不會打開,不是「點兩次」的問題。
        完整晚安動畫一天只會播一次:不管是自動跳出來播的,還是手動點兩次
        觸發播的,只要今天已經播過了(data.lastAutoRecapDate===today),
@@ -6113,12 +6115,13 @@ function skipQuickNoteAnimation(note){
 ============================================================ */
 let pendingMorningBriefAfterRecap = false;
 function maybeShowDailyBrief(){
-  const hour = new Date().getHours();
-  if(hour < 7) return false;
+  const now = new Date();
+  if(!isMorningStarted(now)) return false;
+  const hour = now.getHours();
   const today = todayStr();
   const briefOff = data.dailyBriefDismissedDate === today;
-  /* 早安動畫只在早上(7:00～11:59)自動顯示。晚上才打開 App 時(例如 23:00)不該出現早安,也不能把「今天已經顯示過」記起來 */
-  const isMorning = hour >= 7 && hour < 12;
+  /* 早安動畫只在早上(早安時間～11:59)自動顯示。晚上才打開 App 時(例如 23:00)不該出現早安,也不能把「今天已經顯示過」記起來 */
+  const isMorning = hour < MORNING_END_HOUR;
   const showGreeting = isMorning && !data.morningGreetingDisabled && data.morningGreetingShownDate !== today;
   if(briefOff && !showGreeting) return false;
   if(showGreeting){
@@ -6245,9 +6248,11 @@ function buildRecapSummaryHtml(day){
       else undoneItems.push(s.title);
     });
   });
+  /* 標題要跟著「看的是哪一天」:看今天寫「今天」,看昨天寫「昨天」,更早的日子寫「當天」(以前一律寫「今天」,凌晨或看過去日期時會對不上) */
+  const dayWord = day===getRecapDateStr() ? getRecapLabel() : (day===todayStr() ? '今天' : (day===dateStrOffset(-1) ? '昨天' : '當天'));
   let html = '';
-  html += `<div class="brief-section"><div class="brief-label">今天完成了</div>` +
-    (doneItems.length? doneItems.map(x=>`<div class="brief-item">${escapeHtml(x)}</div>`).join('') : `<div class="brief-item" style="color:var(--ink-soft)">今天沒有完成的項目</div>`) + `</div>`;
+  html += `<div class="brief-section"><div class="brief-label">${dayWord}完成了</div>` +
+    (doneItems.length? doneItems.map(x=>`<div class="brief-item">${escapeHtml(x)}</div>`).join('') : `<div class="brief-item" style="color:var(--ink-soft)">${dayWord}沒有完成的項目</div>`) + `</div>`;
   if(undoneItems.length){
     html += `<div class="brief-section"><div class="brief-label">還沒做</div>` +
       undoneItems.map(x=>`<div class="brief-item">${escapeHtml(x)}</div>`).join('') + `</div>`;
