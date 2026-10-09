@@ -13,18 +13,24 @@ try{
     appId: "1:826476371547:web:1ce534bb5fd1fed891697e"
   });
   const messaging = firebase.messaging();
-  messaging.onBackgroundMessage((payload) => {
+  messaging.onBackgroundMessage(async (payload) => {
     const title = (payload.notification && payload.notification.title) || '提醒';
     const options = {
       body: (payload.notification && payload.notification.body) || '',
       icon: 'icon-192.png',
       badge: 'icon-notification.png'
     };
-    self.registration.showNotification(title, options);
+    /* 後端送的訊息帶有 notification 欄位時,Firebase 的程式會「自己先跳一則」(沒有圖示),接著才呼叫這裡,
+       結果同一則通知出現兩次。所以先把剛剛跳出來的同標題同內容那則關掉,再用這裡的(有圖示)取代,只剩一則 */
+    try{
+      const shown = await self.registration.getNotifications();
+      shown.filter((n) => n.title === title && (n.body || '') === options.body).forEach((n) => n.close());
+    }catch(e){}
+    return self.registration.showNotification(title, options);
   });
 }catch(e){ /* 沒有推播也沒關係 */ }
 
-const CACHE_NAME = 'jishibu-cache-v149';
+const CACHE_NAME = 'jishibu-cache-v151';
 const CORE_ASSETS = ['./index.html', './manifest.json', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './icon-notification.png'];
 
 self.addEventListener('install', (event) => {

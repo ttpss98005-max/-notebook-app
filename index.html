@@ -1820,6 +1820,7 @@ async function loadData(storageKey, opts){
   opts = opts || {};
   const res = await storageGet(storageKey);
   const raw = res ? res.value : null;
+  lastWrittenValue = raw;     /* 剛從雲端讀到的這份,等一下即時同步第一次回報的「就是這份」,不用再重新解析、解壓縮一次(也不會被誤判成別台裝置的衝突) */
   archiveCache = {};
   let parsed = raw ? JSON.parse(raw) : defaultData();
   await inflateArchives(parsed);    /* 收納的舊資料解開併回來;任何一個解不開就丟出錯誤,登入中止,不會用缺了一塊的資料去覆蓋雲端 */
@@ -2177,7 +2178,23 @@ function showSyncDetail(){
   retrySaveNow();
   notify('目前沒有連上雲端，你的修改已經暫存在這支手機上，連線後會自動同步。剛剛已經再試了一次。');
 }
+/* 同一時間只讓「一次存檔」在跑。收納舊資料要做非同步的壓縮,如果前一次還沒寫完、下一次又開始,
+   寫到雲端的順序可能對調,舊的那份最後才寫進去,把比較新的修改蓋掉(實測重現過)。
+   所以存檔進行中又有新的修改時,只記下「等一下要再存一次」,前一次結束後馬上用最新的資料再存。 */
+let saveRunning = false, saveAgain = false;
 async function runSave(key, d){
+  if(saveRunning){ saveAgain = true; return; }
+  saveRunning = true;
+  try{ await runSaveOnce(key, d); }
+  finally{
+    saveRunning = false;
+    if(saveAgain){
+      saveAgain = false;
+      if(currentStorageKey && data && !saveTimer) runSave(currentStorageKey, data);   /* 用「現在」最新的資料,不是舊的那份 */
+    }
+  }
+}
+async function runSaveOnce(key, d){
   if(!key || !d || currentStorageKey!==key || data!==d) return;
   const cats = categoryCounts(d), currentCount = totalContentCount(d);   /* 兩邊都用同一個算法 */
   const fullWipe = (currentCount===0 && lastPersistedCount!==null && lastPersistedCount>3);
@@ -2638,6 +2655,24 @@ async function pruneOldHistory(key){
     d = shiftDay(d, 1); n++;
   }
   try{ localStorage.setItem(cursorKey, d); }catch(e){}
+  pruneLabeledBackups(key);
+}
+/* 「衝突」「升版前」「還原前」「未同步」這幾種備份的名稱是 conflict-時間、pre-v11-日期…,不是單純日期,上面那段清不到,會一直累積(每份最大約 1 MB)。
+   這裡每天一次,用備份時間(backedUpAt)把超過 60 天的清掉,每次最多 25 份 */
+const LABELED_BACKUP_KEEP_DAYS = 60;
+async function pruneLabeledBackups(key){
+  if(!fbDb) return;
+  try{ if(localStorage.getItem('historyPruneOff')==='1') return; }catch(e){}
+  const flag = 'labeledPruned_'+key, today = todayStr();
+  try{ if(localStorage.getItem(flag)===today) return; }catch(e){}
+  try{
+    const col = fbDb.collection('userdata').doc(key).collection('history');
+    const old = await col.where('backedUpAt','<', Date.now()-LABELED_BACKUP_KEEP_DAYS*86400000).limit(25).get();
+    for(const doc of old.docs) await col.doc(doc.id).delete();
+    if(old.docs.length<25){ try{ localStorage.setItem(flag, today); }catch(e){} }     /* 還有剩的,明天繼續 */
+  }catch(e){
+    if(e && e.code==='permission-denied'){ try{ localStorage.setItem('historyPruneOff','1'); }catch(e2){} }
+  }
 }
 
 /* ============================================================
@@ -3189,8 +3224,15 @@ document.addEventListener('visibilitychange', ()=>{
 window.addEventListener('pagehide', flushPendingSave);
 window.addEventListener('online', ()=>{ updateSyncBadge(); if(saveFailed==='network') retrySaveNow(); });
 window.addEventListener('offline', updateSyncBadge);
+/* 回到 App 時重新接上即時同步(手機切回來時,舊的連線可能已經斷了)。
+   但每次 focus 都重接,等於每次都把整份資料(最大約 1 MB)重新下載一次,所以 60 秒內不重複重接 */
+let __lastResync = 0;
 window.addEventListener('focus', ()=>{
-  if(currentStorageKey) startRealtimeSync(currentStorageKey);
+  if(!currentStorageKey) return;
+  const now = Date.now();
+  if(unsubscribeSnapshot && now - __lastResync < 60000) return;
+  __lastResync = now;
+  startRealtimeSync(currentStorageKey);
 });
 window.addEventListener('DOMContentLoaded', async ()=>{
   LoginBg.start();
@@ -4407,10 +4449,12 @@ function startHabitDrag(habitId, rowEl, e){
   if(navigator.vibrate) navigator.vibrate(12);
   document.addEventListener('pointermove', onHabitDragMove);
   document.addEventListener('pointerup', onHabitDragEnd);
+  document.addEventListener('pointercancel', onHabitDragEnd);     /* 被系統打斷(來電、手勢)時也要收尾,不然拖曳的殘影和隱藏的那一列會一直留著 */
 }
 function onHabitDragMove(e){
   if(!habitDragCtx) return;
   e.preventDefault();
+  if(!habitDragCtx.rowEl.parentElement){ onHabitDragEnd(); return; }     /* 拖曳中畫面被重畫(例如別台裝置同步進來),那一列已經不在了 */
   habitDragCtx.ghost.style.top = (e.clientY - habitDragCtx.grabOffsetY) + 'px';
   const container = habitDragCtx.rowEl.parentElement;
   const rows = Array.from(container.querySelectorAll('.habit-grid-row')).filter(r=> r!==habitDragCtx.rowEl);
@@ -4430,11 +4474,14 @@ function onHabitDragEnd(){
   if(!habitDragCtx) return;
   document.removeEventListener('pointermove', onHabitDragMove);
   document.removeEventListener('pointerup', onHabitDragEnd);
+  document.removeEventListener('pointercancel', onHabitDragEnd);
   habitDragCtx.ghost.remove();
   const container = habitDragCtx.rowEl.parentElement;
-  const newOrderIds = Array.from(container.querySelectorAll('.habit-grid-row')).map(r=> r.dataset.habitId);
-  const reordered = newOrderIds.map(id=> data.habits.find(h=>h.id===id)).filter(Boolean);
-  if(reordered.length === data.habits.length) data.habits = reordered;
+  if(container){
+    const newOrderIds = Array.from(container.querySelectorAll('.habit-grid-row')).map(r=> r.dataset.habitId);
+    const reordered = newOrderIds.map(id=> data.habits.find(h=>h.id===id)).filter(Boolean);
+    if(reordered.length === data.habits.length) data.habits = reordered;
+  }
   habitDragCtx = null;
   persist();
   renderHabitCheckin();

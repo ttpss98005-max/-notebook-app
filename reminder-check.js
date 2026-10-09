@@ -43,25 +43,30 @@ async function processReminders() {
   }
 }
 
-function todayStrInTZ() {
-  const d = new Date();
-  const pad = (n) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+/* 台灣時間(Asia/Taipei)。GitHub 的伺服器是 UTC,直接用 new Date().getHours() 會差 8 小時 */
+const TZ = 'Asia/Taipei';
+function nowInTaipei() {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: TZ, hourCycle: 'h23',
+    year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
+  }).formatToParts(new Date());
+  const g = (t) => parts.find((p) => p.type === t).value;
+  return { date: `${g('year')}-${g('month')}-${g('day')}`, minutes: Number(g('hour')) * 60 + Number(g('minute')) };
 }
-function nowHHMM() {
-  const d = new Date();
-  const pad = (n) => String(n).padStart(2, '0');
-  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
+/* 排程每 5 分鐘才跑一次,而且常常晚幾分鐘,所以不能要求「時:分完全相同」。
+   改成:提醒時間已經到了,而且在 CATCH_UP_MIN 分鐘內,今天還沒提醒過,就送出。
+   超過這個時間窗(例如半夜才新增、早上的提醒時間早就過了)就不補送,避免深夜突然收到早上的提醒 */
+const CATCH_UP_MIN = 20;
 async function processHabitReminders() {
-  const currentHHMM = nowHHMM();
-  const today = todayStrInTZ();
-  const snap = await db.collection('habitReminders')
-    .where('remindTime', '==', currentHHMM)
-    .get();
+  const { date: today, minutes: nowMin } = nowInTaipei();
+  const snap = await db.collection('habitReminders').get();
   for (const doc of snap.docs) {
     const h = doc.data();
+    if (!/^\d{2}:\d{2}$/.test(h.remindTime || '')) continue;
     if (h.lastRemindedDate === today) continue;
+    const [hh, mm] = h.remindTime.split(':').map(Number);
+    const diff = nowMin - (hh * 60 + mm);
+    if (diff < 0 || diff > CATCH_UP_MIN) continue;
     await sendToUser(h.uid, '習慣提醒：' + h.habitName, '今天還沒打卡喔');
     await doc.ref.update({ lastRemindedDate: today });
     console.log('已發送習慣提醒：', h.habitName);
