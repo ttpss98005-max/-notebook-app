@@ -169,6 +169,9 @@
   .check:disabled{opacity:.35;cursor:not-allowed;}
   .check.done{background:var(--accent);border-color:var(--accent);}
   .check.done::after{content:'';position:absolute;left:6px;top:2px;width:6px;height:11px;border-right:2.5px solid #fff;border-bottom:2.5px solid #fff;transform:rotate(45deg);}
+  /* 細項用的小勾勾:圓圈 16px,勾勾按比例縮小並置中(以前只縮圓圈、勾勾還是大的尺寸,會跑到圓圈外面) */
+  .check.sm{width:16px;height:16px;border-width:1.5px;}
+  .check.sm.done::after{left:3.5px;top:0.5px;width:4px;height:8px;border-right-width:2px;border-bottom-width:2px;}
   .task-title{font-weight:700;font-size:14px;flex:1 1 90px;min-width:90px;}
   .task.done .task-title{color:var(--ink-soft);text-decoration:line-through;}
   .cat-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
@@ -3573,7 +3576,7 @@ function buildTaskHtml(list){
           const subOverdue = isOverdueTime(s.time, s.status);
           return `
           <div class="subtask-row ${s.status==='done'?'done':''}">
-            <button class="check ${s.status==='done'?'done':''}" style="width:15px;height:15px" data-check-id="sub:${t.id}:${s.id}" aria-label="完成：${escapeAttr(s.title)}" aria-pressed="${s.status==='done'}" onclick="toggleSubtask('${t.id}','${s.id}')"></button>
+            <button class="check sm ${s.status==='done'?'done':''}" data-check-id="sub:${t.id}:${s.id}" aria-label="完成：${escapeAttr(s.title)}" aria-pressed="${s.status==='done'}" onclick="toggleSubtask('${t.id}','${s.id}')"></button>
             <span class="subtask-title">${escapeHtml(s.title)}</span>
             <span class="${subOverdue?'overdue-tag':'time-chip'}">${subOverdue?'延誤 ':''}${fmtTime(s.time)}</span>
             <span class="reminder-toggle">提醒<button class="switch ${s.reminder?'on':''}" onclick="toggleReminder('${t.id}','${s.id}')"></button></span>
