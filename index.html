@@ -92,6 +92,7 @@
   .top-bar{position:sticky;top:0;background:var(--surface);border-bottom:1px solid var(--border);
     padding:14px 26px;z-index:10;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
   .brand{font-size:16px;font-weight:700;letter-spacing:1px;flex-shrink:0;color:#1A1A1A;}
+  .brand img{display:block;width:28px;height:28px;object-fit:contain;}
   .top-bar-actions{margin-left:auto;display:flex;gap:8px;}
   .search-trigger-btn{background:#F1F0EA;border:none;width:34px;height:34px;border-radius:50%;
     color:var(--ink-soft);display:flex;align-items:center;justify-content:center;}
@@ -818,7 +819,7 @@
 <!-- ================= APP ================= -->
 <div id="appShell">
   <div class="top-bar">
-    <div class="brand">記事簿</div>
+    <div class="brand" role="img" aria-label="記事簿"><img src="data:image/png;base64,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" alt="" width="28" height="28" draggable="false"></div>
     <div class="top-bar-actions">
       <button class="sync-badge" id="syncBadge" onclick="showSyncDetail()" style="display:none" title="同步狀態" aria-label="同步狀態，點一下看詳情"></button>
       <button class="search-trigger-btn" onclick="openSearch()" title="搜尋" aria-label="搜尋">
@@ -933,7 +934,7 @@
           <label style="margin:0;font-size:13px;">早晚安推播</label>
           <button class="switch" id="greetPushSwitch" role="switch" aria-label="早晚安推播" onclick="toggleGreetPush()"></button>
         </div>
-        <div class="fee-hint" style="margin-top:6px;">早上 8:00 提醒今天的習慣，晚上 9:00 提醒你回顧今天。實際送出可能晚幾分鐘。</div>
+        <div class="fee-hint" style="margin-top:6px;">早上 6:00 提醒今天的習慣，晚上 8:00 提醒你回顧今天。實際送出可能晚幾分鐘。</div>
       </div>
       <div class="setting-block">
         <h3>桌面小工具（Android）</h3>
@@ -2470,12 +2471,13 @@ async function deleteReminderDoc(id){
    而且只寫「還沒到時間」的那幾筆,所以不會把已經送出的標記洗掉造成重複送。 */
 /* 「晚安時間」只有這一個:晚安通知、晚安動畫、晚安回顧、選心情,全部從這個時間開始。
    以前通知的時間和動畫的時間是各寫各的(通知可以比動畫早),結果通知先跳出來,點進去卻還沒到晚安時間。 */
-const MORNING_START_TIME = '08:00';     /* 「早安時間」也只有這一個:早安通知、早安動畫、今天要做的事,全部從這個時間開始 */
-const MORNING_START_MINUTES = 8*60;
+const MORNING_START_TIME = '06:00';     /* 「早安時間」也只有這一個:早安通知、早安動畫、今天要做的事,全部從這個時間開始 */
+const MORNING_START_MINUTES = 6*60;
 const MORNING_END_HOUR = 12;            /* 中午 12:00 之後不再自動跳早安動畫(只剩手動看「今天要做的事」) */
 function isMorningStarted(now){ now = now || new Date(); return now.getHours()*60+now.getMinutes() >= MORNING_START_MINUTES; }
-const NIGHT_START_TIME = '21:00';
-const NIGHT_START_MINUTES = 21*60;
+const NIGHT_START_TIME = '20:00';
+const NIGHT_START_MINUTES = 20*60;
+const NIGHT_END_HOUR = 6;               /* 晚安時段:當天 20:00 起,到隔天早上 6:00 前(6:00 起換成早安) */
 function isNightStarted(now){ now = now || new Date(); return now.getHours()*60+now.getMinutes() >= NIGHT_START_MINUTES; }
 const NOTIFY_KINDS = {
   morning:{ time:MORNING_START_TIME },
@@ -2577,7 +2579,7 @@ function renderNotifySettings(){
   const sw = document.getElementById('greetPushSwitch');
   if(sw) sw.classList.toggle('on', greetPushOn());
 }
-/* 「早晚安推播」:一個開關同時管早上 8:00 和晚上 9:00 兩則。
+/* 「早晚安推播」:一個開關同時管早上 6:00 和晚上 8:00 兩則。
    還沒打開「背景推播提醒」(沒有通知權限)的話,會先幫你走一次開啟推播的流程 */
 async function toggleGreetPush(){
   ensureNotifySettings();
@@ -4156,16 +4158,16 @@ function renderDayDetail(){
     </div>`).join('') : `<div class="empty-state" style="padding:14px">當日無事項</div>`);
 }
 
-/* 今天心情:改到週日期條的「今天」格子。若在晚安動畫時段(21:00~10:00)點擊,
+/* 今天心情:改到週日期條的「今天」格子。若在晚安動畫時段(20:00~隔天6:00)點擊,
    開啟完整的晚安回顧動畫(跟自動彈出的一樣);若在這個時段之外點擊,
    只開一個簡單的心情選擇視窗,轉場速度跟早安動畫一致(0.5秒淡入淡出),不跑完整動畫。 */
-/* 今天在21:00~5:00(晚安時段)點擊 → 完整晚安動畫,存檔後會看到晚安動畫。
-   今天在5:00~21:00點擊 → 同樣是「今日完成＋選擇心情＋一句話」的卡片,但開關速度
+/* 今天在20:00~隔天6:00(晚安時段)點擊 → 完整晚安動畫,存檔後會看到晚安動畫。
+   今天在6:00~20:00點擊 → 同樣是「今日完成＋選擇心情＋一句話」的卡片,但開關速度
    跟早安動畫一樣快(0.5秒),存檔後直接關閉,不會跑完整的晚安動畫。
    過去的日期:第一次點只是切換成看那一天的打卡頁面,已經在那天了、再點一次才會
    開心情編輯(用跟白天一樣的快速卡片,畢竟不是正在經歷那個晚上)。未來不能設定。 */
 /* 「晚安時段」是綁在「被點的那一天」本身,不是只看現在的時鐘:
-   10/1的晚安時段是10/1 21:00到10/2 5:00(跨過午夜算同一段)。
+   10/1的晚安時段是10/1 20:00到10/2 6:00(跨過午夜算同一段)。
    這段時間內點10/1 → 完整晚安動畫。
    這段過了之後,10/1變成「昨天」,單次點擊就能打開簡化卡片(今日完成＋心情＋一句話,
    速度跟早安動畫一樣)。再更早的日子,要先點一次切換頁面,點第二次才打開同一張簡化卡片。
@@ -4179,7 +4181,7 @@ function dayNightWindowActive(dayStr){
   next.setDate(next.getDate()+1);
   const pad = n=>String(n).padStart(2,'0');
   const nextStr = `${next.getFullYear()}-${pad(next.getMonth()+1)}-${pad(next.getDate())}`;
-  if(nowStr === nextStr && hour < 5) return true;
+  if(nowStr === nextStr && hour < NIGHT_END_HOUR) return true;
   return false;
 }
 function habitFreqLabel(h){
@@ -4228,7 +4230,7 @@ function openDayMoodFlow(dayStr){
   /* 切換到那天的打卡頁面,不管是過去、今天還是未來都可以點,跟以前一樣。
      「選心情」這件事:
      - 未來:永遠不能選,只切換頁面。
-     - 今天:只有在今天自己的晚安時段(21:00~5:00)正在進行時才能選,
+     - 今天:只有在今天自己的晚安時段(20:00~隔天6:00)正在進行時才能選,
        這段時間之外,不管點幾次都不會打開,不是「點兩次」的問題。
        完整晚安動畫一天只會播一次:不管是自動跳出來播的,還是手動點兩次
        觸發播的,只要今天已經播過了(data.lastAutoRecapDate===today),
@@ -6291,11 +6293,11 @@ function getRecapDateStr(){
 }
 function getRecapLabel(){
   const hour = new Date().getHours();
-  return (isNightStarted() || hour < 4) ? '今天' : '昨天';
+  return (isNightStarted() || hour < NIGHT_END_HOUR) ? '今天' : '昨天';
 }
 function isNightRecapWindow(){
   const hour = new Date().getHours();
-  return isNightStarted() || hour < 10;
+  return isNightStarted() || hour < NIGHT_END_HOUR;
 }
 function maybeShowNightRecap(){
   if(data.nightRecapDisabled) return false;
