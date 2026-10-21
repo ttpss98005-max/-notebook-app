@@ -191,7 +191,21 @@
   .subtask-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:9px 0;border-top:1px dotted var(--border);}
   .subtask-title{flex:1 1 70px;font-size:13px;min-width:70px;}
   .subtask-row.done .subtask-title{color:var(--ink-soft);text-decoration:line-through;}
-  .reminder-toggle{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--ink-soft);}
+  /* 線條圖示(鉛筆、叉叉、鈴鐺):跟其他圖示同一種畫法 */
+  .ic{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+  .ic-bell{width:12px;height:12px;margin-left:5px;vertical-align:-1.5px;}
+  .icon-btn{background:none;border:none;color:var(--ink-soft);padding:6px;border-radius:50%;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;}
+  .icon-btn:hover{color:var(--accent);background:var(--accent-soft);}
+  .icon-btn.del:hover{color:var(--danger);background:#FBECEA;}
+  .subtask-row .ic{width:15px;height:15px;}
+  .dt-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+  .dt-col{display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:14px;background:var(--accent-soft);min-width:0;}
+  .dt-col.off{opacity:.6;background:transparent;border:1.5px dashed var(--border);padding:10.5px;}
+  .dt-col label{margin:0;font-size:13px;color:var(--ink);font-weight:700;}
+  .dt-col input{padding:8px 6px;font-size:13px;min-width:0;}
+  .dt-col input:disabled{opacity:.55;}
+  .dt-reminder{margin-bottom:6px;padding:0 4px;color:var(--ink-soft);}
+  .switch:disabled{opacity:.45;}
   .add-sub-btn{margin-top:8px;background:var(--accent-soft);border:none;color:var(--accent);font-size:12px;font-weight:700;padding:7px 14px;border-radius:999px;}
   .empty-state{text-align:center;padding:60px 20px;color:var(--ink-soft);font-size:13.5px;}
 
@@ -703,6 +717,24 @@
   #recapGoodnightScreen{display:none;position:absolute;inset:0;z-index:5;flex-direction:column;align-items:center;
     justify-content:center;opacity:0;transition:opacity 1s ease;cursor:pointer;overflow:hidden;}
   #recapGoodnightScreen.show{display:flex;opacity:1;}
+  /* 特別的日子慶祝動畫(跟 App 同一套:節日、週年、整百天。同一天同一支手機只跳一次) */
+  #celebrateOverlay{display:none;position:fixed;inset:0;z-index:165;align-items:center;justify-content:center;opacity:0;transition:opacity .45s ease;
+    background:linear-gradient(180deg,rgba(255,244,214,.96),rgba(234,241,239,.96));}
+  #celebrateOverlay.dark{background:linear-gradient(180deg,rgba(60,52,30,.96),rgba(30,42,38,.96));}
+  #celebrateOverlay.show{display:flex;}
+  #celebrateOverlay.in{opacity:1;}
+  #celebrateFx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
+  .celebrate-card{position:relative;width:min(340px,84vw);background:#fff;color:#1A1A1A;border-radius:24px;padding:26px 22px 20px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.25);
+    opacity:0;transform:translateY(40px) scale(.92);}
+  #celebrateOverlay.in .celebrate-card{opacity:1;transform:none;transition:opacity .8s cubic-bezier(.1,.6,.2,1) .25s, transform .8s cubic-bezier(.1,.6,.2,1) .25s;}
+  .celebrate-icon{font-size:44px;line-height:1.2;display:inline-block;transform:scale(.4) rotate(-12deg);}
+  #celebrateOverlay.in .celebrate-icon{transform:none;transition:transform 1s cubic-bezier(.3,1.6,.5,1) .9s;}
+  .celebrate-kicker{font-size:12px;font-weight:700;color:var(--accent);margin:10px 0 4px;}
+  .celebrate-title{font-size:22px;font-weight:700;margin:0;word-break:break-word;}
+  .celebrate-text{font-size:13.5px;color:#6B6B6B;margin-top:6px;}
+  .celebrate-more{font-size:12.5px;color:#6B6B6B;margin-top:10px;}
+  .celebrate-card .btn-primary{margin-top:18px;}
+  @media (prefers-reduced-motion:reduce){ #celebrateOverlay,#celebrateOverlay.in .celebrate-card,#celebrateOverlay.in .celebrate-icon{transition:none;} .celebrate-card{opacity:1;transform:none;} .celebrate-icon{transform:none;} }
   #dailyBriefOverlay{display:none;position:fixed;inset:0;z-index:150;align-items:center;justify-content:center;
     background:rgba(0,0,0,.35);overflow:hidden;transition:opacity .5s ease;padding:20px;}
   #dailyBriefOverlay.show{display:flex;opacity:1;}
@@ -940,7 +972,7 @@
           <label style="margin:0;font-size:13px;">早晚安推播</label>
           <button class="switch" id="greetPushSwitch" role="switch" aria-label="早晚安推播" onclick="toggleGreetPush()"></button>
         </div>
-        <div class="fee-hint" style="margin-top:6px;">早上 6:00 提醒今天的習慣，晚上 8:00 提醒你回顧今天。實際送出可能晚幾分鐘。</div>
+        <div class="fee-hint" style="margin-top:6px;">早上 4:00 提醒今天的習慣，晚上 8:00 提醒你回顧今天。實際送出可能晚幾分鐘。</div>
       </div>
       <div class="setting-block">
         <h3>桌面小工具（Android）</h3>
@@ -966,6 +998,10 @@
         <div class="row-inline" style="max-width:300px;margin-top:10px;">
           <label style="margin:0;font-size:13px;">晚上自動顯示回顧動畫</label>
           <button class="switch" id="nightRecapSwitch" role="switch" aria-label="晚上自動顯示回顧動畫" onclick="toggleNightRecapSwitch()"></button>
+        </div>
+        <div class="row-inline" style="max-width:340px;margin-top:10px;">
+          <label style="margin:0;font-size:13px;">特別的日子到了顯示慶祝動畫</label>
+          <button class="switch" id="celebrateSwitch" role="switch" aria-label="特別的日子到了顯示慶祝動畫" onclick="toggleCelebrateSwitch()"></button>
         </div>
       </div>
       <div class="setting-block">
@@ -1135,6 +1171,17 @@
 </div>
 
 <!-- ================= 每日提醒動畫 ================= -->
+<div id="celebrateOverlay" onclick="closeCelebrate()" role="dialog" aria-modal="true" aria-label="特別的日子">
+  <canvas id="celebrateFx"></canvas>
+  <div class="celebrate-card" onclick="event.stopPropagation()">
+    <div class="celebrate-icon" id="celebrateIcon"></div>
+    <div class="celebrate-kicker" id="celebrateKicker"></div>
+    <h2 class="celebrate-title" id="celebrateTitle"></h2>
+    <div class="celebrate-text" id="celebrateText"></div>
+    <div class="celebrate-more" id="celebrateMore"></div>
+    <button class="btn-primary" onclick="closeCelebrate()">太棒了</button>
+  </div>
+</div>
 <div id="dailyBriefOverlay" onclick="closeDailyBrief()">
   <div id="morningGreetingScreen" onclick="event.stopPropagation(); advanceFromMorningGreeting()">
     <canvas class="scene-canvas" id="morningSceneCanvas"></canvas>
@@ -1324,7 +1371,20 @@
       <select id="taskCatSelect"></select>
     </div>
     <div class="field"><label>標題</label><input id="taskTitle" placeholder="例如：完成季報"></div>
-    <div class="field"><label>截止日期</label><input type="date" id="taskDueDate"></div>
+    <div class="dt-row">
+      <div class="dt-col off" id="taskDateCol">
+        <div class="row-inline"><label>日期</label><button class="switch" id="taskDateSwitch" role="switch" aria-checked="false" aria-label="日期" onclick="toggleTaskDt('d')"></button></div>
+        <input type="date" id="taskDueDate" aria-label="日期" disabled>
+      </div>
+      <div class="dt-col off" id="taskTimeCol">
+        <div class="row-inline"><label>時間</label><button class="switch" id="taskTimeSwitch" role="switch" aria-checked="false" aria-label="時間" onclick="toggleTaskDt('t')"></button></div>
+        <input type="time" id="taskDueTime" aria-label="時間" disabled>
+      </div>
+    </div>
+    <div class="row-inline dt-reminder">
+      <span class="dt-bell" aria-label="提醒"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 17V11a6 6 0 0 1 12 0v6l1.5 2h-15z"/><path d="M10 21.5a2.2 2.2 0 0 0 4 0"/></svg></span>
+      <button class="switch" id="taskReminderSwitch" role="switch" aria-checked="false" aria-label="提醒" onclick="toggleTaskDt('r')"></button>
+    </div>
     <div class="modal-actions">
       <button class="btn-ghost" onclick="closeModal('taskModal')">取消</button>
       <button class="btn-primary" onclick="saveTask()">儲存</button>
@@ -1359,6 +1419,7 @@
     <div class="dev-btns">
       <button class="btn-ghost" onclick="devTriggerMorning()">立即觸發早安動畫</button>
       <button class="btn-ghost" onclick="devTriggerNight()">立即觸發晚安動畫</button>
+      <button class="btn-ghost" onclick="devTriggerCelebrate()">立即觸發慶祝動畫</button>
       <button class="btn-ghost" onclick="devResetShownFlags()">重置今天的顯示標記</button>
     </div>
     <div class="fee-hint">平常要等特定時間才會自動出現的動畫，可以在這裡直接看。觸發時這個視窗會先關掉。</div>
@@ -1599,12 +1660,6 @@
   <div class="modal">
     <h3 id="subModalTitle">新增細項</h3>
     <div class="field"><label>標題</label><input id="subTitle" placeholder="例如：整理數據"></div>
-    <div class="field"><label>日期</label><input type="date" id="subDate"></div>
-    <div class="field"><label>時間</label><input type="time" id="subTime" value="08:00"></div>
-    <div class="field row-inline">
-      <label style="margin:0">開啟提醒</label>
-      <button class="switch" id="subReminderSwitch" role="switch" aria-label="開啟提醒" onclick="this.classList.toggle('on')"></button>
-    </div>
     <div class="modal-actions">
       <button class="btn-ghost" onclick="closeModal('subModal')">取消</button>
       <button class="btn-primary" onclick="saveSubtask()">儲存</button>
@@ -1678,6 +1733,7 @@ function defaultData(){
     lastAutoRecapDate: null,
     lastCatId: 'overview',
     nightRecapDisabled: false,
+    specialCelebrateDisabled: false,
     globalPaletteId:'p01',
     customPalettes:[],
     expenses: [],
@@ -1852,6 +1908,7 @@ async function loadData(storageKey, opts){
   }
   data = parsed;
   const prevVer = (data && data.schemaVersion) || 0;
+  if(prevVer > SCHEMA_VERSION){ data = null; { const m = '雲端的資料是比較新的版本（v'+prevVer+'），這個頁面還是舊的（v'+SCHEMA_VERSION+'）。請關掉重開、或重新整理一次取得最新版，才不會把新版的資料弄壞'; throw Object.assign(new Error(m), {userMsg:m}); } }     /* 舊頁面不能碰新版資料 */
   normalizeData();    /* 資料格式不對會丟出錯誤,登入就會中止,不會用壞掉的資料去覆蓋雲端 */
   /* 資料結構升版:先把升版前的原始資料備份一份,萬一升版處理有問題還找得回來 */
   if(raw && prevVer < SCHEMA_VERSION) await backupRaw(storageKey, 'pre-v'+SCHEMA_VERSION+'-'+todayStr(), raw);
@@ -1868,6 +1925,85 @@ async function loadData(storageKey, opts){
   }else if(migrated || useLocal || (!hasArchives && raw && canCompress() && utf8Bytes(raw)>=ARCHIVE_TRIGGER_BYTES)){
     persist();     /* 超過 700 KB 還沒收納過:登入後馬上存一次,把舊資料收納起來 */
   }
+  runMigrationReminderFixups();     /* 舊細項轉成事項後,雲端的提醒跟著換 */
+}
+
+/* ===== 舊細項轉換(資料版本 12) =====
+   新規則:細項只有名稱和備註,日期、時間、提醒只有事項才有(事項:日期 → 時間 → 提醒,一層開了才能開下一層)。
+   舊資料裡有時間的細項這樣處理:
+   1. 原事項還沒完成 → 細項搬出來,變成獨立的事項(沿用同一個 id,所以雲端提醒、備註、完成狀態都跟著走):
+      日期、時間、提醒原樣帶過去;細項做完了就是已完成的事項,沒做完就是未完成的事項;分類跟原事項一樣;
+      標題後面加上「（原事項名稱）」;新事項排在原事項後面。
+   2. 原事項已經完成 → 細項留在原事項底下,只清掉時間和提醒。
+   3. 沒有時間的細項:不動(只清掉多餘的提醒欄位)。
+   轉換一律先在複本上做,做完逐項核對(每個原本的事項和細項都還在、標題完整、備註和完成狀態沒變、數量對得上),
+   核對沒過就丟出錯誤、不改任何資料(登入中止,不會存回雲端)。重複執行不會再變(沒有東西可轉就什麼都不做)。 */
+let migrationReminderCleanup = [], migrationReminderWrite = [];
+function migrateSubtaskSettings(){
+  if(!data.tasks.some(t=> t && Array.isArray(t.subtasks) && t.subtasks.some(s=> s && typeof s==='object' && ('time' in s || 'reminder' in s)))) return;
+  const parseTime = x=>{
+    const m = /^(\d{4}-\d{2}-\d{2})T([01]\d|2[0-3]):([0-5]\d)/.exec(String(x||''));
+    return m ? { date:m[1], time:m[2]+':'+m[3] } : null;
+  };
+  const src = data.tasks, work = JSON.parse(JSON.stringify(src));
+  const taken = new Set(work.map(t=>t && t.id));
+  const out = [], promotedMap = [], cleanup = [], writes = [];
+  for(const t of work){
+    out.push(t);
+    if(!t || !Array.isArray(t.subtasks)) continue;
+    const keep = [], promoted = [];
+    for(const s of t.subtasks){
+      if(!s || typeof s!=='object'){ keep.push(s); continue; }
+      const tm = parseTime(s.time), hadReminder = s.reminder===true;
+      if(tm && t.status!=='done'){
+        let nid = String(s.id||''); if(!nid || taken.has(nid)) nid = uid();
+        taken.add(nid);
+        const nt = Object.assign({}, s, { id:nid, categoryId:t.categoryId, title:String(s.title||'')+'（'+String(t.title||'')+'）',
+          dueDate:tm.date, dueTime:tm.time, reminder:hadReminder, status: s.status==='done'?'done':'pending', subtasks:[] });
+        delete nt.time;
+        promoted.push(nt); promotedMap.push({ subId:s.id, newId:nid, title:s.title, status:s.status, note:s.note });
+        if(hadReminder && nt.status!=='done') writes.push(nid);
+        else if(hadReminder) cleanup.push(nid);
+      }else{
+        if(hadReminder) cleanup.push(s.id);
+        delete s.time; delete s.reminder; keep.push(s);
+      }
+    }
+    t.subtasks = keep;
+    promoted.forEach(p=> out.push(p));
+  }
+  /* 核對:任何一項對不上就整個放棄 */
+  const fail = why=>{ const m = '資料版本升級的檢查沒通過（'+why+'），為了保護你的資料，這次沒有做任何修改。請把這段文字告訴我。'; throw Object.assign(new Error(m), {userMsg:m}); };
+  const outIds = new Map(out.map(t=>[t && t.id, t]));
+  for(const t of src){
+    if(!outIds.has(t && t.id)) fail('事項不見了：'+(t&&t.title));
+    const nt = outIds.get(t.id);
+    if(nt.title!==t.title || nt.status!==t.status || (nt.note||'')!==(t.note||'') || (nt.dueDate||'')!==(t.dueDate||'')) fail('事項被改到：'+t.title);
+  }
+  const subCountBefore = src.reduce((n,t)=> n + ((t&&t.subtasks)||[]).length, 0);
+  const subCountAfter = out.reduce((n,t)=> n + ((t&&t.subtasks)||[]).length, 0);
+  if(out.length !== src.length + promotedMap.length) fail('事項數量對不上');
+  if(subCountAfter !== subCountBefore - promotedMap.length) fail('細項數量對不上');
+  for(const p of promotedMap){
+    const nt = outIds.get(p.newId);
+    if(!nt || !String(nt.title).startsWith(String(p.title||'')) || (nt.note||'')!==(p.note||'') || (nt.status==='done')!==(p.status==='done')) fail('搬出來的細項核對失敗：'+p.title);
+  }
+  for(const t of src) for(const s of ((t&&t.subtasks)||[])){
+    if(!s || typeof s!=='object' || promotedMap.some(p=>p.subId===s.id)) continue;
+    const kept = out.find(x=>x && x.id===t.id).subtasks.find(x=>x && x.id===s.id);
+    if(!kept || kept.title!==s.title || kept.status!==s.status || (kept.note||'')!==(s.note||'')) fail('細項被改到：'+s.title);
+  }
+  data.tasks = out;
+  migrationReminderCleanup = migrationReminderCleanup.concat(cleanup.filter(Boolean));
+  migrationReminderWrite = migrationReminderWrite.concat(writes);
+}
+/* 升級轉換後,雲端的提醒也要跟著換:被清掉的提醒文件刪掉,搬成事項的提醒用事項的資料重寫(同一個 id,不會重複) */
+function runMigrationReminderFixups(){
+  const del = migrationReminderCleanup, wr = migrationReminderWrite;
+  migrationReminderCleanup = []; migrationReminderWrite = [];
+  if(!fbDb || !data) return;
+  del.forEach(id=> deleteReminderDoc(id));
+  wr.forEach(id=>{ const t = data.tasks.find(x=>x.id===id); if(t) syncTaskReminder(t); });
 }
 /* 所有「資料進入記憶體」的入口(載入、雲端即時同步)都必須經過這裡,確保舊格式資料補齊新欄位 */
 function normalizeData(){
@@ -1882,11 +2018,18 @@ function normalizeData(){
     if(data[k]===undefined || data[k]===null) data[k] = {};
     else if(typeof data[k]!=='object' || Array.isArray(data[k])) throw new Error('資料欄位格式不正確：'+k);
   };
+  /* 這幾個欄位一定會被補齊(沒有就建空的,格式不對就丟出錯誤),所以後面不用再一個一個檢查 */
   needArr('categories', ()=> defaultData().categories);
   needArr('tasks', ()=>[]); needArr('habits', ()=>[]); needArr('quickNotes', ()=>[]); needArr('expenses', ()=>[]);
   needArr('bookmarks', ()=> defaultData().bookmarks); needArr('recurring', ()=>[]); needArr('customPalettes', ()=>[]);
   needObj('habitLogs'); needObj('dayRecaps'); needObj('categoryBudgets'); needObj('leaveByMonth'); needObj('salaryRecorded');
   data.tasks.forEach(t=>{ if(!Array.isArray(t.subtasks)) t.subtasks = []; });
+  migrateSubtaskSettings();     /* 舊版細項有日期/時間/提醒:升到新版時轉成事項(規則見函式說明) */
+  data.tasks.forEach(t=>{      /* 事項的日期、時間、提醒:日期開了才能有時間和提醒 */
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(String(t.dueDate||''))) t.dueDate = '';
+    if(!t.dueDate || !/^([01]\d|2[0-3]):[0-5]\d$/.test(String(t.dueTime||''))) t.dueTime = '';
+    t.reminder = !!t.dueDate && t.reminder===true;
+  });
   /* 特別的日子:格式不對的(沒有名稱、日期不是正確格式、類型不認得)濾掉,id 只允許安全字元(會放進按鈕的 onclick 裡) */
   needArr('specialDays', ()=>[]);
   data.specialDays.forEach(x=>{ if(x.kind==='together' || x.kind==='raising') x.kind = 'count'; });   /* 舊版分成「在一起」「開始養」,現在合併成「計算天數」(名稱、日期都保留) */
@@ -1895,14 +2038,9 @@ function normalizeData(){
   delete data.calShowLunar;     /* 舊版有「月曆顯示農曆」的開關,已經拿掉,農曆固定顯示 */
   delete data.theme;
   if(!data.globalPaletteId) data.globalPaletteId = 'p01';
-  if(!data.customPalettes) data.customPalettes = [];
-  if(!data.tasks) data.tasks = [];
-  if(!data.habits) data.habits = [];
-  if(!data.habitLogs) data.habitLogs = {};
-  if(!data.quickNotes) data.quickNotes = [];
-  if(!data.dayRecaps) data.dayRecaps = {};
   if(data.lastAutoRecapDate===undefined) data.lastAutoRecapDate = null;
   if(data.nightRecapDisabled===undefined) data.nightRecapDisabled = false;
+  if(typeof data.specialCelebrateDisabled!=='boolean') data.specialCelebrateDisabled = false;
   if(!data.lastCatId) data.lastCatId = 'overview';
   if(data.morningGreetingDisabled===undefined){
     /* 舊版是「每次登入都顯示」的開關,語意跟現在不同,直接視為預設開啟(跟晚安一樣的行為) */
@@ -1910,7 +2048,6 @@ function normalizeData(){
   }
   delete data.morningGreetingAlwaysOn;
   if(data.morningGreetingShownDate===undefined) data.morningGreetingShownDate = null;
-  if(!data.expenses) data.expenses = [];
   if(!data.payroll) data.payroll = {baseSalary:0, salaryDay:5, laborFee:0, healthFee:0, healthDependents:0, pensionSelfRate:0, leaveDivisor:'workdays', personalRule:{type:'halfpay',fixedAmount:0}, sickRule:{type:'halfpay',fixedAmount:0}, deductions:[]};
   if(!data.payroll.personalRule) data.payroll.personalRule = {type:'halfpay', fixedAmount:0};
   if(!data.payroll.sickRule) data.payroll.sickRule = {type:'halfpay', fixedAmount:0};
@@ -1924,13 +2061,9 @@ function normalizeData(){
     if(pr.payMonthOffset===undefined) pr.payMonthOffset = 0;
     if(pr.autoFrom===undefined) pr.autoFrom = null;
     delete pr.insuredSalary; delete pr.laborRate; delete pr.healthRate; }
-  if(!data.leaveByMonth) data.leaveByMonth = {};
-  if(!data.salaryRecorded) data.salaryRecorded = {};
   if(!data.expenseCategories) data.expenseCategories = DEFAULT_EXPENSE_CATEGORIES.map(c=>({...c}));
   if(!data.incomeCategories) data.incomeCategories = DEFAULT_INCOME_CATEGORIES.map(c=>({...c}));
-  if(!data.categoryBudgets) data.categoryBudgets = {};
   ensureNotifySettings();
-  if(!data.recurring) data.recurring = [];
   if(!Array.isArray(data.accounts) || !data.accounts.length){
     /* 舊版只有單一「目前存款」：轉成「銀行」帳戶，讓合計金額與原本顯示的一致 */
     const net = e=> e.type==='income' ? e.amount : e.type==='expense' ? -e.amount : (e.amount||0);
@@ -1999,7 +2132,7 @@ let lastPersistedCounts = {tasks:0, habits:0, quickNotes:0, dayRecaps:0};
    - 整份資料存在 Firestore 單一文件(上限約 1 MiB),接近上限時會提醒,超過會停止儲存並說明原因
    - 本機有還沒存完的修改時,不會用雲端收到的版本蓋掉它(先留著,存完後把那份備份起來)
 ============================================================ */
-const SCHEMA_VERSION = 11;                               /* 資料結構每改一次就加 1。升版時會先把「升版前」的原始資料備份起來 */
+const SCHEMA_VERSION = 12;                               /* 資料結構每改一次就加 1。升版時會先把「升版前」的原始資料備份起來 */
 const SIZE_WARN_BYTES = 700*1024, SIZE_DANGER_BYTES = 900*1024, SIZE_BLOCK_BYTES = 1000*1024;   /* Firestore 單一文件上限 1,048,576 位元組 */
 const UNSYNCED_PREFIX = 'jishibu_unsynced_';
 let pendingSave = null, saveInFlight = false, saveFailed = null /* null | 'network' | 'size' */;
@@ -2109,7 +2242,7 @@ async function inflateArchives(obj){
   if(typeof arc!=='object' || Array.isArray(arc)) throw new Error('資料欄位格式不正確：archives');
   const ys = Object.keys(arc);
   if(!ys.length){ delete obj.archives; return; }
-  if(!canCompress()) throw new Error('這個瀏覽器不支援解壓縮，請改用較新的瀏覽器開啟，才不會看到缺少舊資料的版本');
+  if(!canCompress()){ const m = '這個瀏覽器不支援解壓縮，請改用較新的瀏覽器開啟，才不會看到缺少舊資料的版本'; throw Object.assign(new Error(m), {userMsg:m}); }
   for(const y of ys){
     const raw = await gunzipFromB64(arc[y]);
     const ch = JSON.parse(raw);
@@ -2293,6 +2426,7 @@ function startRealtimeSync(storageKey){
     if(saveTimer || saveInFlight || saveFailed){ skippedRemote = remote; return; }
     try{
       const incoming = JSON.parse(remote);
+      if(incoming && incoming.schemaVersion > SCHEMA_VERSION){ notify('另一台裝置用了比較新的版本存檔，這個頁面請重新整理一次取得最新版。在那之前不會更動雲端資料'); return; }
       await inflateArchives(incoming);
       if(saveTimer || saveInFlight || saveFailed){ skippedRemote = remote; return; }     /* 解壓縮的這段時間,本機又有新的修改了 */
       const prev = data; data = incoming;
@@ -2301,6 +2435,7 @@ function startRealtimeSync(storageKey){
       lastPersistedCount = totalContentCount(data);
       lastPersistedCounts = categoryCounts(data);
       refreshCurrentView();
+      runMigrationReminderFixups();
     }catch(e){ console.error('即時同步資料解析失敗', e); }
   }, (err)=>{ console.error('即時同步監聽失敗', err); });
 }
@@ -2460,6 +2595,8 @@ function togglePushSwitch(){
 
 async function writeReminderDoc(id, title, body, dueAtMs){
   if(!fbDb || !currentStorageKey) return;
+  /* 已經過期超過 1 分鐘的時間不再寫(寫了後端會馬上補送一則「早就過了」的通知);順便清掉雲端上可能還留著的舊文件 */
+  if(dueAtMs < Date.now()-60000){ deleteReminderDoc(id); return; }
   try{
     await fbDb.collection('reminders').doc(id).set({
       uid: currentStorageKey, title, body, dueAt: dueAtMs, sent: false
@@ -2477,13 +2614,13 @@ async function deleteReminderDoc(id){
    而且只寫「還沒到時間」的那幾筆,所以不會把已經送出的標記洗掉造成重複送。 */
 /* 「晚安時間」只有這一個:晚安通知、晚安動畫、晚安回顧、選心情,全部從這個時間開始。
    以前通知的時間和動畫的時間是各寫各的(通知可以比動畫早),結果通知先跳出來,點進去卻還沒到晚安時間。 */
-const MORNING_START_TIME = '06:00';     /* 「早安時間」也只有這一個:早安通知、早安動畫、今天要做的事,全部從這個時間開始 */
-const MORNING_START_MINUTES = 6*60;
+const MORNING_START_TIME = '04:00';     /* 「早安時間」也只有這一個:早安通知、早安動畫、今天要做的事,全部從這個時間開始 */
+const MORNING_START_MINUTES = (p=>p[0]*60+p[1])(MORNING_START_TIME.split(':').map(Number));     /* 從上面那個時間算出來,不再另外寫一個數字(以前兩個寫的不一樣,造成早安動畫比通知晚出現) */
 const MORNING_END_HOUR = 12;            /* 中午 12:00 之後不再自動跳早安動畫(只剩手動看「今天要做的事」) */
 function isMorningStarted(now){ now = now || new Date(); return now.getHours()*60+now.getMinutes() >= MORNING_START_MINUTES; }
 const NIGHT_START_TIME = '20:00';
-const NIGHT_START_MINUTES = 20*60;
-const NIGHT_END_HOUR = 6;               /* 晚安時段:當天 20:00 起,到隔天早上 6:00 前(6:00 起換成早安) */
+const NIGHT_START_MINUTES = (p=>p[0]*60+p[1])(NIGHT_START_TIME.split(':').map(Number));
+const NIGHT_END_HOUR = MORNING_START_MINUTES/60;     /* 晚安時段:當天 20:00 起,到隔天早安時間(4:00)前;跟早安起點永遠是同一個值 */
 function isNightStarted(now){ now = now || new Date(); return now.getHours()*60+now.getMinutes() >= NIGHT_START_MINUTES; }
 const NOTIFY_KINDS = {
   morning:{ time:MORNING_START_TIME },
@@ -2585,7 +2722,7 @@ function renderNotifySettings(){
   const sw = document.getElementById('greetPushSwitch');
   if(sw) sw.classList.toggle('on', greetPushOn());
 }
-/* 「早晚安推播」:一個開關同時管早上 6:00 和晚上 8:00 兩則。
+/* 「早晚安推播」:一個開關同時管早上 4:00 和晚上 8:00 兩則。
    還沒打開「背景推播提醒」(沒有通知權限)的話,會先幫你走一次開啟推播的流程 */
 async function toggleGreetPush(){
   ensureNotifySettings();
@@ -2785,7 +2922,7 @@ async function proceedLogin(name, email, storageKey){
     currentEmail = null;
     currentStorageKey = null;
     data = null;
-    notify('讀取資料失敗，請檢查網路連線後重新登入，避免資料被覆蓋。');
+    notify(e.userMsg || '讀取資料失敗，請檢查網路連線後重新登入，避免資料被覆蓋。');
     throw e;
   }
   startRealtimeSync(currentStorageKey);
@@ -2806,7 +2943,6 @@ function hslToHex(h,s,l){ h=((h%360)+360)%360; const c=(1-Math.abs(2*l-1))*s,x=c
    只在登入畫面顯示期間執行，進到主畫面就停掉，不耗電。 */
 const LoginBg = (function(){
   const THEME_KEY = 'jishibu_login_theme', DEFAULT_ACCENT = '#3A6B5E';
-  const lerp = (a,b,t)=> a+(b-a)*t;
   const isHex = h=> /^#[0-9a-fA-F]{6}$/.test(h||'');
   function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
   function derive(accent){
@@ -3154,12 +3290,17 @@ function exportBackup(){
   setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1500);
   flashToast('已匯出備份檔');
 }
+const restoreMigration = new WeakMap();
 function readBackupPayload(text){
   const obj = JSON.parse(text);
   const cand = (obj && obj.data && typeof obj.data==='object') ? obj.data : obj;    /* 也接受直接是資料本體的檔案 */
   if(!cand || typeof cand!=='object' || Array.isArray(cand) || !Array.isArray(cand.tasks) && !Array.isArray(cand.habits) && !Array.isArray(cand.expenses)) throw new Error('這不是記事簿的備份檔');
   const prev = data;
+  const keepDel = migrationReminderCleanup, keepWr = migrationReminderWrite;
+  migrationReminderCleanup = []; migrationReminderWrite = [];
   try{ data = cand; normalizeData(); }finally{ data = prev; }    /* 先在副本上檢查格式,不會動到目前的資料 */
+  restoreMigration.set(cand, { del:migrationReminderCleanup, wr:migrationReminderWrite });     /* 備份裡舊細項轉換出來的提醒變動,要等真的還原了才處理 */
+  migrationReminderCleanup = keepDel; migrationReminderWrite = keepWr;
   return { cand, meta:obj };
 }
 function restoreBackupFromFile(input){
@@ -3181,9 +3322,11 @@ async function applyRestore(cand){
   const key = currentStorageKey; if(!key || !data) return;
   await backupRaw(key, 'pre-restore-'+Date.now(), (await buildStoredValue(data, serializeData(data))).json);
   data = cand; normalizeData(); data.schemaVersion = SCHEMA_VERSION;
+  const mig = restoreMigration.get(cand); if(mig){ migrationReminderCleanup = migrationReminderCleanup.concat(mig.del); migrationReminderWrite = migrationReminderWrite.concat(mig.wr); }
   lastPersistedCount = totalContentCount(data); lastPersistedCounts = categoryCounts(data);   /* 這是使用者主動還原,不要被「資料驟降」誤判擋下 */
   skippedRemote = null; ui.catId = 'overview';
   applyTheme(); persist(); refreshCurrentView(); renderAll();
+  runMigrationReminderFixups();
   flashToast('已還原');
 }
 
@@ -3202,8 +3345,9 @@ function enterAppDirectly(){
     pruneOldDailyNotifications();
     refreshPushRegistration();
     const recapShown = maybeShowNightRecap();
-    if(recapShown){ pendingMorningBriefAfterRecap = true; }
-    else{ maybeShowDailyBrief(); }
+    if(recapShown){ pendingMorningBriefAfterRecap = true; pendingCelebrate = true; }
+    else if(maybeShowDailyBrief()){ pendingCelebrate = true; }
+    else{ maybeShowCelebrate(); }
     handleShortcutParam();
   }, 500);
 }
@@ -3412,7 +3556,7 @@ function switchMainView(v){
   if(v==='list') renderTaskList();
   if(v==='cal') renderCalendar();
   if(v==='week') renderWeek();
-  if(v==='settings'){ renderBookmarks(); renderSettings(); updateDailyBriefSwitch(); updateMorningGreetingSwitch(); updateNightRecapSwitch(); updatePushSwitch('Notification' in window && Notification.permission==='granted' && isPushConfigured()); }
+  if(v==='settings'){ renderBookmarks(); renderSettings(); updateDailyBriefSwitch(); updateMorningGreetingSwitch(); updateNightRecapSwitch(); updateCelebrateSwitch(); updatePushSwitch('Notification' in window && Notification.permission==='granted' && isPushConfigured()); }
   if(v==='habits') setHabitTab('checkin');
   if(v==='expense') renderExpensePage();
   if(v==='quicknotes'){
@@ -3537,13 +3681,26 @@ function fmtDate(d){
   const dt = new Date(d+'T00:00');
   return `${dt.getMonth()+1}/${dt.getDate()}`;
 }
-function isOverdueDate(dueDate, status){
-  if(!dueDate || status==='done') return false;
-  return new Date(dueDate+'T23:59:59').getTime() < Date.now();
+const ICON_BELL = '<svg class="ic ic-bell" viewBox="0 0 24 24" role="img" aria-label="有提醒"><path d="M6 17V11a6 6 0 0 1 12 0v6l1.5 2h-15z"/><path d="M10 21.5a2.2 2.2 0 0 0 4 0"/></svg>';
+const ICON_EDIT = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1-4 10-10 3 3-10 10z"/><line x1="15" y1="6" x2="18" y2="9"/></svg>';
+const ICON_DEL = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>';
+/* 事項到期的時間點(毫秒)。只設日期沒設時間 → 當天 08:00(提醒也是這個時間);沒有日期 → null */
+function taskDueMs(t){
+  if(!t || !t.dueDate) return null;
+  return new Date(t.dueDate+'T'+(t.dueTime||'08:00')+':00').getTime();
 }
-function isOverdueTime(time, status){
-  if(!time || status==='done') return false;
-  return new Date(time).getTime() < Date.now();
+/* 延誤:有設時間的,過了那個時間才算;只有日期的,過了那天才算 */
+function isOverdueTask(t){
+  if(!t.dueDate || t.status==='done') return false;
+  if(t.dueTime) return taskDueMs(t) < Date.now();
+  return new Date(t.dueDate+'T23:59:59').getTime() < Date.now();
+}
+function fmtTaskWhen(t){ return fmtDate(t.dueDate) + (t.dueTime ? ' '+t.dueTime : ''); }
+/* 依事項現在的狀態,寫入或取消「雲端提醒」+ 這個頁面開著時的本機提醒。提醒要有日期、開著、還沒完成才有效 */
+function syncTaskReminder(t){
+  const ms = (t && t.reminder && t.dueDate && t.status!=='done') ? taskDueMs(t) : null;
+  if(ms){ scheduleReminder(t); writeReminderDoc(t.id, t.title, fmtTaskWhen(t), ms); }
+  else if(t) deleteReminderDoc(t.id);
 }
 
 function buildTaskHtml(list){
@@ -3555,7 +3712,7 @@ function buildTaskHtml(list){
     const subs = t.subtasks||[];
     const doneSub = subs.filter(s=>s.status==='done').length;
     const expanded = ui.expanded[t.id] !== false;
-    const taskOverdue = isOverdueDate(t.dueDate, t.status);
+    const taskOverdue = isOverdueTask(t);
     return `
     <div class="task ${t.status==='done'?'done':''}">
       <div class="task-row">
@@ -3563,26 +3720,23 @@ function buildTaskHtml(list){
         ${ui.catId==='overview' && cat ? `<span class="cat-dot" style="background:${cat.color}"></span>`:''}
         <span class="task-title">${escapeHtml(t.title)}</span>
         ${subs.length? `<span class="progress-chip">${doneSub}/${subs.length}</span>`:''}
-        ${t.dueDate? `<span class="${taskOverdue?'overdue-tag':'time-chip'}">${taskOverdue?'延誤 ':''}${fmtDate(t.dueDate)}</span>`:''}
+        ${t.dueDate? `<span class="${taskOverdue?'overdue-tag':'time-chip'}">${taskOverdue?'延誤 ':''}${fmtTaskWhen(t)}${t.reminder?ICON_BELL:''}</span>`:''}
         <button class="expand-arrow ${expanded?'expanded':''}" aria-label="${expanded?'收合':'展開'}細項" aria-expanded="${!!expanded}" onclick="toggleExpand('${t.id}')"><span class="arrow-glyph">▸</span></button>
         <button class="text-btn note-btn ${t.note?'has-note':''}" onclick="openNoteModal('task','${t.id}')">備註</button>
-        <button class="text-btn" onclick="openTaskModal('${t.id}')">編輯</button>
-        <button class="text-btn" onclick="deleteTask('${t.id}')">刪除</button>
+        <button class="icon-btn" aria-label="編輯" onclick="openTaskModal('${t.id}')">${ICON_EDIT}</button>
+        <button class="icon-btn del" aria-label="刪除" onclick="deleteTask('${t.id}')">${ICON_DEL}</button>
       </div>
       ${t.note? `<div class="note-preview">${escapeHtml(t.note)}</div>`:''}
       ${expanded? `
       <div class="subtasks">
         ${subs.map(s=>{
-          const subOverdue = isOverdueTime(s.time, s.status);
           return `
           <div class="subtask-row ${s.status==='done'?'done':''}">
             <button class="check sm ${s.status==='done'?'done':''}" data-check-id="sub:${t.id}:${s.id}" aria-label="完成：${escapeAttr(s.title)}" aria-pressed="${s.status==='done'}" onclick="toggleSubtask('${t.id}','${s.id}')"></button>
             <span class="subtask-title">${escapeHtml(s.title)}</span>
-            <span class="${subOverdue?'overdue-tag':'time-chip'}">${subOverdue?'延誤 ':''}${fmtTime(s.time)}</span>
-            <span class="reminder-toggle">提醒<button class="switch ${s.reminder?'on':''}" onclick="toggleReminder('${t.id}','${s.id}')"></button></span>
             <button class="text-btn note-btn ${s.note?'has-note':''}" onclick="openNoteModal('subtask','${t.id}','${s.id}')">備註</button>
-            <button class="text-btn" onclick="openSubModal('${t.id}','${s.id}')">編輯</button>
-            <button class="text-btn" onclick="deleteSubtask('${t.id}','${s.id}')">刪除</button>
+            <button class="icon-btn" aria-label="編輯" onclick="openSubModal('${t.id}','${s.id}')">${ICON_EDIT}</button>
+            <button class="icon-btn del" aria-label="刪除" onclick="deleteSubtask('${t.id}','${s.id}')">${ICON_DEL}</button>
           </div>
           ${s.note? `<div class="note-preview" style="margin-left:23px;">${escapeHtml(s.note)}</div>`:''}
         `;}).join('')}
@@ -3631,6 +3785,7 @@ function toggleTask(id){
   t.completedAt = nowDone ? todayStr() : null;
   persist(); refreshAll();
   if(nowDone) bounceCheck(`task:${id}`);
+  syncTaskReminder(t);      /* 做完的事項不該再收到提醒;改回「未完成」就把提醒補回去 */
 }
 function toggleSubtask(tid,sid){
   const t = data.tasks.find(x=>x.id===tid);
@@ -3647,8 +3802,10 @@ function deleteTask(id){
     const removed = data.tasks[idx];
     data.tasks.splice(idx,1);
     refreshAll();
+    deleteReminderDoc(removed.id);     /* 事項刪掉了,它的提醒也要一起取消,不然到時間還會跳通知 */
     showUndoToast('已刪除「'+removed.title+'」', ()=>{
       data.tasks.splice(idx,0,removed);
+      syncTaskReminder(removed);
     }, refreshAll);
   });
 }
@@ -3658,37 +3815,24 @@ function deleteSubtask(tid,sid){
   const removed = t.subtasks[idx];
   t.subtasks.splice(idx,1);
   renderTaskList();
-  deleteReminderDoc(sid);
   showUndoToast('已刪除「'+removed.title+'」', ()=>{
     t.subtasks.splice(idx,0,removed);
-    if(removed.reminder && removed.time) writeReminderDoc(sid, removed.title, t.title, new Date(removed.time).getTime());
   }, renderTaskList);
 }
-function toggleReminder(tid,sid){
-  const t = data.tasks.find(x=>x.id===tid);
-  const s = t.subtasks.find(x=>x.id===sid);
-  if(!s.reminder && 'Notification' in window && Notification.permission!=='granted'){
-    Notification.requestPermission();
-  }
-  s.reminder = !s.reminder;
-  if(s.reminder){
-    scheduleReminder(t, s);
-    if(s.time) writeReminderDoc(sid, s.title, t.title, new Date(s.time).getTime());
-  }else{
-    deleteReminderDoc(sid);
-  }
-  persist(); refreshAll();
-}
-function scheduleReminder(task, sub){
-  if(!sub.time) return;
-  const ms = new Date(sub.time).getTime() - Date.now();
+/* 這個頁面開著的時候,到時間跳出本機通知(頁面關著時由雲端提醒負責)。 */
+function scheduleReminder(task){
+  const dueMs = taskDueMs(task);
+  if(!dueMs) return;
+  const ms = dueMs - Date.now();
   if(ms<=0 || ms > 24*60*60*1000*7) return;
   setTimeout(()=>{
-    if(!sub.reminder) return;
+    /* 到時間再確認一次:事項還在、還沒做完、提醒沒關、時間沒被改過,才跳通知(用 id 找最新的資料,不用舊的物件) */
+    const tk = data && data.tasks.find(x=>x.id===task.id);
+    if(!tk || !tk.reminder || tk.status==='done' || taskDueMs(tk)!==dueMs) return;
     if('Notification' in window && Notification.permission==='granted'){
-      new Notification('提醒：'+sub.title, {body: task.title+'（'+fmtTime(sub.time)+'）', icon:'icon-192.png', badge:'icon-notification.png'});
+      new Notification('提醒：'+tk.title, {body: fmtTaskWhen(tk), icon:'icon-192.png', badge:'icon-notification.png'});
     }else{
-      notify('提醒：'+sub.title);
+      notify('提醒：'+tk.title);
     }
   }, ms);
 }
@@ -3704,11 +3848,13 @@ function scheduleHabitReminders(){
     let ms = target.getTime() - Date.now();
     if(ms<0) ms += 24*60*60*1000;
     habitReminderTimers[h.id] = setTimeout(()=>{
-      if(!habitHasLog(h, todayStr())){
+      /* 到時間用 id 重新找一次最新的資料(這段時間習慣可能被改掉、刪掉,或已經打過卡) */
+      const cur = data && data.habits.find(x=>x.id===h.id);
+      if(cur && cur.remindTime===h.remindTime && !habitHasLog(cur, todayStr())){
         if('Notification' in window && Notification.permission==='granted'){
-          new Notification('習慣提醒：'+h.name, {body:'今天還沒打卡喔', icon:'icon-192.png', badge:'icon-notification.png'});
+          new Notification('習慣提醒：'+cur.name, {body:'今天還沒打卡喔', icon:'icon-192.png', badge:'icon-notification.png'});
         }else{
-          notify('習慣提醒：'+h.name+'（今天還沒打卡）');
+          notify('習慣提醒：'+cur.name+'（今天還沒打卡）');
         }
       }
       scheduleHabitReminders();
@@ -3829,6 +3975,26 @@ function saveNote(){
   persist(); refreshAll();
 }
 
+/* 事項視窗的三個開關:日期 → 時間、提醒。日期關掉,時間和提醒一起關掉(時間值先留著,再打開還在) */
+function taskDtPaint(){
+  const g = id=>document.getElementById(id);
+  const dOn = g('taskDateSwitch').classList.contains('on');
+  if(!dOn){ g('taskTimeSwitch').classList.remove('on'); g('taskReminderSwitch').classList.remove('on'); }
+  const tOn = g('taskTimeSwitch').classList.contains('on'), rOn = g('taskReminderSwitch').classList.contains('on');
+  g('taskDateCol').classList.toggle('off',!dOn); g('taskTimeCol').classList.toggle('off',!tOn);
+  g('taskDueDate').disabled = !dOn; g('taskTimeSwitch').disabled = !dOn; g('taskDueTime').disabled = !tOn; g('taskReminderSwitch').disabled = !dOn;
+  g('taskDateSwitch').setAttribute('aria-checked',dOn); g('taskTimeSwitch').setAttribute('aria-checked',tOn); g('taskReminderSwitch').setAttribute('aria-checked',rOn);
+}
+function toggleTaskDt(which){
+  const id = which==='d' ? 'taskDateSwitch' : which==='t' ? 'taskTimeSwitch' : 'taskReminderSwitch';
+  const sw = document.getElementById(id);
+  if(sw.disabled) return;
+  sw.classList.toggle('on');
+  if(which==='d' && sw.classList.contains('on') && !document.getElementById('taskDueDate').value) document.getElementById('taskDueDate').value = todayStr();
+  if(which==='t' && sw.classList.contains('on') && !document.getElementById('taskDueTime').value) document.getElementById('taskDueTime').value = '08:00';
+  if(which==='r' && sw.classList.contains('on') && 'Notification' in window && Notification.permission==='default') Notification.requestPermission();
+  taskDtPaint();
+}
 function openTaskModal(taskId){
   editingTaskId = taskId || null;
   const task = taskId ? data.tasks.find(t=>t.id===taskId) : null;
@@ -3845,27 +4011,41 @@ function openTaskModal(taskId){
   document.getElementById('taskModalTitle').textContent = task ? '編輯主要事項' : '新增主要事項';
   document.getElementById('taskTitle').value = task ? task.title : '';
   document.getElementById('taskDueDate').value = task ? (task.dueDate||'') : '';
+  document.getElementById('taskDueTime').value = task ? (task.dueTime||'') : '';
+  document.getElementById('taskDateSwitch').classList.toggle('on', !!(task && task.dueDate));
+  document.getElementById('taskTimeSwitch').classList.toggle('on', !!(task && task.dueDate && task.dueTime));
+  document.getElementById('taskReminderSwitch').classList.toggle('on', !!(task && task.dueDate && task.reminder));
+  taskDtPaint();
   document.getElementById('taskModal').classList.add('show');
 }
 function saveTask(){
   const title = document.getElementById('taskTitle').value.trim();
   if(!title){ notify('請輸入標題'); return; }
-  const dueDate = document.getElementById('taskDueDate').value;
+  const dOn = document.getElementById('taskDateSwitch').classList.contains('on');
+  const dueDate = dOn ? document.getElementById('taskDueDate').value : '';
+  if(dOn && !validYmd(dueDate)){ notify('請選擇日期'); return; }
+  const tOn = dOn && document.getElementById('taskTimeSwitch').classList.contains('on');
+  const dueTime = tOn ? document.getElementById('taskDueTime').value : '';
+  if(tOn && !/^\d{2}:\d{2}$/.test(dueTime)){ notify('請選擇時間'); return; }
+  const reminder = dOn && document.getElementById('taskReminderSwitch').classList.contains('on');
   const catField = document.getElementById('taskCatField');
   let categoryId = ui.catId;
   if(catField.style.display==='block'){
     categoryId = document.getElementById('taskCatSelect').value;
     if(!categoryId){ notify('請選擇歸類分類'); return; }
   }
+  let t;
   if(editingTaskId){
-    const t = data.tasks.find(x=>x.id===editingTaskId);
-    t.title = title; t.dueDate = dueDate; t.categoryId = categoryId;
+    t = data.tasks.find(x=>x.id===editingTaskId);
+    t.title = title; t.dueDate = dueDate; t.dueTime = dueTime; t.reminder = reminder; t.categoryId = categoryId;
   }else{
-    data.tasks.push({id:uid(), categoryId, title, dueDate, status:'pending', subtasks:[]});
+    t = {id:uid(), categoryId, title, dueDate, dueTime, reminder, status:'pending', subtasks:[]};
+    data.tasks.push(t);
   }
   editingTaskId = null;
   closeModal('taskModal');
   persist(); refreshAll();
+  syncTaskReminder(t);
 }
 
 let subModalTaskId = null;
@@ -3877,35 +4057,17 @@ function openSubModal(taskId, subId){
   const s = subId ? t.subtasks.find(x=>x.id===subId) : null;
   document.getElementById('subModalTitle').textContent = s ? '編輯細項' : '新增細項';
   document.getElementById('subTitle').value = s ? s.title : '';
-  if(s && s.time){
-    const [d, tm] = s.time.split('T');
-    document.getElementById('subDate').value = d || '';
-    document.getElementById('subTime').value = tm || '08:00';
-  }else{
-    document.getElementById('subDate').value='';
-    document.getElementById('subTime').value='08:00';
-  }
-  document.getElementById('subReminderSwitch').classList.toggle('on', !!(s && s.reminder));
   document.getElementById('subModal').classList.add('show');
 }
 function saveSubtask(){
   const title = document.getElementById('subTitle').value.trim();
   if(!title){ notify('請輸入標題'); return; }
-  const date = document.getElementById('subDate').value;
-  const timeOnly = document.getElementById('subTime').value || '08:00';
-  const time = date ? (date+'T'+timeOnly) : '';
-  const reminder = document.getElementById('subReminderSwitch').classList.contains('on');
   const t = data.tasks.find(x=>x.id===subModalTaskId);
   if(editingSubId){
-    const s = t.subtasks.find(x=>x.id===editingSubId);
-    s.title = title; s.time = time; s.reminder = reminder;
-    if(reminder && time){ scheduleReminder(t, s); writeReminderDoc(s.id, s.title, t.title, new Date(time).getTime()); }
-    else deleteReminderDoc(s.id);
+    t.subtasks.find(x=>x.id===editingSubId).title = title;
   }else{
-    const sub = {id:uid(), title, time, status:'pending', reminder};
-    t.subtasks.push(sub);
+    t.subtasks.push({id:uid(), title, status:'pending'});
     ui.expanded[t.id] = true;
-    if(reminder && time){ scheduleReminder(t, sub); writeReminderDoc(sub.id, sub.title, t.title, new Date(time).getTime()); }
   }
   editingSubId = null;
   closeModal('subModal');
@@ -3919,11 +4081,10 @@ function allTimedItems(){
   let items = [];
   const src = ui.catId==='overview' ? data.tasks : data.tasks.filter(t=>t.categoryId===ui.catId);
   src.forEach(t=>{
+    if(!t.dueDate) return;
     const cat = categoryOf(t.categoryId);
-    if(t.dueDate) items.push({title:t.title, time:t.dueDate+'T00:00', color:cat?cat.color:'#999', status:t.status, isDate:true});
-    (t.subtasks||[]).forEach(s=>{
-      if(s.time) items.push({title:s.title, time:s.time, color:cat?cat.color:'#999', status:s.status, parent:t.title});
-    });
+    /* 有設時間的事項顯示在那個時間;只有日期的顯示「截止」 */
+    items.push({title:t.title, time:t.dueDate+'T'+(t.dueTime||'00:00'), color:cat?cat.color:'#999', status:t.status, isDate:!t.dueTime});
   });
   if(ui.filter==='pending') items = items.filter(i=>i.status!=='done');
   if(ui.filter==='done') items = items.filter(i=>i.status==='done');
@@ -4160,20 +4321,20 @@ function renderDayDetail(){
   const selStr = ymdStr(ui.selectedDate.getFullYear(), ui.selectedDate.getMonth()+1, ui.selectedDate.getDate());
   box.innerHTML = `<h3>${label} 的事項<span style="font-weight:400;color:var(--ink-soft);font-size:11.5px;margin-left:8px;">${escapeHtml(infoLine)}</span></h3>` + specialDetailHtml(selStr) + (items.length? items.map(i=>`
     <div class="item-line" style="border-left-color:${i.color}">
-      <span class="t">${i.isDate? '截止' : fmtTime(i.time).split(' ')[1]}</span>${i.parent? `${escapeHtml(i.parent)} · `:''}${escapeHtml(i.title)}
+      <span class="t">${i.isDate? '截止' : fmtTime(i.time).split(' ')[1]}</span>${escapeHtml(i.title)}
     </div>`).join('') : `<div class="empty-state" style="padding:14px">當日無事項</div>`);
 }
 
-/* 今天心情:改到週日期條的「今天」格子。若在晚安動畫時段(20:00~隔天6:00)點擊,
+/* 今天心情:改到週日期條的「今天」格子。若在晚安動畫時段(20:00~隔天4:00)點擊,
    開啟完整的晚安回顧動畫(跟自動彈出的一樣);若在這個時段之外點擊,
    只開一個簡單的心情選擇視窗,轉場速度跟早安動畫一致(0.5秒淡入淡出),不跑完整動畫。 */
-/* 今天在20:00~隔天6:00(晚安時段)點擊 → 完整晚安動畫,存檔後會看到晚安動畫。
-   今天在6:00~20:00點擊 → 同樣是「今日完成＋選擇心情＋一句話」的卡片,但開關速度
+/* 今天在20:00~隔天4:00(晚安時段)點擊 → 完整晚安動畫,存檔後會看到晚安動畫。
+   今天在4:00~20:00點擊 → 同樣是「今日完成＋選擇心情＋一句話」的卡片,但開關速度
    跟早安動畫一樣快(0.5秒),存檔後直接關閉,不會跑完整的晚安動畫。
    過去的日期:第一次點只是切換成看那一天的打卡頁面,已經在那天了、再點一次才會
    開心情編輯(用跟白天一樣的快速卡片,畢竟不是正在經歷那個晚上)。未來不能設定。 */
 /* 「晚安時段」是綁在「被點的那一天」本身,不是只看現在的時鐘:
-   10/1的晚安時段是10/1 20:00到10/2 6:00(跨過午夜算同一段)。
+   10/1的晚安時段是10/1 20:00到10/2 4:00(跨過午夜算同一段)。
    這段時間內點10/1 → 完整晚安動畫。
    這段過了之後,10/1變成「昨天」,單次點擊就能打開簡化卡片(今日完成＋心情＋一句話,
    速度跟早安動畫一樣)。再更早的日子,要先點一次切換頁面,點第二次才打開同一張簡化卡片。
@@ -4236,7 +4397,7 @@ function openDayMoodFlow(dayStr){
   /* 切換到那天的打卡頁面,不管是過去、今天還是未來都可以點,跟以前一樣。
      「選心情」這件事:
      - 未來:永遠不能選,只切換頁面。
-     - 今天:只有在今天自己的晚安時段(20:00~隔天6:00)正在進行時才能選,
+     - 今天:只有在今天自己的晚安時段(20:00~隔天4:00)正在進行時才能選,
        這段時間之外,不管點幾次都不會打開,不是「點兩次」的問題。
        完整晚安動畫一天只會播一次:不管是自動跳出來播的,還是手動點兩次
        觸發播的,只要今天已經播過了(data.lastAutoRecapDate===today),
@@ -6130,7 +6291,7 @@ function confirmMoveNote(){
     const categoryId = document.getElementById('moveNoteCatSelect').value;
     if(!categoryId){ notify('請選擇分類'); return; }
     const dueDate = document.getElementById('moveNoteDateInput').value;
-    createdTask = {id:uid(), categoryId, title, dueDate, status:'pending', subtasks:[]};
+    createdTask = {id:uid(), categoryId, title, dueDate, dueTime:'', reminder:false, status:'pending', subtasks:[]};
     data.tasks.push(createdTask);
   }else{
     const name = document.getElementById('moveNoteHabitNameInput').value.trim();
@@ -6199,6 +6360,163 @@ function skipQuickNoteAnimation(note){
   if(inp) inp.focus();
 }
 
+
+/* ============================================================
+   特別的日子慶祝動畫(App 也有一樣的)
+   什麼時候:當天打開、資料載入完、早安動畫/每日提醒(或晚安回顧)都結束之後;同一天同一支手機只跳一次(記在這支手機上,不寫進雲端)。
+   哪些日子:節日(生日、紀念日…)、計算天數的每一個週年、整百天(1000 天以內每 100 天;之後 1500 天,以及 2000、3000、4000… 每 1000 天)。
+           計算天數的「起點」那天不慶祝。同一天好幾個:同一個畫面,第一個放大,其他列在下面。
+   設定頁可以關閉(資料欄位 specialCelebrateDisabled)。
+============================================================ */
+let pendingCelebrate = false, celebrateFx = null;
+function celebrateWorthDay(n){
+  if(n<=0 || n%100!==0) return false;
+  if(n<=1000) return true;
+  return n===1500 || (n>=2000 && n%1000===0);
+}
+function celebrateIconFor(name, type){
+  const n = name||'';
+  if(n.includes('生日')) return '🎂';
+  if(n.includes('畢業')) return '🎓';
+  if(n.includes('結婚') || n.includes('婚')) return '💍';
+  if(n.includes('聖誕')) return '🎄';
+  if(n.includes('新年') || n.includes('過年') || n.includes('春節')) return '🧧';
+  if(n.includes('情人')) return '💝';
+  if(n.includes('貓') || n.includes('狗') || n.includes('寵') || n.includes('毛孩') || n.includes('養')) return '🐾';
+  if(type==='anniv') return '💞';
+  if(type==='hundred') return '🏁';
+  return '🎉';
+}
+/* 某一天要慶祝的東西,主角排第一(節日 → 週年 → 整百天,同類保持原本順序) */
+function celebrateItemsFor(day){
+  const out = [], sp = specialsOn(day);
+  sp.festivals.forEach(sd=> out.push({ pri:0, icon:celebrateIconFor(sd.name,'festival'), kicker:'今天是', title:sd.name, text: sd.name.includes('生日') ? '生日快樂！' : '祝你有美好的一天。' }));
+  sp.marks.forEach(mk=>{
+    if(mk.type==='anniv') out.push({ pri:1, icon:celebrateIconFor(mk.sd.name,'anniv'), kicker:'恭喜', title:mk.text, text:'一起走過的每一天都值得慶祝。' });
+    else if(mk.type==='hundred' && celebrateWorthDay(mk.n)) out.push({ pri:2, icon:celebrateIconFor(mk.sd.name,'hundred'), kicker:'里程碑', title:mk.text, text:'累積了 '+mk.n+' 天，真不簡單。' });
+  });
+  return out.map((x,i)=>({x,i})).sort((a,b)=> a.x.pri-b.x.pri || a.i-b.i).map(o=>o.x);
+}
+function celebrateFlagKey(){ return 'jishibu_celebrate_'+currentStorageKey; }
+function celebrateAnyOverlayOpen(){
+  return !!document.querySelector('#dailyBriefOverlay.show, #nightRecapOverlay.show, #celebrateOverlay.show, .overlay.show, .modal-overlay.show');
+}
+function maybeShowCelebrate(){
+  if(!data || data.specialCelebrateDisabled) return false;
+  const today = todayStr();
+  let seenDay = null; try{ seenDay = localStorage.getItem(celebrateFlagKey()); }catch(e){}
+  if(seenDay===today) return false;
+  const items = celebrateItemsFor(today);
+  if(!items.length) return false;
+  if(celebrateAnyOverlayOpen()) return false;      /* 手上正開著別的畫面:這次不插隊,也不算已跳過 */
+  try{ localStorage.setItem(celebrateFlagKey(), today); }catch(e){}
+  showCelebrate(items);
+  return true;
+}
+/* 這一輪自動跳出的畫面都結束了:輪到慶祝 */
+function celebrateChainEnd(){
+  if(!pendingCelebrate) return;
+  pendingCelebrate = false;
+  setTimeout(maybeShowCelebrate, 350);
+}
+function showCelebrate(items){
+  if(!items.length) return;
+  const main = items[0], ov = document.getElementById('celebrateOverlay');
+  document.getElementById('celebrateIcon').textContent = main.icon;
+  document.getElementById('celebrateKicker').textContent = main.kicker;
+  document.getElementById('celebrateTitle').textContent = main.title;
+  document.getElementById('celebrateText').textContent = main.text;
+  document.getElementById('celebrateText').style.display = main.text ? '' : 'none';
+  const more = items.slice(1).map(x=>x.title).join('、');
+  document.getElementById('celebrateMore').textContent = more ? '另外：'+more : '';
+  document.getElementById('celebrateMore').style.display = more ? '' : 'none';
+  const rgb = (getComputedStyle(document.body).backgroundColor.match(/\d+/g)||[250,250,250]).map(Number);
+  ov.classList.toggle('dark', (0.2126*rgb[0]+0.7152*rgb[1]+0.0722*rgb[2])/255 < 0.4);
+  if(celebrateCloseTimer){ clearTimeout(celebrateCloseTimer); celebrateCloseTimer = 0; celebrateClosing = false; }   /* 關到一半又要開:取消關閉,直接換成新內容 */
+  ov.classList.remove('in'); ov.classList.add('show');
+  requestAnimationFrame(()=> requestAnimationFrame(()=> ov.classList.add('in')));
+  startCelebrateFx();
+}
+let celebrateClosing = false, celebrateCloseTimer = 0;
+function closeCelebrate(){
+  const ov = document.getElementById('celebrateOverlay');
+  if(!ov.classList.contains('show') || celebrateClosing) return;
+  celebrateClosing = true;
+  ov.classList.remove('in');
+  celebrateCloseTimer = setTimeout(()=>{ celebrateCloseTimer = 0; ov.classList.remove('show'); stopCelebrateFx(); celebrateClosing = false; }, 450);
+}
+function stopCelebrateFx(){
+  if(celebrateFx){ cancelAnimationFrame(celebrateFx.raf); celebrateFx = null; }
+  const cv = document.getElementById('celebrateFx'); const g = cv.getContext('2d'); g.clearRect(0,0,cv.width,cv.height);
+}
+/* 彩帶和氣球:氣球由下往上飄;彩帶兩側先炸開,再從上面輕輕飄落約 7 秒,全部落完就停,不再空轉 */
+function startCelebrateFx(){
+  stopCelebrateFx();
+  if(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const cv = document.getElementById('celebrateFx'), g = cv.getContext('2d');
+  const dpr = Math.min(window.devicePixelRatio||1, 2);
+  const W = cv.clientWidth, H = cv.clientHeight;
+  cv.width = Math.round(W*dpr); cv.height = Math.round(H*dpr);
+  g.setTransform(dpr,0,0,dpr,0,0);
+  const COLORS = ['#E8A33D','#D9604C','#3A6B5E','#6FB3A0','#F2C94C','#8E6BBF','#4A90C2'], R = Math.random;
+  const parts = [], balloons = [];
+  for(let i=0;i<6;i++) balloons.push({ x:W*(.08+.84*i/5)+(R()-.5)*20, y:H+60+R()*120, r:17+R()*7, vy:1.4+R()*.8, ph:R()*6, c:COLORS[i%COLORS.length] });
+  const burst = (x,y,n,spread,speed)=>{ for(let i=0;i<n;i++){ const a=-Math.PI/2+(R()-.5)*spread, v=speed*(.5+R());
+    parts.push({ x,y, vx:Math.cos(a)*v, vy:Math.sin(a)*v, w:5+R()*5, h:8+R()*7, r:R()*6, vr:(R()-.5)*.35, ph:R()*6, c:COLORS[(R()*COLORS.length)|0] }); } };
+  const drizzle = ()=> parts.push({ x:R()*W, y:-12, vx:(R()-.5)*1.2, vy:1.2+R()*1.8, w:5+R()*4, h:8+R()*6, r:R()*6, vr:(R()-.5)*.25, ph:R()*6, c:COLORS[(R()*COLORS.length)|0] });
+  const st = { raf:0 }; celebrateFx = st;
+  let t0 = performance.now(), last = t0, burstDone = false;
+  const frame = (now)=>{
+    const f = Math.min((now-last)/1000, .05)*60; last = now;      /* 以 60 張/秒為 1 的時間比例,掉幀也不會跳 */
+    const t = (now-t0)/1000;
+    g.clearRect(0,0,W,H);
+    let anyBalloon = false;
+    for(const b of balloons){
+      b.y -= b.vy*f;
+      if(b.y < -80) continue;
+      anyBalloon = true;
+      const x = b.x+Math.sin(t*1.6+b.ph)*6;
+      g.strokeStyle='rgba(120,120,120,.55)'; g.lineWidth=1; g.beginPath(); g.moveTo(x,b.y+b.r*1.25);
+      g.quadraticCurveTo(x+Math.sin(t*2+b.ph)*6, b.y+b.r*2.4, x, b.y+b.r*3.2); g.stroke();
+      g.fillStyle=b.c; g.beginPath(); g.ellipse(x,b.y,b.r,b.r*1.25,0,0,Math.PI*2); g.fill();
+      g.fillStyle='rgba(255,255,255,.35)'; g.beginPath(); g.ellipse(x-b.r*.35,b.y-b.r*.42,b.r*.22,b.r*.38,0,0,Math.PI*2); g.fill();
+    }
+    if(!burstDone && t>.08){ burstDone = true; burst(W*.12,H*.78,46,1.2,13); burst(W*.88,H*.78,46,1.2,13); }
+    if(t>.6 && t<7 && R()<.5*f) drizzle();
+    for(let i=parts.length-1;i>=0;i--){
+      const p = parts[i];
+      p.vy += .16*f; const damp = Math.pow(.992,f); p.vx*=damp; p.vy*=damp;
+      p.x += (p.vx+Math.sin(t*3+p.ph)*.5)*f; p.y += p.vy*f; p.r += p.vr*f;
+      if(p.y > H+30){ parts.splice(i,1); continue; }
+      g.save(); g.translate(p.x,p.y); g.rotate(p.r); g.scale(1,Math.cos(p.r*1.3)); g.fillStyle=p.c; g.fillRect(-p.w/2,-p.h/2,p.w,p.h); g.restore();
+    }
+    if(t>9 && !parts.length && !anyBalloon){ celebrateFx = null; return; }
+    st.raf = requestAnimationFrame(frame);
+  };
+  st.raf = requestAnimationFrame(frame);
+}
+function updateCelebrateSwitch(){
+  const sw = document.getElementById('celebrateSwitch');
+  if(sw) sw.classList.toggle('on', !data.specialCelebrateDisabled);
+}
+function toggleCelebrateSwitch(){
+  data.specialCelebrateDisabled = !data.specialCelebrateDisabled;
+  persist();
+  updateCelebrateSwitch();
+  flashToast(data.specialCelebrateDisabled ? '已關閉慶祝動畫' : '已開啟慶祝動畫');
+}
+function devTriggerCelebrate(){
+  if(!isDevUser()) return;
+  closeModal('devToolsModal');
+  let items = celebrateItemsFor(todayStr());
+  if(!items.length) items = [
+    { pri:0, icon:'🎂', kicker:'今天是', title:'媽媽生日', text:'生日快樂！' },
+    { pri:2, icon:'🏁', kicker:'里程碑', title:'在一起 第 400 天', text:'' }];
+  showCelebrate(items);
+  flashToast('已手動觸發慶祝動畫');
+}
+function celebrateDevReset(){ try{ localStorage.removeItem(celebrateFlagKey()); }catch(e){} }
+
 /* ============================================================
    每日提醒
 ============================================================ */
@@ -6224,20 +6542,13 @@ function showDailyBrief(withGreeting, briefOff){
   dailyBriefContentSkipped = !!briefOff;
   const day = todayStr();
   const dueTasks = data.tasks.filter(t=> t.status!=='done' && t.dueDate && t.dueDate<=day);
-  const todaySubtasks = [];
-  data.tasks.forEach(t=>{
-    (t.subtasks||[]).forEach(s=>{
-      if(s.status!=='done' && s.time && s.time.slice(0,10)===day) todaySubtasks.push(s);
-    });
-  });
   const pendingHabits = data.habits.filter(h=> !habitHasLog(h, day));
 
   let html = `<h2 style="margin:0 0 16px;font-size:18px;">今天要做的事</h2>`;
-  if(dueTasks.length===0 && todaySubtasks.length===0 && pendingHabits.length===0){
+  if(dueTasks.length===0 && pendingHabits.length===0){
     html += `<p class="brief-empty">今天沒有排定的事項，輕鬆的一天！</p>`;
   }else{
     if(dueTasks.length) html += `<div class="brief-section"><div class="brief-label">到期或逾期的事項</div>${dueTasks.map(t=>`<div class="brief-item">${escapeHtml(t.title)}</div>`).join('')}</div>`;
-    if(todaySubtasks.length) html += `<div class="brief-section"><div class="brief-label">今天的細項</div>${todaySubtasks.map(s=>`<div class="brief-item">${escapeHtml(s.title)}</div>`).join('')}</div>`;
     if(pendingHabits.length) html += `<div class="brief-section"><div class="brief-label">今天還沒打卡的習慣</div>${pendingHabits.map(h=>`<div class="brief-item">${escapeHtml(h.name)}</div>`).join('')}</div>`;
   }
   document.getElementById('dailyBriefContent').innerHTML = html;
@@ -6271,6 +6582,7 @@ function advanceFromMorningGreeting(){
       greetScreen.style.display = 'none';
       SceneAnim.stop('morning');
       overlay.classList.remove('show');
+      celebrateChainEnd();
     }, 500);
     return;
   }
@@ -6288,6 +6600,7 @@ function closeDailyBrief(){
   setTimeout(()=>{
     overlay.classList.remove('show','fading-out');
     SceneAnim.stop('morning');
+    celebrateChainEnd();
   }, 500);
 }
 
@@ -6329,13 +6642,6 @@ function buildRecapSummaryHtml(day){
       if(t.completedAt===day) doneItems.push(t.title);
     }else if(t.dueDate && t.dueDate < day) overdueItems.push(t.title);
     else if(t.dueDate === day) undoneItems.push(t.title);
-    (t.subtasks||[]).forEach(s=>{
-      if(!s.time) return;
-      const sDay = s.time.slice(0,10);
-      if(sDay !== day) return;
-      if(s.status==='done') doneItems.push(s.title);
-      else undoneItems.push(s.title);
-    });
   });
   /* 標題要跟著「看的是哪一天」:看今天寫「今天」,看昨天寫「昨天」,更早的日子寫「當天」(以前一律寫「今天」,凌晨或看過去日期時會對不上) */
   const dayWord = day===getRecapDateStr() ? getRecapLabel() : (day===todayStr() ? '今天' : (day===dateStrOffset(-1) ? '昨天' : '當天'));
@@ -6425,15 +6731,20 @@ function saveNightRecap(){
     showGoodnightScreen();
   }
 }
+/* 晚安回顧結束後:如果還有早安/每日提醒要接著跳就跳,都沒有了就輪到慶祝 */
+function continueAfterRecap(){
+  if(pendingMorningBriefAfterRecap){
+    pendingMorningBriefAfterRecap = false;
+    if(maybeShowDailyBrief()) return;
+  }
+  celebrateChainEnd();
+}
 function closeNightRecapQuick(){
   const overlay = document.getElementById('nightRecapOverlay');
   overlay.classList.add('fading-out');
   setTimeout(()=>{
     overlay.classList.remove('show','fading-out','quick-transition');
-    if(pendingMorningBriefAfterRecap){
-      pendingMorningBriefAfterRecap = false;
-      maybeShowDailyBrief();
-    }
+    continueAfterRecap();
   }, 500);
 }
 function showGoodnightScreen(){
@@ -6456,10 +6767,7 @@ function closeFromGoodnight(){
     overlay.classList.remove('show','fading-out');
     screen.style.display = 'none';
     SceneAnim.stop('night');
-    if(pendingMorningBriefAfterRecap){
-      pendingMorningBriefAfterRecap = false;
-      maybeShowDailyBrief();
-    }
+    continueAfterRecap();
   }, 1000);
 }
 function closeNightRecap(){
@@ -6468,10 +6776,7 @@ function closeNightRecap(){
   overlay.classList.add('fading-out');
   setTimeout(()=>{
     overlay.classList.remove('show','fading-out');
-    if(pendingMorningBriefAfterRecap){
-      pendingMorningBriefAfterRecap = false;
-      maybeShowDailyBrief();
-    }
+    continueAfterRecap();
   }, 1000);
 }
 function dismissDailyBriefToday(){
@@ -6528,9 +6833,6 @@ function openSummary(range){
   let completedTasks = 0;
   data.tasks.forEach(t=>{
     if(t.status==='done') completedTasks++;
-    (t.subtasks||[]).forEach(s=>{
-      if(s.status==='done' && s.time && dateList.includes(s.time.slice(0,10))) completedTasks++;
-    });
   });
 
   const habitRows = data.habits.map(h=>{
@@ -6742,6 +7044,7 @@ function devResetShownFlags(){
   data.morningGreetingShownDate = null;
   data.lastAutoRecapDate = null;
   data.dailyBriefDismissedDate = null;
+  celebrateDevReset();
   persist();
   flashToast('已重置今天的顯示標記,重新整理後會再自動跳出一次');
 }
