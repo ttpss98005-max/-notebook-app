@@ -976,16 +976,15 @@
         </div>
       </div>
       <div class="setting-block">
-        <h3>推播通知</h3>
+        <h3>通知</h3>
         <div class="row-inline" style="max-width:300px;">
-          <label style="margin:0;font-size:13px;">背景推播提醒（App沒開也會響）</label>
-          <button class="switch" id="pushSwitch" role="switch" aria-label="背景推播提醒" onclick="togglePushSwitch()"></button>
+          <label style="margin:0;font-size:13px;">背景通知提醒</label>
+          <button class="switch" id="pushSwitch" role="switch" aria-label="背景通知提醒" onclick="togglePushSwitch()"></button>
         </div>
         <div class="row-inline" style="max-width:300px;margin-top:14px;">
-          <label style="margin:0;font-size:13px;">早晚安推播</label>
-          <button class="switch" id="greetPushSwitch" role="switch" aria-label="早晚安推播" onclick="toggleGreetPush()"></button>
+          <label style="margin:0;font-size:13px;">早晚安通知</label>
+          <button class="switch" id="greetPushSwitch" role="switch" aria-label="早晚安通知" onclick="toggleGreetPush()"></button>
         </div>
-        <div class="fee-hint" style="margin-top:6px;">早上 4:00 提醒今天的習慣，晚上 8:00 提醒你回顧今天。實際送出可能晚幾分鐘。</div>
       </div>
       <div class="setting-block">
         <h3>每日提醒</h3>
@@ -1432,15 +1431,15 @@
     </div>
     <div class="fee-hint">平常要等特定時間才會自動出現的動畫，可以在這裡直接看。觸發時這個視窗會先關掉。</div>
 
-    <div class="dev-group">推播測試</div>
+    <div class="dev-group">通知測試</div>
     <div class="dev-btns">
-      <button class="btn-ghost" onclick="devCheckPushStatus()">檢查推播狀態</button>
+      <button class="btn-ghost" onclick="devCheckPushStatus()">檢查通知狀態</button>
       <button class="btn-ghost" onclick="devTestLocalNotification()">測試本機通知（立刻跳出，不經過雲端）</button>
-      <button class="btn-ghost" onclick="devTestFullPush()">測試完整推播（經過雲端，約5分鐘內）</button>
+      <button class="btn-ghost" onclick="devTestFullPush()">測試完整通知（經過雲端，約5分鐘內）</button>
       <button class="btn-ghost" onclick="devListScheduledNotifications()">查看已排入的通知</button>
     </div>
     <div class="fee-hint" id="devPushStatus" style="margin-top:10px;white-space:pre-line;"></div>
-    <div class="fee-hint" style="margin-top:6px;">完整推播測試：送出後請把 App 切到背景或關閉。App 開在畫面上時，推播只會變成畫面內的提示，不會跳系統通知。</div>
+    <div class="fee-hint" style="margin-top:6px;">完整通知測試：送出後請把 App 切到背景或關閉。App 開在畫面上時，通知只會變成畫面內的提示，不會跳系統通知。</div>
 
     <div class="modal-actions"><button class="btn-primary" onclick="closeModal('devToolsModal')">關閉</button></div>
   </div>
@@ -2515,7 +2514,7 @@ function initFirebase(){
 }
 
 /* ============================================================
-   推播通知（Firebase Cloud Messaging）
+   通知（Firebase Cloud Messaging）
    到 Firebase Console →專案設定 →Cloud Messaging →「網頁 Push 憑證」
    產生一組金鑰，換掉下面的 VAPID_KEY。
 ============================================================ */
@@ -2523,7 +2522,7 @@ const VAPID_KEY = 'BM15AF6_tlv-axwTfJr1oN07_QuOTadwqMpJrKRNCtJ-rIpqA31pJCdvJIhDr
 let fcmMessaging = null;
 function isPushConfigured(){ return VAPID_KEY && !VAPID_KEY.startsWith('YOUR_'); }
 
-/* App 開著時收到推播:顯示在畫面內。只註冊一次(重複註冊會讓同一則通知跳好幾次) */
+/* App 開著時收到通知:顯示在畫面內。只註冊一次(重複註冊會讓同一則通知跳好幾次) */
 let fcmOnMessageRegistered = false;
 function registerForegroundPush(){
   if(fcmOnMessageRegistered || !fcmMessaging) return;
@@ -2534,7 +2533,7 @@ function registerForegroundPush(){
     notify(title + (body? '：'+body : ''));
   });
 }
-/* 已經允許過通知的話,每次登入都重新確認這支手機的推播代碼(代碼可能會換,舊的就收不到通知了) */
+/* 已經允許過通知的話,每次登入都重新確認這支手機的通知代碼(代碼可能會換,舊的就收不到通知了) */
 async function refreshPushRegistration(){
   try{
     if(!isPushConfigured() || !('Notification' in window) || Notification.permission!=='granted') return;
@@ -2545,28 +2544,28 @@ async function refreshPushRegistration(){
     const token = await fcmMessaging.getToken({ vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
     if(token) await fbDb.collection('deviceTokens').doc(token).set({ uid: currentStorageKey, updatedAt: Date.now() });
     registerForegroundPush();
-  }catch(e){ console.error('更新推播註冊失敗', e); }
+  }catch(e){ console.error('更新通知註冊失敗', e); }
 }
 async function enablePushNotifications(){
-  if(!isPushConfigured()){ notify('尚未設定推播金鑰，請參考說明設定後再試。'); return; }
+  if(!isPushConfigured()){ notify('尚未設定通知金鑰，請參考說明設定後再試。'); return; }
   if(!('serviceWorker' in navigator) || !window.firebase || !firebase.messaging){
-    notify('這個瀏覽器不支援推播通知。'); return;
+    notify('這個瀏覽器不支援通知。'); return;
   }
   try{
     const permission = await Notification.requestPermission();
-    if(permission !== 'granted'){ notify('沒有允許通知權限，無法開啟推播。'); return; }
+    if(permission !== 'granted'){ notify('沒有允許通知權限，無法開啟通知。'); return; }
     const reg = swRegistration || await navigator.serviceWorker.register('service-worker.js');
     fcmMessaging = firebase.messaging();
     const token = await fcmMessaging.getToken({ vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
     if(token && fbDb && currentStorageKey){
       await fbDb.collection('deviceTokens').doc(token).set({ uid: currentStorageKey, updatedAt: Date.now() });
-      notify('推播通知已開啟！');
+      notify('通知已開啟！');
       updatePushSwitch(true);
     }
     registerForegroundPush();
   }catch(e){
-    console.error('開啟推播失敗', e);
-    notify('開啟推播失敗，請稍後再試。');
+    console.error('開啟通知失敗', e);
+    notify('開啟通知失敗，請稍後再試。');
   }
 }
 function updatePushSwitch(on){
@@ -2593,20 +2592,20 @@ async function deleteReminderDoc(id){
   if(!fbDb) return;
   try{ await fbDb.collection('reminders').doc(id).delete(); }catch(e){}
 }
-/* ===== 每日通知:早安／清單／晚安,排進現有的推播系統(reminders集合) =====
+/* ===== 每日通知:早安／清單／晚安,排進現有的通知系統(reminders集合) =====
    App會把未來7天的通知寫進reminders,到時間由後端排程送到手機。
    每次打開App、改設定、離開App時都會重新同步,內容用當下的資料重寫。
    文件ID固定(種類+日期+使用者),重寫只會覆蓋,不會重複;
    而且只寫「還沒到時間」的那幾筆,所以不會把已經送出的標記洗掉造成重複送。 */
 /* 「晚安時間」只有這一個:晚安通知、晚安動畫、晚安回顧、選心情,全部從這個時間開始。
    以前通知的時間和動畫的時間是各寫各的(通知可以比動畫早),結果通知先跳出來,點進去卻還沒到晚安時間。 */
-const MORNING_START_TIME = '04:00';     /* 「早安時間」也只有這一個:早安通知、早安動畫、今天要做的事,全部從這個時間開始 */
+const MORNING_START_TIME = '06:00';     /* 「早安時間」也只有這一個:早安通知、早安動畫、今天要做的事,全部從這個時間開始 */
 const MORNING_START_MINUTES = (p=>p[0]*60+p[1])(MORNING_START_TIME.split(':').map(Number));     /* 從上面那個時間算出來,不再另外寫一個數字(以前兩個寫的不一樣,造成早安動畫比通知晚出現) */
 const MORNING_END_HOUR = 12;            /* 中午 12:00 之後不再自動跳早安動畫(只剩手動看「今天要做的事」) */
 function isMorningStarted(now){ now = now || new Date(); return now.getHours()*60+now.getMinutes() >= MORNING_START_MINUTES; }
 const NIGHT_START_TIME = '20:00';
 const NIGHT_START_MINUTES = (p=>p[0]*60+p[1])(NIGHT_START_TIME.split(':').map(Number));
-const NIGHT_END_HOUR = MORNING_START_MINUTES/60;     /* 晚安時段:當天 20:00 起,到隔天早安時間(4:00)前;跟早安起點永遠是同一個值 */
+const NIGHT_END_HOUR = MORNING_START_MINUTES/60;     /* 晚安時段:當天 20:00 起,到隔天早安時間(6:00)前;跟早安起點永遠是同一個值 */
 function isNightStarted(now){ now = now || new Date(); return now.getHours()*60+now.getMinutes() >= NIGHT_START_MINUTES; }
 const NOTIFY_KINDS = {
   morning:{ time:MORNING_START_TIME },
@@ -2708,8 +2707,8 @@ function renderNotifySettings(){
   const sw = document.getElementById('greetPushSwitch');
   if(sw) sw.classList.toggle('on', greetPushOn());
 }
-/* 「早晚安推播」:一個開關同時管早上 4:00 和晚上 8:00 兩則。
-   還沒打開「背景推播提醒」(沒有通知權限)的話,會先幫你走一次開啟推播的流程 */
+/* 「早晚安通知」:一個開關同時管早上 6:00 和晚上 20:00 兩則。
+   還沒打開「背景通知提醒」(沒有通知權限)的話,會先幫你走一次開啟通知的流程 */
 async function toggleGreetPush(){
   ensureNotifySettings();
   const turnOn = !greetPushOn();
@@ -4316,16 +4315,16 @@ function renderDayDetail(){
     </div>`).join('') : `<div class="empty-state" style="padding:14px">當日無事項</div>`);
 }
 
-/* 今天心情:改到週日期條的「今天」格子。若在晚安動畫時段(20:00~隔天4:00)點擊,
+/* 今天心情:改到週日期條的「今天」格子。若在晚安動畫時段(20:00~隔天6:00)點擊,
    開啟完整的晚安回顧動畫(跟自動彈出的一樣);若在這個時段之外點擊,
    只開一個簡單的心情選擇視窗,轉場速度跟早安動畫一致(0.5秒淡入淡出),不跑完整動畫。 */
-/* 今天在20:00~隔天4:00(晚安時段)點擊 → 完整晚安動畫,存檔後會看到晚安動畫。
-   今天在4:00~20:00點擊 → 同樣是「今日完成＋選擇心情＋一句話」的卡片,但開關速度
+/* 今天在20:00~隔天6:00(晚安時段)點擊 → 完整晚安動畫,存檔後會看到晚安動畫。
+   今天在6:00~20:00點擊 → 同樣是「今日完成＋選擇心情＋一句話」的卡片,但開關速度
    跟早安動畫一樣快(0.5秒),存檔後直接關閉,不會跑完整的晚安動畫。
    過去的日期:第一次點只是切換成看那一天的打卡頁面,已經在那天了、再點一次才會
    開心情編輯(用跟白天一樣的快速卡片,畢竟不是正在經歷那個晚上)。未來不能設定。 */
 /* 「晚安時段」是綁在「被點的那一天」本身,不是只看現在的時鐘:
-   10/1的晚安時段是10/1 20:00到10/2 4:00(跨過午夜算同一段)。
+   10/1的晚安時段是10/1 20:00到10/2 6:00(跨過午夜算同一段)。
    這段時間內點10/1 → 完整晚安動畫。
    這段過了之後,10/1變成「昨天」,單次點擊就能打開簡化卡片(今日完成＋心情＋一句話,
    速度跟早安動畫一樣)。再更早的日子,要先點一次切換頁面,點第二次才打開同一張簡化卡片。
@@ -4388,7 +4387,7 @@ function openDayMoodFlow(dayStr){
   /* 切換到那天的打卡頁面,不管是過去、今天還是未來都可以點,跟以前一樣。
      「選心情」這件事:
      - 未來:永遠不能選,只切換頁面。
-     - 今天:只有在今天自己的晚安時段(20:00~隔天4:00)正在進行時才能選,
+     - 今天:只有在今天自己的晚安時段(20:00~隔天6:00)正在進行時才能選,
        這段時間之外,不管點幾次都不會打開,不是「點兩次」的問題。
        完整晚安動畫一天只會播一次:不管是自動跳出來播的,還是手動點兩次
        觸發播的,只要今天已經播過了(data.lastAutoRecapDate===today),
@@ -5536,12 +5535,12 @@ function saveSalaryDetail(){
 function renderSalaryBlockHeader(){
   const y = expenseUi.monthDate.getFullYear(), m = expenseUi.monthDate.getMonth();
   const key = expenseMonthKeyOf(expenseUi.monthDate);
-  const pay = salaryPayDate(y, m);
-  document.getElementById('salaryBlockTitle').textContent = (m+1)+'月薪資（'+pay.pm+'/'+pay.day+' 發放）';
+  document.getElementById('salaryBlockTitle').textContent = (m+1)+'月薪資';
   document.getElementById('salaryBlockHint').textContent =
     !(Number(data.payroll.baseSalary)>0) ? '先到「薪資設定」填底薪，薪水才會在發薪日自動入帳'
     : data.salaryRecorded[key] ? '這個月的薪水已入帳，之後再改請假不會變動已入帳的金額'
-    : (m+1)+'月的請假天數，會在 '+pay.pm+'/'+pay.day+' 薪水入帳時一併扣除，不會馬上動到存款';
+    : '';
+  document.getElementById('salaryBlockHint').style.display = document.getElementById('salaryBlockHint').textContent ? '' : 'none';
 }
 
 /* ===== 帳戶（銀行／現金）===== */
@@ -7020,32 +7019,32 @@ function devTriggerNight(){
   showNightRecap(getRecapDateStr());
   flashToast('已手動觸發晚安動畫');
 }
-/* ===== 推播測試(只有開發者帳號看得到) ===== */
+/* ===== 通知測試(只有開發者帳號看得到) ===== */
 async function devPushTokenState(){
   const perm = ('Notification' in window) ? Notification.permission : 'unsupported';
   if(perm==='unsupported') return {ok:false, text:'這個瀏覽器不支援通知'};
-  if(perm!=='granted') return {ok:false, text:'通知權限：'+({denied:'已封鎖',default:'尚未詢問'}[perm]||perm)+'（請先到設定頁打開「背景推播提醒」並允許通知）'};
-  if(!window.firebase || !firebase.messaging) return {ok:false, text:'Firebase 推播元件沒有載入（請檢查網路）'};
+  if(perm!=='granted') return {ok:false, text:'通知權限：'+({denied:'已封鎖',default:'尚未詢問'}[perm]||perm)+'（請先到設定頁打開「背景通知提醒」並允許通知）'};
+  if(!window.firebase || !firebase.messaging) return {ok:false, text:'Firebase 通知元件沒有載入（請檢查網路）'};
   if(!fbDb || !currentStorageKey) return {ok:false, text:'尚未連上雲端資料庫'};
-  /* 第1步:向推播服務取得這支手機的代碼 */
+  /* 第1步:向通知服務取得這支手機的代碼 */
   let token;
   try{
     const reg = swRegistration || await navigator.serviceWorker.getRegistration();
     if(!reg) return {ok:false, text:'Service Worker 尚未註冊'};
     token = await firebase.messaging().getToken({ vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
   }catch(e){
-    return {ok:false, text:'向推播服務取得代碼失敗：'+(e.code||e.message||e)};
+    return {ok:false, text:'向通知服務取得代碼失敗：'+(e.code||e.message||e)};
   }
-  if(!token) return {ok:false, text:'取不到這支手機的推播代碼'};
-  /* 第2步:寫進資料庫(跟打開推播開關時做的事一模一樣)。
+  if(!token) return {ok:false, text:'取不到這支手機的通知代碼'};
+  /* 第2步:寫進資料庫(跟打開通知開關時做的事一模一樣)。
      這裡只「寫」不「讀」:資料庫規則通常只允許寫入 deviceTokens,讀取會被擋(permission-denied)。 */
   try{
     await fbDb.collection('deviceTokens').doc(token).set({ uid: currentStorageKey, updatedAt: Date.now() });
   }catch(e){
     const code = e.code||e.message||e;
-    return {ok:false, text:'已取得推播代碼，但寫入資料庫失敗：'+code+(e.code==='permission-denied'?'（資料庫規則不允許寫入 deviceTokens）':'')};
+    return {ok:false, text:'已取得通知代碼，但寫入資料庫失敗：'+code+(e.code==='permission-denied'?'（資料庫規則不允許寫入 deviceTokens）':'')};
   }
-  return {ok:true, text:'已取得這支手機的推播代碼，並確認登記到資料庫（…'+token.slice(-6)+'）'};
+  return {ok:true, text:'已取得這支手機的通知代碼，並確認登記到資料庫（…'+token.slice(-6)+'）'};
 }
 async function devCheckPushStatus(){
   if(!isDevUser()) return;
@@ -7063,7 +7062,7 @@ async function devTestLocalNotification(){
   if(perm!=='granted'){ flashToast('通知權限沒有開（目前：'+perm+'）'); return; }
   try{
     const reg = swRegistration || await navigator.serviceWorker.getRegistration() || await navigator.serviceWorker.register('service-worker.js');
-    await reg.showNotification('推播測試（本機）', { body:'看到這則通知，代表這支手機可以顯示通知。', icon:'icon-192.png', badge:'icon-notification.png' });
+    await reg.showNotification('通知測試（本機）', { body:'看到這則通知，代表這支手機可以顯示通知。', icon:'icon-192.png', badge:'icon-notification.png' });
     flashToast('已送出，請看通知列');
   }catch(e){
     flashToast('顯示通知失敗：'+(e.message||e));
@@ -7075,7 +7074,7 @@ async function devTestFullPush(){
   const st = await devPushTokenState();
   if(!st.ok){ box.textContent = '✗ '+st.text; flashToast('還不能測試，原因在下方'); return; }
   const id = 'devtest_'+Date.now();
-  await writeReminderDoc(id, '推播測試（完整流程）', '看到這則通知，代表 後端排程→推播服務→手機 整條路都通了。', Date.now());
+  await writeReminderDoc(id, '通知測試（完整流程）', '看到這則通知，代表 後端排程→通知服務→手機 整條路都通了。', Date.now());
   box.textContent = '✓ 已排入測試提醒（'+new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'})+'）。請把 App 切到背景，約 5 分鐘內應該會收到通知。';
   flashToast('已排入，請把 App 切到背景');
 }
