@@ -405,7 +405,10 @@
   .habit-grid-name.checked{color:var(--ink-soft);}
   .habit-dot{width:9px;height:9px;border-radius:50%;background:var(--accent);flex-shrink:0;}
   .habit-name-col{display:flex;flex-direction:column;gap:2px;min-width:0;}
-  .habit-name-col .del-link{align-self:flex-start;padding:0;font-size:10.5px;color:#C7C3B8;background:none;border:none;}
+  .habit-name-col .del-link{align-self:flex-start;padding:4px;color:#B9B5A8;background:none;border:none;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;}
+  .habit-name-col .del-link .ic{width:14px;height:14px;}
+  .habit-name-col .del-link:hover{color:var(--accent);background:var(--accent-soft);}
+  .habit-name-col .del-link.del:hover{color:var(--danger);background:#FBECEA;}
   .habit-grid-check{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:#F1F0EA;padding:10px 6px;}
   .streak-badge{font-size:10.5px;color:var(--accent);background:var(--accent-soft);padding:3px 9px;border-radius:999px;white-space:nowrap;font-weight:700;}
   .habit-value-input{width:64px;padding:6px 4px;border:1.5px solid var(--border);border-radius:10px;font-size:12px;text-align:center;font-family:inherit;}
@@ -780,12 +783,23 @@
   .habit-sidebar-item:last-child{border-bottom:none;}
   .habit-sidebar-item-name{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:3px;}
   .habit-sidebar-item-freq{font-size:12px;color:var(--ink-soft);margin-bottom:8px;}
-  .habit-sidebar-item-actions{display:flex;gap:14px;}
-  .habit-sidebar-item-actions button{background:none;border:none;font-size:12.5px;color:var(--accent);padding:0;}
-  .habit-sidebar-item-actions button.danger{color:var(--danger);}
+  .habit-sidebar-item-actions{display:flex;gap:4px;margin-left:-6px;}
   .habit-sidebar-empty{color:var(--ink-soft);font-size:13px;text-align:center;padding:30px 0;}
   .overlay.show{display:flex;}
   .modal{background:#fff;border-radius:24px;padding:28px;max-width:360px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25);color:#1A1A1A;max-height:calc(100vh - 40px);overflow-y:auto;}
+  /* 視窗的捲軸:原本是系統預設的粗捲軸(有上下箭頭),貼著圓角會露出怪角。改成細的圓角捲軸、沒有箭頭,軌道上下留白避開圓角 */
+  .modal::-webkit-scrollbar,.habit-sidebar-panel::-webkit-scrollbar{width:12px;}
+  .modal::-webkit-scrollbar-track{background:transparent;margin:22px 0;}
+  .habit-sidebar-panel::-webkit-scrollbar-track{background:transparent;margin:8px 0;}
+  .modal::-webkit-scrollbar-thumb,.habit-sidebar-panel::-webkit-scrollbar-thumb{background:#D3CFC3;border-radius:999px;border:3px solid transparent;background-clip:padding-box;}
+  .modal::-webkit-scrollbar-thumb:hover,.habit-sidebar-panel::-webkit-scrollbar-thumb:hover{background:#B9B5A8;background-clip:padding-box;}
+  .modal::-webkit-scrollbar-button,.habit-sidebar-panel::-webkit-scrollbar-button{display:none;width:0;height:0;}
+  html::-webkit-scrollbar{width:12px;}
+  html::-webkit-scrollbar-track{background:transparent;}
+  html::-webkit-scrollbar-thumb{background:#D3CFC3;border-radius:999px;border:3px solid transparent;background-clip:padding-box;}
+  html::-webkit-scrollbar-thumb:hover{background:#B9B5A8;background-clip:padding-box;}
+  html::-webkit-scrollbar-button{display:none;width:0;height:0;}
+  @supports not selector(::-webkit-scrollbar){ html,.modal,.habit-sidebar-panel{scrollbar-width:thin;scrollbar-color:#D3CFC3 transparent;} }
   .fee-hint{font-size:11px;color:var(--ink-soft);margin-top:4px;}
   .modal h3{margin:0 0 18px;font-size:16px;}
   .field{margin-bottom:15px;}
@@ -1352,9 +1366,11 @@
       <label>每月幾號要做（可多選）</label>
       <div class="monthday-picker" id="habitMonthdaysPicker"></div>
     </div>
-    <div class="field">
-      <label>每日提醒時間（可留空）</label>
-      <input type="time" id="habitRemindTime">
+    <div class="dt-row">
+      <div class="dt-col off" id="habitTimeCol">
+        <div class="row-inline"><label>提醒時間</label><button class="switch" id="habitTimeSwitch" role="switch" aria-checked="false" aria-label="提醒時間" onclick="toggleHabitTime()"></button></div>
+        <input type="time" id="habitRemindTime" aria-label="提醒時間" disabled>
+      </div>
     </div>
     <div class="modal-actions">
       <button class="btn-ghost" onclick="closeModal('habitModal')">取消</button>
@@ -1406,7 +1422,10 @@
       <div class="icon-picker" id="newCatIconPicker"></div>
       <button class="btn-ghost" style="margin-top:10px;" onclick="addCustomCategory()">新增分類</button>
     </div>
-    <div class="modal-actions"><button class="btn-primary" onclick="closeModal('categoryManageModal')">完成</button></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="cancelCategoryManage()">取消</button>
+      <button class="btn-primary" onclick="finishCategoryManage()">完成</button>
+    </div>
   </div>
 </div>
 
@@ -1443,8 +1462,9 @@
     <h3>特別的日子</h3>
     <div id="specialDaysList"></div>
     <div class="modal-actions">
-      <button class="btn-ghost" onclick="openSpecialEdit()">＋ 新增</button>
-      <button class="btn-primary" onclick="closeModal('specialDaysModal')">完成</button>
+      <button class="btn-ghost" style="margin-right:auto;" onclick="openSpecialEdit()">＋ 新增</button>
+      <button class="btn-ghost" onclick="cancelSpecialDays()">取消</button>
+      <button class="btn-primary" onclick="finishSpecialDays()">完成</button>
     </div>
   </div>
 </div>
@@ -1460,7 +1480,6 @@
         <button type="button" class="sp-kind-btn on" data-kind="festival" onclick="setSpecialKind('festival')">日期</button>
         <button type="button" class="sp-kind-btn" data-kind="count" onclick="setSpecialKind('count')">計算天數</button>
       </div>
-      <div class="fee-hint" id="spKindHint"></div>
     </div>
     <div class="field"><label>名稱</label><input type="text" id="spName" maxlength="30"></div>
     <div class="field"><label id="spDateLabel">日期</label><input type="date" id="spDate" min="1900-01-01" max="2200-12-31"></div>
@@ -1559,7 +1578,7 @@
     </div>
     <div class="field"><label>分類</label><select id="recurringCategory"></select></div>
     <div class="field"><label>扣款帳戶</label><select id="recurringAccount"></select></div>
-    <div class="field"><label>開始日期（之前的日期不會補記）</label><input type="date" id="recurringStart"></div>
+    <div class="field"><label>開始日期</label><input type="date" id="recurringStart"></div>
     <div class="modal-actions">
       <button class="btn-ghost" onclick="closeModal('recurringModal')">取消</button>
       <button class="btn-primary" onclick="saveRecurring()">儲存</button>
@@ -1595,19 +1614,19 @@
     <div class="field"><label>底薪</label><input type="number" id="payrollBaseSalary" placeholder="0" oninput="autoFillInsurance()"></div>
     <div class="field"><label>每月發薪日</label><input type="number" id="payrollSalaryDay" min="1" max="31" placeholder="例如：5"></div>
     <div class="field">
-      <label>薪資發放月份（這個月的薪水在哪個月發）</label>
+      <label>薪資發放月份</label>
       <div class="pill-tabs" id="payrollPayMonthSeg">
         <button class="pill-tab" id="payrollPayMonthThisBtn" onclick="setPayMonthOffset(0)">當月發</button>
         <button class="pill-tab" id="payrollPayMonthNextBtn" onclick="setPayMonthOffset(1)">次月發</button>
       </div>
     </div>
     <div class="field"><label>薪資入帳帳戶</label><select id="payrollAccountSelect"></select></div>
-    <div class="field"><label>健保眷屬人數（0~3，超過 3 人以 3 人計）</label><input type="number" id="payrollHealthDependents" min="0" max="3" step="1" placeholder="0" oninput="autoFillInsurance()"></div>
-    <div class="field"><label>勞保每月自付金額（依底薪級距自動帶入，可自行修改）</label><input type="number" id="payrollLaborFee" placeholder="0"><div class="fee-hint" id="payrollLaborHint"></div></div>
-    <div class="field"><label>健保每月自付金額（依底薪級距自動帶入，可自行修改）</label><input type="number" id="payrollHealthFee" placeholder="0"><div class="fee-hint" id="payrollHealthHint"></div></div>
-    <div class="field"><label>勞退自提（%，0 代表不自提，可填 1~6）</label><input type="number" id="payrollPensionSelfRate" min="0" max="6" step="1" placeholder="0"></div>
+    <div class="field"><label>健保眷屬人數</label><input type="number" id="payrollHealthDependents" min="0" max="3" step="1" placeholder="0" oninput="autoFillInsurance()"></div>
+    <div class="field"><label>勞保每月自付金額</label><input type="number" id="payrollLaborFee" placeholder="0"><div class="fee-hint" id="payrollLaborHint"></div></div>
+    <div class="field"><label>健保每月自付金額</label><input type="number" id="payrollHealthFee" placeholder="0"><div class="fee-hint" id="payrollHealthHint"></div></div>
+    <div class="field"><label>勞退自提（%）</label><input type="number" id="payrollPensionSelfRate" min="0" max="6" step="1" placeholder="0"></div>
     <div class="field">
-      <label>請假扣薪計算基準（每日薪資 = 底薪 ÷ 此基準）</label>
+      <label>請假扣薪計算基準</label>
       <div class="pill-tabs" id="payrollDivisorSeg">
         <button class="pill-tab" id="payrollDivisorWorkBtn" onclick="setPayrollDivisor('workdays')">工作天</button>
         <button class="pill-tab" id="payrollDivisorMonthBtn" onclick="setPayrollDivisor('monthdays')">當月天數</button>
@@ -1632,7 +1651,7 @@
       <input type="number" id="payrollSickFixedAmount" placeholder="固定扣款金額（每天）" style="margin-top:8px;display:none;">
     </div>
     <div class="field">
-      <label>自訂加項（每月固定加給，例如全勤獎金、津貼）</label>
+      <label>自訂加項（獎金、津貼等）</label>
       <div id="payrollAdditionList"></div>
       <div class="row-inline" style="max-width:100%;margin-top:8px;gap:8px;">
         <input type="text" id="newAdditionName" placeholder="項目名稱" style="flex:1;min-width:0;">
@@ -1641,7 +1660,7 @@
       </div>
     </div>
     <div class="field">
-      <label>自訂扣款項目（每月固定扣除）</label>
+      <label>自訂扣款項目</label>
       <div id="payrollDeductionList"></div>
       <div class="row-inline" style="max-width:100%;margin-top:8px;gap:8px;">
         <input type="text" id="newDeductionName" placeholder="項目名稱" style="flex:1;">
@@ -1650,7 +1669,7 @@
       </div>
     </div>
     <div class="modal-actions">
-      <button class="btn-ghost" onclick="closeModal('payrollModal')">關閉</button>
+      <button class="btn-ghost" onclick="cancelPayrollModal()">取消</button>
       <button class="btn-primary" onclick="savePayrollSettings()">儲存</button>
     </div>
   </div>
@@ -4189,7 +4208,15 @@ function specialDetailHtml(dateStr){
   return lines.length ? `<div class="sp-detail">${lines.join('')}</div>` : '';
 }
 function refreshSpecialViews(){ renderSpecialDaysList(); renderCalendar(); renderWeek(); }
-function openSpecialDays(){ renderSpecialDaysList(); document.getElementById('specialDaysModal').classList.add('show'); }
+/* 特別的日子裡新增、修改、刪除都是當下就存;按「取消」要還原成打開時的樣子 */
+let specialSnap = null;
+function openSpecialDays(){ specialSnap = JSON.stringify(data.specialDays); renderSpecialDaysList(); document.getElementById('specialDaysModal').classList.add('show'); }
+function finishSpecialDays(){ specialSnap = null; closeModal('specialDaysModal'); }
+function cancelSpecialDays(){
+  const sn = specialSnap; specialSnap = null;
+  if(sn && JSON.stringify(data.specialDays)!==sn){ data.specialDays = JSON.parse(sn); persist(); refreshSpecialViews(); }
+  closeModal('specialDaysModal');
+}
 function renderSpecialDaysList(){
   const box = document.getElementById('specialDaysList'); if(!box) return;
   if(!data.specialDays.length){ box.innerHTML = `<div class="empty-state" style="padding:18px 8px;">還沒有特別的日子。<br>按下方「＋ 新增」，可以加生日、紀念日，或是計算在一起、養寵物已經過了幾天。</div>`; return; }
@@ -4217,7 +4244,6 @@ function setSpecialKind(kind){
 function updateSpecialForm(){
   const kind = document.getElementById('spKind').value, k = SPECIAL_KINDS[kind];
   document.querySelectorAll('#spKinds .sp-kind-btn').forEach(b=> b.classList.toggle('on', b.dataset.kind===kind));
-  document.getElementById('spKindHint').textContent = kind==='festival' ? '生日、紀念日、節日。可以設定每年重複。' : '從起算日開始算第幾天，例如在一起、養寵物。起算日那天是第 1 天。';
   document.getElementById('spName').placeholder = k.namePh;
   document.getElementById('spDateLabel').textContent = k.dateLabel;
   document.getElementById('spYearlyRow').style.display = kind==='festival' ? 'flex' : 'none';
@@ -4376,8 +4402,8 @@ function renderHabitSidebarList(){
       <div class="habit-sidebar-item-name">${escapeHtml(h.name)}</div>
       <div class="habit-sidebar-item-freq">${habitFreqLabel(h)}</div>
       <div class="habit-sidebar-item-actions">
-        <button onclick="habitSidebarEdit('${h.id}')">編輯</button>
-        <button class="danger" onclick="deleteHabit('${h.id}')">刪除</button>
+        <button class="icon-btn" aria-label="編輯" onclick="habitSidebarEdit('${h.id}')">${ICON_EDIT}</button>
+        <button class="icon-btn del" aria-label="刪除" onclick="deleteHabit('${h.id}')">${ICON_DEL}</button>
       </div>
     </div>`).join('');
 }
@@ -4534,6 +4560,21 @@ function habitScheduledOn(h, day){
   if(h.freq==='monthly') return (h.monthdays||[]).includes(d.getDate());
   return true;
 }
+function habitTimePaint(){
+  const on = document.getElementById('habitTimeSwitch').classList.contains('on');
+  document.getElementById('habitTimeCol').classList.toggle('off',!on);
+  document.getElementById('habitRemindTime').disabled = !on;
+  document.getElementById('habitTimeSwitch').setAttribute('aria-checked',on);
+}
+function toggleHabitTime(){
+  const sw = document.getElementById('habitTimeSwitch'), inp = document.getElementById('habitRemindTime');
+  sw.classList.toggle('on');
+  if(sw.classList.contains('on')){
+    if(!inp.value) inp.value = '08:00';
+    if('Notification' in window && Notification.permission==='default') Notification.requestPermission();
+  }
+  habitTimePaint();
+}
 function openHabitModal(habitId){
   editingHabitId = habitId || null;
   const h = editingHabitId ? data.habits.find(x=>x.id===editingHabitId) : null;
@@ -4542,6 +4583,8 @@ function openHabitModal(habitId){
   document.getElementById('habitName').value = h ? h.name : '';
   document.getElementById('habitUnit').value = '';
   document.getElementById('habitRemindTime').value = h && h.remindTime ? h.remindTime : '';
+  document.getElementById('habitTimeSwitch').classList.toggle('on', !!(h && h.remindTime));
+  habitTimePaint();
   habitFreqSelected = (h && h.freq) || 'daily';
   habitWeekdaysSelected = (h && h.weekdays) ? h.weekdays.slice() : [];
   habitMonthdaysSelected = (h && h.monthdays) ? h.monthdays.slice() : [];
@@ -4563,7 +4606,7 @@ function openHabitModal(habitId){
 function saveHabit(){
   const name = document.getElementById('habitName').value.trim();
   if(!name){ notify('請輸入習慣名稱'); return; }
-  const remindTime = document.getElementById('habitRemindTime').value || null;
+  const remindTime = (document.getElementById('habitTimeSwitch').classList.contains('on') && document.getElementById('habitRemindTime').value) || null;
   if(habitFreqSelected==='weekly' && habitWeekdaysSelected.length===0){ notify('請選擇每週要做的星期'); return; }
   if(habitFreqSelected==='monthly' && habitMonthdaysSelected.length===0){ notify('請選擇每月要做的日期'); return; }
   if(editingHabitId){
@@ -4881,9 +4924,9 @@ function renderHabitCheckin(){
         <span class="habit-dot"></span>
         <div class="habit-name-col">
           <div>${escapeHtml(h.name)}</div>
-          <div style="display:flex;gap:8px;">
-            <button class="del-link" onclick="openHabitModal('${h.id}')">編輯</button>
-            <button class="del-link" onclick="deleteHabit('${h.id}')">刪除</button>
+          <div style="display:flex;gap:4px;margin-left:-4px;">
+            <button class="del-link" aria-label="編輯" onclick="openHabitModal('${h.id}')">${ICON_EDIT}</button>
+            <button class="del-link del" aria-label="刪除" onclick="deleteHabit('${h.id}')">${ICON_DEL}</button>
           </div>
         </div>
       </div>
@@ -5567,7 +5610,26 @@ function fillAccountSelect(selectId, selectedId){
 const CATEGORY_ICON_CHOICES = ['food','transport','shopping','entertainment','home','medical','pet','travel','education','utility','gift','other'];
 let catManageUi = { type:'expense', newIcon:'other' };
 
+/* 分類設定的「取消」:新增、改名、預算、刪除(含「帳改成其他」)都是按下去就存,所以開視窗時先留一份,取消就整個還原 */
+let catManageSnap = null;
+function finishCategoryManage(){ catManageSnap = null; closeModal('categoryManageModal'); }
+function cancelCategoryManage(){
+  const sn = catManageSnap; catManageSnap = null;
+  if(sn){
+    const catsChanged = JSON.stringify(data.expenseCategories)!==sn.ec || JSON.stringify(data.incomeCategories)!==sn.ic || JSON.stringify(data.categoryBudgets)!==sn.cb;
+    const was = new Map(sn.ex);
+    const moved = data.expenses.filter(e=> was.has(e.id) && was.get(e.id)!==e.category);
+    if(catsChanged || moved.length){
+      data.expenseCategories = JSON.parse(sn.ec); data.incomeCategories = JSON.parse(sn.ic); data.categoryBudgets = JSON.parse(sn.cb);
+      moved.forEach(e=>{ e.category = was.get(e.id); });
+      persist();
+      renderExpensePage();
+    }
+  }
+  closeModal('categoryManageModal');
+}
 function openCategoryManageModal(){
+  catManageSnap = { ec:JSON.stringify(data.expenseCategories), ic:JSON.stringify(data.incomeCategories), cb:JSON.stringify(data.categoryBudgets), ex:data.expenses.map(e=>[e.id,e.category]) };
   catManageUi.type = 'expense';
   catManageUi.newIcon = 'other';
   document.getElementById('newCatName').value = '';
@@ -6094,7 +6156,19 @@ function deleteExpense(id){
   renderExpensePage();
 }
 
+/* 薪資設定的「取消」:開關類的設定(請假規則、發薪月份、加項、扣項)按下去就已經存了,所以開視窗時先留一份,取消就還原回去 */
+let payrollSnapshot = null;
+function cancelPayrollModal(){
+  if(payrollSnapshot!==null && JSON.stringify(data.payroll)!==payrollSnapshot){
+    data.payroll = JSON.parse(payrollSnapshot);
+    persist();
+    renderExpensePage();
+  }
+  payrollSnapshot = null;
+  closeModal('payrollModal');
+}
 function openPayrollModal(){
+  payrollSnapshot = JSON.stringify(data.payroll);
   const p = data.payroll;
   document.getElementById('payrollBaseSalary').value = p.baseSalary || '';
   document.getElementById('payrollSalaryDay').value = p.salaryDay || '';
@@ -6184,6 +6258,7 @@ function savePayrollSettings(){
   p.personalRule.fixedAmount = Number(document.getElementById('payrollPersonalFixedAmount').value)||0;
   p.sickRule.fixedAmount = Number(document.getElementById('payrollSickFixedAmount').value)||0;
   persist();
+  payrollSnapshot = null;
   closeModal('payrollModal');
   renderExpensePage();
   flashToast('薪資設定已儲存');
