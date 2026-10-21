@@ -973,7 +973,6 @@
         </div>
         <div id="devToolsEntry" style="display:none;margin-top:14px;">
           <button class="btn-ghost" onclick="openDevTools()">開發者工具</button>
-          <div class="fee-hint" style="margin-top:6px;">只有開發者帳號看得到，一般使用者的設定頁沒有這個按鈕。</div>
         </div>
       </div>
       <div class="setting-block">
@@ -987,14 +986,6 @@
           <button class="switch" id="greetPushSwitch" role="switch" aria-label="早晚安推播" onclick="toggleGreetPush()"></button>
         </div>
         <div class="fee-hint" style="margin-top:6px;">早上 4:00 提醒今天的習慣，晚上 8:00 提醒你回顧今天。實際送出可能晚幾分鐘。</div>
-      </div>
-      <div class="setting-block">
-        <h3>桌面小工具（Android）</h3>
-        <div class="fee-hint" style="margin:0 0 8px;">先在手機安裝「記事簿小工具」App，再按下面的按鈕，就會把月曆小工具連到你的資料。連結碼等於登入憑證，不要貼給別人。</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="btn-ghost" onclick="linkWidgetApp()">連結桌面小工具</button>
-          <button class="btn-ghost" onclick="copyWidgetCode()">複製連結碼</button>
-        </div>
       </div>
       <div class="setting-block">
         <h3>每日提醒</h3>
@@ -1027,14 +1018,12 @@
         <h3>資料備份</h3>
         <div class="data-size-text" id="dataSizeText"></div>
         <div class="data-size-bar"><div class="data-size-fill" id="dataSizeFill"></div></div>
-        <div class="fee-hint" id="dataSizeHint" style="margin:6px 0 4px;"></div>
         <div class="fee-hint" id="dataArchiveInfo" style="margin:0 0 12px;"></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
           <button class="btn-ghost" onclick="exportBackup()">匯出備份檔</button>
           <button class="btn-ghost" onclick="document.getElementById('restoreFileInput').click()">從備份檔還原</button>
         </div>
         <input type="file" id="restoreFileInput" accept=".json,application/json" style="display:none" onchange="restoreBackupFromFile(this)">
-        <div class="fee-hint" style="margin-top:8px;">資料每天會自動在雲端備份一份（保留最近 30 天）。這裡的備份檔是存在你自己手機裡的另一份。</div>
       </div>
       <div class="setting-block">
         <h3>書籤</h3>
@@ -1045,7 +1034,7 @@
         <div class="palette-grid" id="paletteGrid"></div>
       </div>
       <div class="setting-block">
-        <h3>各分類專屬配色（可個別指定，不設定則跟隨整體）</h3>
+        <h3>各分類專屬配色</h3>
         <div id="categoryPaletteList"></div>
       </div>
       <button class="btn-ghost" onclick="resetTheme()">重設為預設外觀</button>
@@ -2584,28 +2573,6 @@ function updatePushSwitch(on){
   const sw = document.getElementById('pushSwitch');
   if(sw) sw.classList.toggle('on', !!on);
 }
-/* ===== 桌面小工具(Android 原生 App)連結 =====
-   把「登入憑證(refresh token)+資料位置+網站網址」包成一串連結碼。
-   按「連結桌面小工具」會用 jishibuwidget:// 開啟已安裝的小工具 App;打不開時可以複製連結碼,貼到小工具 App 裡。 */
-function buildWidgetCode(){
-  const u = (window.firebase && firebase.auth) ? firebase.auth().currentUser : null;
-  if(!u || !u.refreshToken || !currentStorageKey) return null;
-  const payload = { v:1, t:u.refreshToken, k:currentStorageKey, e:u.email||'', o:new URL('./', location.href).href };
-  const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
-  return b64.replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-}
-function linkWidgetApp(){
-  const code = buildWidgetCode();
-  if(!code){ notify('請先登入後再連結。'); return; }
-  location.href = 'jishibuwidget://link?code=' + code;
-  setTimeout(()=>{ notify('如果沒有跳到小工具 App,請先安裝它,或改按「複製連結碼」。'); }, 1500);
-}
-async function copyWidgetCode(){
-  const code = buildWidgetCode();
-  if(!code){ notify('請先登入後再複製。'); return; }
-  try{ await navigator.clipboard.writeText(code); notify('已複製連結碼,到小工具 App 貼上即可。'); }
-  catch(e){ window.prompt('請手動複製這串連結碼:', code); }
-}
 function togglePushSwitch(){
   const sw = document.getElementById('pushSwitch');
   if(sw && sw.classList.contains('on')) return;
@@ -3284,9 +3251,7 @@ function renderDataInfo(){
     fill.style.width = pct+'%';
     fill.classList.toggle('warn', bytes>=SIZE_WARN_BYTES && bytes<SIZE_DANGER_BYTES);
     fill.classList.toggle('danger', bytes>=SIZE_DANGER_BYTES);
-    const total = parts.reduce((t,x)=>t+x.n,0) || 1, shown = parts.filter(x=>Math.round(x.n/total*100)>=1);
     const ai = document.getElementById('dataArchiveInfo'); if(ai) ai.textContent = arch.length ? '已把 '+arch.join('、')+' 年的舊資料壓縮收納，查看時一樣正常。' : '';
-    document.getElementById('dataSizeHint').textContent = shown.length ? '佔最多的是：'+shown.map(x=>x.name+' '+Math.round(x.n/total*100)+'%').join('、') : '';
   }, 120);
 }
 function exportBackup(){
