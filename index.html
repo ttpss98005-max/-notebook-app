@@ -206,7 +206,6 @@
   /* 清單的排序按鈕、拖動把手 */
   .toolbar-right{display:flex;align-items:center;gap:8px;}
   .sort-btn{background:#F1F0EA;border:none;border-radius:10px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;color:var(--ink);flex-shrink:0;}
-  .sort-btn.on{background:var(--accent-soft);color:var(--accent);}
   .sort-btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
   .task-row.has-handle{padding-left:6px;}
   .task-row .drag-handle{padding:5px 5px;margin:1px -4px 0 0;}
@@ -1698,12 +1697,13 @@
   <div class="modal">
     <h3>排序</h3>
     <div id="sortModeList"></div>
-    <div class="field" id="sortDirField" style="margin-top:14px;margin-bottom:0;">
+    <div class="field" style="margin-top:14px;margin-bottom:0;">
       <label>順序</label>
       <div class="pill-tabs" id="sortDirSeg"></div>
     </div>
     <div class="modal-actions">
-      <button class="btn-primary" onclick="closeModal('sortModal')">完成</button>
+      <button class="btn-ghost" onclick="closeModal('sortModal')">取消</button>
+      <button class="btn-primary" onclick="applyTaskSort()">排序</button>
     </div>
   </div>
 </div>
@@ -2078,6 +2078,7 @@ function normalizeData(){
   data.specialDays.forEach(x=>{ x.name = x.name.trim().slice(0,30); if(!/^[\w-]+$/.test(String(x.id||''))) x.id = uid(); x.yearly = x.kind==='festival' ? x.yearly!==false : false; });
   delete data.calShowLunar;     /* 舊版有「月曆顯示農曆」的開關,已經拿掉,農曆固定顯示 */
   delete data.theme;
+  delete data.taskSort;         /* 清單排序一度會存起來、自動套用,現在改成按「排序」才整理一次,不用存 */
   if(!data.globalPaletteId) data.globalPaletteId = 'p01';
   if(data.lastAutoRecapDate===undefined) data.lastAutoRecapDate = null;
   if(data.nightRecapDisabled===undefined) data.nightRecapDisabled = false;
@@ -3684,29 +3685,24 @@ function visibleTasks(filterMode){
   if(ui.catId !== 'overview') list = list.filter(t=>t.categoryId===ui.catId);
   if(filterMode==='pending') list = list.filter(t=>t.status!=='done');
   if(filterMode==='done') list = list.filter(t=>t.status==='done');
-  return sortTasks(list);
+  return list;
 }
 
-/* ---------- 清單排序:日期 / 名稱 / 新增時間;都不選就是自己拖動的順序(長按把手拖動,拖了就取消排序);設定存在 data.taskSort,網頁和 App 共用 ---------- */
-const TASK_SORT_MODES = [['date','日期'], ['name','名稱'], ['created','新增時間']];   /* 都沒選(manual)= 照自己拖動的順序 */
+/* ---------- 清單排序:按「排序」才整理一次(日期 / 名稱 / 新增時間),整理完就是普通的順序;之後改日期、拖動都不會自己再跑掉 ---------- */
+const TASK_SORT_MODES = [['date','日期'], ['name','名稱'], ['created','新增時間']];
 const TASK_SORT_DIRS = {
   date:    ['最早在前','最晚在前'],
   name:    ['正序','倒序'],
   created: ['最舊在前','最新在前']
 };
-function taskSortCfg(){
-  const s = (data && data.taskSort) || {};
-  return { mode: TASK_SORT_MODES.some(m=>m[0]===s.mode) ? s.mode : 'manual', dir: s.dir==='desc' ? 'desc' : 'asc' };
-}
+let sortPick = { mode:'date', dir:'asc' };      /* 排序視窗裡目前選的(只是選項,不存起來) */
 /* 新增時間:id 的最後 8 碼是建立當下的時間(base36);看不出來的(舊資料)當成最舊,同時間的照原本順序 */
 function taskCreatedMs(t){
   const id = String((t && t.id) || '');
   const ms = id.length>=13 ? parseInt(id.slice(-8), 36) : NaN;
   return (ms>=1.4e12 && ms<3.2e12) ? ms : 0;
 }
-function sortTasks(list){
-  const {mode, dir} = taskSortCfg();
-  if(mode==='manual') return list;
+function sortTasks(list, mode, dir){
   const sgn = dir==='desc' ? -1 : 1;
   const pos = new Map(data.tasks.map((t,i)=>[t,i]));
   return list.slice().sort((a,b)=>{
@@ -3725,35 +3721,31 @@ function sortTasks(list){
     return c || (pos.get(a)-pos.get(b));
   });
 }
-/* 按選項:選了就套用(順序從「最早在前」那一邊開始);再按一次已選的 = 取消,回到自己拖動的順序 */
-function pickTaskSort(mode){
-  if(taskSortCfg().mode===mode) setTaskSort('manual','asc');
-  else setTaskSort(mode,'asc');
-}
-function setTaskSort(mode, dir){
-  data.taskSort = { mode, dir };
-  persist();
-  renderTaskList();
-  renderSortModal();
-}
-function updateSortBtn(){
-  const b = document.getElementById('sortBtn');
-  if(b) b.classList.toggle('on', taskSortCfg().mode!=='manual');
-}
 function openSortModal(){
   renderSortModal();
   document.getElementById('sortModal').classList.add('show');
 }
+function pickSortMode(mode){ sortPick = { mode, dir:'asc' }; renderSortModal(); }
+function pickSortDir(dir){ sortPick.dir = dir; renderSortModal(); }
 function renderSortModal(){
-  const {mode, dir} = taskSortCfg();
+  const {mode, dir} = sortPick;
   document.getElementById('sortModeList').innerHTML = TASK_SORT_MODES.map(m=>
-    `<button type="button" class="sort-opt ${m[0]===mode?'sel':''}" role="radio" aria-checked="${m[0]===mode}" onclick="pickTaskSort('${m[0]}')"><span class="rd"></span>${m[1]}</button>`).join('');
-  const labels = TASK_SORT_DIRS[mode];
-  document.getElementById('sortDirField').style.display = labels ? 'block' : 'none';
-  document.getElementById('sortDirSeg').innerHTML = labels ? labels.map((l,i)=>{
+    `<button type="button" class="sort-opt ${m[0]===mode?'sel':''}" role="radio" aria-checked="${m[0]===mode}" onclick="pickSortMode('${m[0]}')"><span class="rd"></span>${m[1]}</button>`).join('');
+  document.getElementById('sortDirSeg').innerHTML = TASK_SORT_DIRS[mode].map((l,i)=>{
     const d = i===0 ? 'asc' : 'desc';
-    return `<button type="button" class="pill-tab ${d===dir?'active':''}" onclick="setTaskSort('${mode}','${d}')">${l}</button>`;
-  }).join('') : '';
+    return `<button type="button" class="pill-tab ${d===dir?'active':''}" onclick="pickSortDir('${d}')">${l}</button>`;
+  }).join('');
+}
+/* 按下「排序」:把現在看得到的事項整理成選的順序(看不到的別的分類、已完成維持不動),5 秒內可以復原 */
+function applyTaskSort(){
+  const {mode, dir} = sortPick;
+  const shown = visibleTasks(ui.filter);
+  closeModal('sortModal');
+  if(shown.length<2) return;
+  const prev = data.tasks.slice();
+  if(!commitTaskOrder(sortTasks(shown, mode, dir).map(t=>t.id))) return;
+  persist(); renderTaskList();
+  showUndoToast('已依'+TASK_SORT_MODES.find(m=>m[0]===mode)[1]+'排序', ()=>{ data.tasks = prev; persist(); }, ()=>renderTaskList());
 }
 /* 拖動完成後,把看得到的幾個事項照新順序填回它們原本佔的位置,看不到的(別的分類、已完成)維持不動 */
 function commitTaskOrder(ids){
@@ -3852,7 +3844,6 @@ function buildTaskHtml(list){
 
 function renderTaskList(){
   document.getElementById('taskList').innerHTML = buildTaskHtml(visibleTasks(ui.filter));
-  updateSortBtn();
 }
 function refreshAll(){ renderTaskList(); renderCalendar(); renderWeek(); }
 
@@ -4755,7 +4746,6 @@ function commitHabitOrder(container, rowSel){
 }
 function commitTaskDrag(container, rowSel){
   commitTaskOrder(Array.from(container.querySelectorAll(rowSel)).map(r=> r.dataset.taskId));
-  data.taskSort = { mode:'manual', dir:'asc' };      /* 自己拖了順序,就不再套用排序 */
   persist();
   renderTaskList();
 }
