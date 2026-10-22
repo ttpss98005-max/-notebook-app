@@ -978,8 +978,8 @@
       <div class="setting-block">
         <h3>通知</h3>
         <div class="row-inline" style="max-width:300px;">
-          <label style="margin:0;font-size:13px;">背景通知提醒</label>
-          <button class="switch" id="pushSwitch" role="switch" aria-label="背景通知提醒" onclick="togglePushSwitch()"></button>
+          <label style="margin:0;font-size:13px;">通知提醒</label>
+          <button class="switch" id="pushSwitch" role="switch" aria-label="通知提醒" onclick="togglePushSwitch()"></button>
         </div>
         <div class="row-inline" style="max-width:300px;margin-top:14px;">
           <label style="margin:0;font-size:13px;">早晚安通知</label>
@@ -2708,7 +2708,7 @@ function renderNotifySettings(){
   if(sw) sw.classList.toggle('on', greetPushOn());
 }
 /* 「早晚安通知」:一個開關同時管早上 6:00 和晚上 20:00 兩則。
-   還沒打開「背景通知提醒」(沒有通知權限)的話,會先幫你走一次開啟通知的流程 */
+   還沒打開「通知提醒」(沒有通知權限)的話,會先幫你走一次開啟通知的流程 */
 async function toggleGreetPush(){
   ensureNotifySettings();
   const turnOn = !greetPushOn();
@@ -7023,7 +7023,7 @@ function devTriggerNight(){
 async function devPushTokenState(){
   const perm = ('Notification' in window) ? Notification.permission : 'unsupported';
   if(perm==='unsupported') return {ok:false, text:'這個瀏覽器不支援通知'};
-  if(perm!=='granted') return {ok:false, text:'通知權限：'+({denied:'已封鎖',default:'尚未詢問'}[perm]||perm)+'（請先到設定頁打開「背景通知提醒」並允許通知）'};
+  if(perm!=='granted') return {ok:false, text:'通知權限：'+({denied:'已封鎖',default:'尚未詢問'}[perm]||perm)+'（請先到設定頁打開「通知提醒」並允許通知）'};
   if(!window.firebase || !firebase.messaging) return {ok:false, text:'Firebase 通知元件沒有載入（請檢查網路）'};
   if(!fbDb || !currentStorageKey) return {ok:false, text:'尚未連上雲端資料庫'};
   /* 第1步:向通知服務取得這支手機的代碼 */
