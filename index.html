@@ -859,174 +859,35 @@
   .quicknote-del::after,.bm-del::after,.recap-close::after,.habit-sidebar-close::after,.ex-del::after,.sd-x::after,.acc-btn.del::after,.habit-week-arrow::after,.expand-arrow::after,.cal-nav-btn::after,.drag-handle::after{content:'';position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%);}
   .bm-add-card{background:#fff;border:1.5px dashed var(--border);border-radius:16px;display:flex;align-items:center;justify-content:center;color:var(--ink-soft);font-size:12.5px;min-height:50px;}
 
-  /* ============ 新手教學(練習舞台) ============ */
-/* 手機 */
-#tutStage .phone{flex:0 0 auto;width:min(340px,100%);height:640px;border-radius:34px;border:8px solid #22262a;background:var(--app-bg);position:relative;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.18)}
-#tutStage .bar{height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 14px 0 16px;background:var(--card);border-bottom:1px solid var(--line)}
-#tutStage .bar svg.logo{width:26px;height:26px}
-#tutStage .bar .ico{display:flex;gap:7px}
-#tutStage .bar .ico button{width:32px;height:32px;border-radius:50%;border:0;background:var(--chip);color:var(--soft);display:grid;place-items:center;padding:0}
-#tutStage .bar .ico svg{width:18px;height:18px}
-#tutStage .pillrow{position:absolute;top:53px;left:0;right:0;padding:10px 14px 0}
-#tutStage .pill{display:inline-block;background:var(--accent);color:var(--on-accent);border-radius:999px;padding:7px 16px;font-size:12.5px;font-weight:700}
-#tutStage .screen{position:absolute;inset:53px 0 56px 0;padding:14px;overflow:hidden}
-#tutStage .screen.p{top:101px}
-#tutStage .btn{display:inline-block;background:var(--accent);color:var(--on-accent);border-radius:999px;padding:7px 14px;font-size:12px;font-weight:700}
-#tutStage .btn.g{background:var(--chip);color:var(--soft)}
-#tutStage .rowr{display:flex;justify-content:flex-end;margin-bottom:10px;gap:6px;flex-wrap:wrap;align-items:center}
-#tutStage .bar2{position:absolute;left:12px;right:12px;bottom:66px;background:var(--card);border:1.5px solid var(--line);border-radius:18px;padding:8px 8px 8px 14px;display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--soft);min-height:44px}
-#tutStage .bar2 .tx{flex:1;min-width:0;color:var(--ink)}
-#tutStage .bar2 .tx.ph{color:var(--soft)}
-#tutStage .bar2 b{background:var(--accent);color:var(--on-accent);border-radius:999px;padding:6px 14px;font-weight:700;font-size:12px}
-#tutStage .nav{position:absolute;left:0;right:0;bottom:0;height:56px;background:var(--card);border-top:1px solid var(--line);display:flex;padding:6px 6px}
-#tutStage .nav button{flex:1;display:grid;place-items:center;border-radius:16px;color:var(--soft);background:none;border:0;padding:0}
-#tutStage .nav button.on{background:var(--accent-soft);color:var(--accent)}
-#tutStage .nav svg{width:21px;height:21px}
-#tutStage .c{background:var(--card);border:1.5px solid var(--line);border-radius:16px;padding:11px 13px;margin-bottom:9px;font-size:13px;display:flex;align-items:center;gap:10px}
-#tutStage .c i{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);flex:none;position:relative}
-#tutStage .c i.k{background:var(--accent);border-color:var(--accent)}
-#tutStage .c i.k::after{content:"";position:absolute;left:5px;top:1px;width:5px;height:9px;border:solid var(--on-accent);border-width:0 2px 2px 0;transform:rotate(45deg)}
-#tutStage .c small{margin-left:auto;color:var(--soft);font-size:11px;white-space:nowrap}
-#tutStage .week{display:flex;gap:5px;margin-bottom:10px}
-#tutStage .week b{flex:1;text-align:center;font-size:11px;font-weight:500;background:var(--chip);border-radius:10px;padding:5px 0;color:var(--soft)}
-#tutStage .week b.t{background:var(--accent);color:var(--on-accent)}
-#tutStage .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;font-size:11.5px;color:var(--soft)}
-#tutStage .grid span{padding:7px 0;border-radius:8px}
-#tutStage .grid .t{background:var(--accent);color:var(--on-accent)}
-#tutStage .grid .d{position:relative}
-#tutStage .grid .d::after{content:"";position:absolute;left:50%;bottom:2px;width:4px;height:4px;border-radius:50%;background:var(--accent);transform:translateX(-50%)}
-#tutStage .notes{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-#tutStage .notes div{border-radius:6px;padding:12px 10px 22px;font-size:12.5px;color:var(--note-ink);min-height:84px;box-shadow:0 2px 5px rgba(0,0,0,.12);position:relative}
-#tutStage .notes div:nth-child(3n+1){background:var(--note);transform:rotate(-1.6deg)}
-#tutStage .notes div:nth-child(3n+2){background:var(--note2);transform:rotate(1.4deg)}
-#tutStage .notes div:nth-child(3n){background:var(--note3);transform:rotate(1deg)}
-#tutStage .notes .mv{position:absolute;right:8px;bottom:5px;font-size:11px;opacity:.55;padding:2px 4px}
-#tutStage .sum{display:flex;gap:8px;margin-bottom:10px}
-#tutStage .sum div{flex:1;background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:8px 10px;font-size:11px;color:var(--soft)}
-#tutStage .sum b{display:block;font-size:16px;color:var(--ink);font-variant-numeric:tabular-nums}
-#tutStage .sum .in b{color:var(--good)}
-#tutStage .sum .out b{color:var(--bad)}
-#tutStage .pos{color:var(--good)}
-#tutStage .neg{color:var(--bad)}
-#tutStage .tk{background:var(--card);border:1.5px solid var(--line);border-radius:16px;margin-bottom:9px;overflow:hidden}
-#tutStage .tk .h{display:flex;align-items:center;gap:8px;padding:10px 12px;font-size:13px}
-#tutStage .tk .h i{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);flex:none}
-#tutStage .tk .h i.k{background:var(--accent);border-color:var(--accent)}
-#tutStage .tk .h{align-items:flex-start;padding:10px 8px 10px 6px;gap:8px}
-#tutStage .tk .h .hd{display:flex;flex-direction:column;gap:2.5px;padding:7px 4px 4px;margin-right:-2px;flex:none}
-#tutStage .tk .h .hd s{display:block;width:13px;height:2px;border-radius:1px;background:var(--soft);text-decoration:none}
-#tutStage .tk .h .tm{flex:1;min-width:0}
-#tutStage .tk .h .tm b{display:block;font-weight:700;overflow-wrap:anywhere;line-height:20px}
-#tutStage .tk .h .mt{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}
-#tutStage .tk .h .acts2{display:flex;align-items:center;flex:none;margin-top:-3px;color:var(--soft);font-size:11.5px}
-#tutStage .tk .h .acts2 span{padding:4px 5px}
-#tutStage .tk .h .acts2 .tb{padding:4px 7px}
-#tutStage .sortb{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:9px;background:var(--chip);color:var(--ink);font-size:14px;font-weight:700}
-#tutStage .tk .ar{color:var(--soft);font-size:11px;padding:4px 6px;display:inline-block;transition:transform .15s}
-#tutStage .tk .ar.o{transform:rotate(90deg)}
-#tutStage .tk .tb{font-size:11.5px;color:var(--soft);padding:3px 6px;border-radius:999px}
-#tutStage .tk .subs{background:var(--app-bg);padding:2px 12px 8px 40px;font-size:12.5px}
-#tutStage .tk .sr{display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px dotted var(--line)}
-#tutStage .tk .sr i{width:14px;height:14px;border-radius:50%;border:2px solid var(--line);flex:none}
-#tutStage .tk .addsub{display:inline-block;margin-top:4px;color:var(--accent);font-weight:700;font-size:12px}
-#tutStage .tk .np{margin:0 12px 10px 40px;background:var(--chip);border-radius:10px;padding:6px 10px;font-size:12px;color:var(--soft)}
-#tutStage .chipS{display:inline-flex;gap:6px;align-items:center;background:var(--card);border:1.5px solid var(--line);border-radius:999px;padding:4px 12px;font-size:12px}
-#tutStage .chipS b{color:var(--accent)}
-#tutStage .spstrip{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;font-size:12px;color:var(--soft)}
-#tutStage .spstrip .ad{border:1.5px dashed var(--line);border-radius:999px;padding:4px 12px;color:var(--soft)}
-#tutStage .cap{font-size:11.5px;color:var(--soft);margin:2px 0 8px}
-/* 假的對話框與底部彈出視窗(教學用) */
-#tutStage .dlgwrap{position:absolute;inset:0;z-index:4;background:var(--scrim);display:flex;padding:14px}
-#tutStage .dlgwrap.center{align-items:center;justify-content:center}
-#tutStage .dlgwrap.bottom{align-items:flex-end;padding:0}
-#tutStage .dlg{width:100%;background:var(--card);border-radius:22px;padding:16px 16px 14px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
-#tutStage .dlgwrap.bottom .dlg{border-radius:24px 24px 0 0;padding-bottom:18px}
-#tutStage .dlg h3{margin:0 0 10px;font-size:15px}
-#tutStage .fld{margin-bottom:9px}
-#tutStage .fld label{display:block;font-size:11.5px;color:var(--soft);font-weight:700;margin-bottom:3px}
-#tutStage .inp{border:1.5px solid var(--line);border-radius:12px;padding:8px 12px;font-size:13px;background:var(--card);min-height:36px}
-#tutStage .inp.area{min-height:64px}
-#tutStage .pills{display:flex;gap:6px;flex-wrap:wrap}
-#tutStage .pills span{border:1.5px solid var(--line);border-radius:999px;padding:5px 14px;font-size:12.5px;color:var(--soft)}
-#tutStage .pills span.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:700}
-#tutStage .sw{display:flex;align-items:center;justify-content:space-between;font-size:13px;margin-bottom:9px}
-#tutStage .sw i{width:38px;height:22px;border-radius:999px;background:var(--line);position:relative;flex:none}
-#tutStage .sw i::after{content:"";position:absolute;left:3px;top:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .15s}
-#tutStage .sw i.on{background:var(--accent)}
-#tutStage .sw i.on::after{left:19px}
-#tutStage .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
-#tutStage .acts .b{border-radius:999px;padding:8px 18px;font-size:13px;font-weight:700;border:1.5px solid var(--line);color:var(--soft);background:var(--card)}
-#tutStage .acts .b.ok{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
-#tutStage .row{display:flex;align-items:center;gap:10px;padding:11px 10px;border-radius:12px;font-size:14px}
-#tutStage .row .dot{width:10px;height:10px;border-radius:50%;flex:none}
-#tutStage .row.on{background:var(--accent-soft);color:var(--accent);font-weight:700}
-#tutStage .empty{font-size:12.5px;color:var(--soft);padding:6px 0 10px;white-space:pre-line}
-#tutStage .swatches{display:flex;gap:10px;flex-wrap:wrap;margin:4px 0 8px}
-#tutStage .swatches i{width:36px;height:36px;border-radius:50%;display:block;border:3px solid var(--card);box-shadow:0 0 0 1.5px var(--line)}
-#tutStage .toast{position:absolute;left:50%;bottom:76px;transform:translateX(-50%);background:#1a1a1a;color:#fff;font-size:12.5px;padding:8px 16px;border-radius:999px;z-index:8;white-space:nowrap;animation:tutin .25s ease}
-/* 教學遮罩:亮起來的洞(box-shadow 外擴蓋住其他地方)+ 說明泡泡 */
-#tutStage .ov{position:absolute;inset:0;z-index:5}
-#tutStage .hole{position:absolute;border-radius:14px;box-shadow:0 0 0 900px var(--dim);transition:all .35s cubic-bezier(.3,.7,.2,1);pointer-events:none}
-#tutStage .hole::after{content:"";position:absolute;inset:-4px;border-radius:inherit;border:2.5px solid #fff;animation:tutpulse 1.4s ease-out infinite}
-@keyframes tutpulse{0%{opacity:.95;transform:scale(1)}100%{opacity:0;transform:scale(1.18)}}
-#tutStage .catch{position:absolute;cursor:pointer}
-#tutStage .dim{position:absolute;inset:0;background:var(--dim);display:flex;align-items:center;justify-content:center;padding:14px}
-#tutStage .tip{position:absolute;left:14px;right:14px;background:var(--card);border-radius:18px;padding:14px 16px 12px;box-shadow:0 8px 24px rgba(0,0,0,.28);animation:tutin .3s ease}
-#tutStage .tip::before{content:"";position:absolute;left:var(--ax,50%);width:14px;height:14px;background:var(--card);transform:translateX(-50%) rotate(45deg);top:-6px}
-#tutStage .tip.up::before{top:auto;bottom:-6px}
-#tutStage .card{width:100%;background:var(--card);border-radius:22px;padding:18px 18px 14px;box-shadow:0 8px 24px rgba(0,0,0,.25);animation:tutin .3s ease}
-#tutStage .tip h2{margin:0 0 4px;font-size:15.5px}
-#tutStage .tip p{margin:0;font-size:13px;color:var(--soft)}
-#tutStage .prog{font-size:11px;color:var(--soft);margin-bottom:4px;letter-spacing:.04em}
-#tutStage .tip .btns{margin-top:10px}
-#tutStage .hint{margin-top:7px;font-size:12.5px;color:var(--accent);font-weight:700}
-@keyframes tutin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-#tutStage .tag{display:inline-block;font-size:11.5px;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:2px 10px;margin-bottom:8px;font-weight:700}
-#tutStage .card h2{margin:0 0 6px;font-size:18px;text-wrap:balance}
-#tutStage .card p{margin:0;font-size:13.5px;color:var(--soft);white-space:pre-line}
-#tutStage .btns{display:flex;gap:8px;align-items:center}
-#tutStage .btns .sp{flex:1}
-#tutStage .skip{background:none;border:0;color:var(--soft);font-size:12.5px;padding:8px 4px}
-#tutStage .wg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0 2px}
-#tutStage .wg div{border-radius:14px;padding:8px 10px;font-size:11px;color:var(--soft);background:var(--chip);min-height:54px}
-#tutStage .wg b{display:block;color:var(--ink);font-size:12.5px;margin-bottom:2px}
-/* 「⋯」選單(底部彈出) */
-#tutStage .sheetwrap{position:absolute;inset:0;z-index:6;background:var(--dim);display:flex;align-items:flex-end}
-#tutStage .sheet{width:100%;background:var(--card);border-radius:24px 24px 0 0;padding:18px 18px 16px;animation:tutin .25s ease}
-#tutStage .sheet h3{margin:0 0 8px;font-size:13px;color:var(--soft);letter-spacing:.04em}
-#tutStage .sheet button.it{display:block;width:100%;text-align:left;background:none;border:0;border-radius:12px;padding:12px;font-size:14px;color:var(--ink)}
-#tutStage .sheet button.it small{display:block;color:var(--soft);font-size:11.5px;margin-top:1px}
-#tutStage .sheet button.it:hover,
-#tutStage .sheet button.it:focus-visible{background:var(--accent-soft)}
-#tutStage .sheet .cancel{margin-top:4px;text-align:center;color:var(--soft)}
-@media (prefers-reduced-motion:reduce){#tutStage .card,
-#tutStage .tip,
-#tutStage .sheet,
-#tutStage .toast{animation:none}
-#tutStage .hole{transition:none}
-#tutStage .hole::after{animation:none}
-#tutStage .tk .ar,
-#tutStage .sw i::after{transition:none}}
-/* ---------- 在真正的 App 裡的版面與色票 ---------- */
-#tutStage{position:fixed;inset:0;z-index:152;display:flex;align-items:center;justify-content:center;
-  background:rgba(20,28,25,.55);padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px);
-  --card:#FFFFFF;--ink:#1A1A1A;--soft:#6B6B6B;--line:#E4E4E4;--chip:#F1F0EA;--app-bg:#FAFAFA;--on-accent:#FFFFFF;
-  --dim:rgba(20,28,25,.55);--scrim:rgba(20,28,25,.38);--note:#FFF3B8;--note2:#FFD9D2;--note3:#D6EBDD;--note-ink:#2a2a2a;--good:#3A8A5E;--bad:#C0504D;
-  color:var(--ink);font-family:"Microsoft JhengHei","微軟正黑體","PingFang TC","Heiti TC",sans-serif;line-height:1.55}
-#tutStage[hidden]{display:none!important}
-#tutStage [hidden]{display:none!important}
-#tutStage *{box-sizing:border-box}
-#tutStage button{font:inherit;cursor:pointer}
-#tutStage button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-#tutStage .phone{width:min(400px,100%);height:min(720px,100%);border:0;border-radius:30px;box-shadow:0 10px 40px rgba(0,0,0,.35)}
-@media (max-width:520px){#tutStage .phone{width:100%;height:100%;border-radius:0;box-shadow:none}}
-#tutStage .primary{background:var(--accent);color:var(--on-accent);border:0;border-radius:999px;padding:10px 22px;font-size:13.5px;font-weight:700}
-#tutStage .bar .ico button{pointer-events:none}
-#tutStage .nav button{pointer-events:none}
-#tutStage .c,#tutStage .tk,#tutStage .row{color:var(--ink)}
-#tutStage .tip,#tutStage .card,#tutStage .dlg{color:var(--ink)}
-#tutStage .tip h2,#tutStage .card h2,#tutStage .dlg h3{color:var(--ink)}
-
+  /* ============ 新手教學：直接在真正的畫面上亮起來(用練習資料，不會動到真正的資料) ============ */
+  #tutLayer{position:fixed;inset:0;z-index:160;--tutdim:rgba(20,28,25,.58);font-family:inherit;}
+  #tutLayer[hidden]{display:none;}
+  #tutLayer [hidden]{display:none!important;}
+  #tutLayer .tut-block{position:absolute;inset:0;touch-action:none;}
+  #tutLayer .tut-hole{position:fixed;border-radius:14px;box-shadow:0 0 0 100vmax var(--tutdim);pointer-events:none;transition:left .3s cubic-bezier(.3,.7,.2,1),top .3s cubic-bezier(.3,.7,.2,1),width .3s cubic-bezier(.3,.7,.2,1),height .3s cubic-bezier(.3,.7,.2,1);}
+  #tutLayer .tut-hole::after{content:"";position:absolute;inset:-4px;border-radius:inherit;border:2.5px solid #fff;animation:tutPulse 1.4s ease-out infinite;}
+  @keyframes tutPulse{0%{opacity:.95;transform:scale(1)}100%{opacity:0;transform:scale(1.14)}}
+  @keyframes tutIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  #tutLayer .tut-catch{position:fixed;cursor:pointer;border-radius:14px;}
+  #tutLayer .tut-tip{position:fixed;width:min(420px,calc(100vw - 32px));left:calc((100vw - min(420px,100vw - 32px))/2);background:#fff;color:#1A1A1A;border-radius:18px;padding:14px 16px 12px;box-shadow:0 8px 28px rgba(0,0,0,.32);animation:tutIn .25s ease;}
+  #tutLayer .tut-tip::before{content:"";position:absolute;left:var(--ax,50%);width:14px;height:14px;background:#fff;transform:translateX(-50%) rotate(45deg);top:-6px;}
+  #tutLayer .tut-tip.up::before{top:auto;bottom:-6px;}
+  #tutLayer .tut-tip.none::before{display:none;}
+  #tutLayer .tut-dim{position:absolute;inset:0;background:var(--tutdim);display:flex;align-items:center;justify-content:center;padding:16px;}
+  #tutLayer .tut-card{width:min(400px,100%);background:#fff;color:#1A1A1A;border-radius:22px;padding:20px 20px 14px;box-shadow:0 8px 28px rgba(0,0,0,.3);animation:tutIn .3s ease;}
+  #tutLayer h2{margin:0 0 4px;font-size:16px;}
+  #tutLayer .tut-card h2{font-size:18px;margin-bottom:6px;text-wrap:balance;}
+  #tutLayer p{margin:0;font-size:13.5px;color:#555;line-height:1.6;white-space:pre-line;}
+  #tutLayer .tut-prog{font-size:11px;color:#6B6B6B;margin-bottom:4px;letter-spacing:.04em;}
+  #tutLayer .tut-tag{display:inline-block;font-size:11.5px;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:2px 10px;margin-bottom:8px;font-weight:700;}
+  #tutLayer .tut-hint{margin-top:7px;font-size:12.5px;color:var(--accent);font-weight:700;}
+  #tutLayer .tut-btns{display:flex;gap:8px;align-items:center;margin-top:12px;}
+  #tutLayer .tut-sp{flex:1;}
+  #tutLayer .tut-skip{background:none;border:0;color:#6B6B6B;font-size:12.5px;padding:8px 4px;}
+  #tutLayer .tut-next{background:var(--accent);color:#fff;border:0;border-radius:999px;padding:10px 22px;font-size:13.5px;font-weight:700;}
+  #tutLayer button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion:reduce){#tutLayer .tut-tip,#tutLayer .tut-card{animation:none}#tutLayer .tut-hole{transition:none}#tutLayer .tut-hole::after{animation:none}}
+  .tut-pages{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
 </style>
 </head>
 <body>
@@ -1064,9 +925,6 @@
       </button>
       <button class="search-trigger-btn" onclick="switchMainView('settings')" title="設定" aria-label="設定">
         <svg aria-hidden="true" viewBox="0 0 24 24" width="19" height="19"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/><line x1="12" y1="2.5" x2="12" y2="5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="18.5" x2="12" y2="21.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="2.5" y1="12" x2="5.5" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="18.5" y1="12" x2="21.5" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="5.1" y1="5.1" x2="7.2" y2="7.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="16.8" y1="16.8" x2="18.9" y2="18.9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="5.1" y1="18.9" x2="7.2" y2="16.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="16.8" y1="7.2" x2="18.9" y2="5.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-      </button>
-      <button class="search-trigger-btn" onclick="tutOpenMenu()" title="新手教學" aria-label="更多：新手教學">
-        <svg aria-hidden="true" viewBox="0 0 24 24" width="19" height="19" fill="currentColor"><circle cx="5.5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="18.5" cy="12" r="1.9"/></svg>
       </button>
     </div>
   </div>
@@ -1199,6 +1057,19 @@
           <button class="switch" id="celebrateSwitch" role="switch" aria-label="特別的日子到了顯示慶祝動畫" onclick="toggleCelebrateSwitch()"></button>
         </div>
       </div>
+      <div class="setting-block" id="tutSettingsBlock">
+        <h3>新手教學</h3>
+        <div class="fee-hint" style="margin:-4px 0 10px;">用練習資料帶你做一遍，不會動到你的記事簿。</div>
+        <button class="btn-primary" onclick="tutPlayAll()">從頭完整看一遍</button>
+        <div class="tut-pages">
+          <button class="btn-ghost" onclick="tutPlay('habits')">習慣</button>
+          <button class="btn-ghost" onclick="tutPlay('list')">清單</button>
+          <button class="btn-ghost" onclick="tutPlay('cal')">行事曆</button>
+          <button class="btn-ghost" onclick="tutPlay('notes')">隨手記</button>
+          <button class="btn-ghost" onclick="tutPlay('money')">記帳</button>
+          <button class="btn-ghost" onclick="tutPlay('settings')">設定</button>
+        </div>
+      </div>
       <div class="setting-block">
         <h3>回顧小結</h3>
         <button class="btn-ghost" onclick="openSummary('week')">本週小結</button>
@@ -1324,36 +1195,13 @@
   </button>
 </div>
 
-<!-- ================= 新手教學：練習舞台（假資料，不會動到真正的記事簿） ================= -->
-<div id="tutStage" hidden role="dialog" aria-modal="true" aria-label="新手教學">
-  <div class="phone" id="tut_phone">
-    <div class="bar">
-      <svg class="logo" viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="tutlg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--accent)"/><stop offset="1" stop-color="var(--accent)" stop-opacity=".72"/></linearGradient></defs><path d="M4.5 21C3 11 9.5 4 21 3c0 10-5.5 17.5-16.5 18z" fill="url(#tutlg)"/><path d="M6 19.5C8.5 14 11.5 10 15.5 7" fill="none" stroke="var(--card)" stroke-width="1.8" stroke-linecap="round"/></svg>
-      <span class="ico">
-        <button tabindex="-1" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><line x1="15.5" y1="15.5" x2="21" y2="21"/></svg></button>
-        <button tabindex="-1" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.1 5.1l2.1 2.1M16.8 16.8l2.1 2.1M5.1 18.9l2.1-2.1M16.8 7.2l2.1-2.1"/></svg></button>
-        <button data-t="more" tabindex="-1" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5.5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="18.5" cy="12" r="1.9"/></svg></button>
-      </span>
-    </div>
-    <div class="pillrow" id="tut_pillrow" hidden><span class="pill" id="tut_tPill" data-t="pill">總覽 ▾</span></div>
-    <div class="screen" id="tut_screen"></div>
-    <div class="nav" id="tut_nav"></div>
-    <div class="dlgwrap" id="tut_dlgwrap" hidden></div>
-    <div class="ov" id="tut_ov" hidden><div class="hole" id="tut_hole"></div><div class="catch" id="tut_catch"></div><div class="tip" id="tut_tip"></div><div class="dim" id="tut_dim" hidden><div class="card" id="tut_card"></div></div></div>
-  </div>
-</div>
-
-<!-- 頂欄「⋯」跳出的選單 -->
-<div class="overlay" id="tutMenuModal" onclick="if(event.target===this)closeModal('tutMenuModal')">
-  <div class="modal" role="dialog" aria-label="新手教學">
-    <h3>新手教學</h3>
-    <p class="fee-hint" style="margin:0 0 10px;">用練習用的假資料帶你做一遍，不會動到你的記事簿。</p>
-    <div class="dev-btns">
-      <button class="btn-ghost" onclick="tutPlayThisPage()">看這一頁的教學</button>
-      <button class="btn-ghost" onclick="tutPlayAll()">從頭完整看一遍<span style="display:block;font-size:11.5px;color:var(--ink-soft);font-weight:400;margin-top:2px;">依序走過每一頁，約 3 分鐘</span></button>
-    </div>
-    <div class="modal-actions"><button class="btn-ghost" onclick="closeModal('tutMenuModal')">取消</button></div>
-  </div>
+<!-- ================= 新手教學：亮起來的遮罩 ================= -->
+<div id="tutLayer" hidden role="dialog" aria-modal="true" aria-label="新手教學">
+  <div class="tut-block"></div>
+  <div class="tut-hole" id="tutHole"></div>
+  <div class="tut-catch" id="tutCatch"></div>
+  <div class="tut-tip" id="tutTip"></div>
+  <div class="tut-dim" id="tutDim" hidden><div class="tut-card" id="tutCard"></div></div>
 </div>
 
 <!-- ================= 今天總結（夜間） ================= -->
@@ -1667,9 +1515,9 @@
     <div class="dev-group">新手教學</div>
     <div class="dev-btns">
       <button class="btn-ghost" onclick="tutPlayAll()">▶ 播放新手教學（從頭完整播一遍）</button>
-      <button class="btn-ghost" onclick="tutResetSeen()">重設各頁教學狀態（像第一次登入）</button>
+      <button class="btn-ghost" onclick="tutResetSeen()">重設各頁教學狀態（像新註冊，每頁會再自動跳出）</button>
     </div>
-    <div class="fee-hint">播放時這個視窗會先關掉。重設後，每一頁下次打開都會再自動跳出教學。</div>
+    <div class="fee-hint">播放時這個視窗會先關掉。教學用的是練習資料，不會動到你的資料。</div>
 
     <div class="modal-actions"><button class="btn-primary" onclick="closeModal('devToolsModal')">關閉</button></div>
   </div>
@@ -2146,6 +1994,7 @@ async function loadData(storageKey, opts){
   lastWrittenValue = raw;     /* 剛從雲端讀到的這份,等一下即時同步第一次回報的「就是這份」,不用再重新解析、解壓縮一次(也不會被誤判成別台裝置的衝突) */
   archiveCache = {};
   let parsed = raw ? JSON.parse(raw) : defaultData();
+  if(!raw) parsed.tutorialSeen = {};     /* 新註冊的帳號才有:每個頁面第一次打開時會自動帶新手教學(舊帳號沒有這個欄位,不會自動跳出) */
   await inflateArchives(parsed);    /* 收納的舊資料解開併回來;任何一個解不開就丟出錯誤,登入中止,不會用缺了一塊的資料去覆蓋雲端 */
   let useLocal = false;
   /* 登入時:如果這支手機上有一份「還沒同步到雲端」的修改,問你要用哪一份。兩邊都不會直接丟掉,沒選到的那份會備份起來 */
@@ -2591,7 +2440,8 @@ async function runSave(key, d){
     saveRunning = false;
     if(saveAgain){
       saveAgain = false;
-      if(currentStorageKey && data && !saveTimer) runSave(currentStorageKey, data);   /* 用「現在」最新的資料,不是舊的那份 */
+      { const cur = window.__tutActive ? window.__tutReal : data;     /* 新手教學期間 data 是練習資料,不能存它 */
+        if(currentStorageKey && cur && cur===data && !saveTimer) runSave(currentStorageKey, cur); }   /* 用「現在」最新的資料,不是舊的那份 */
     }
   }
 }
@@ -2648,6 +2498,7 @@ async function runSaveOnce(key, d){
   }
 }
 function persist(){
+  if(window.__tutActive) return;     /* 新手教學進行中(用練習資料):不存檔、不寫雲端 */
   clearTimeout(saveTimer);
   if(!currentStorageKey || !data){ saveTimer = null; pendingSave = null; return; }
   pendingSave = { key:currentStorageKey, data };
@@ -2671,7 +2522,8 @@ function startRealtimeSync(storageKey){
   if(unsubscribeSnapshot){ unsubscribeSnapshot(); unsubscribeSnapshot = null; }
   unsubscribeSnapshot = fbDb.collection('userdata').doc(storageKey).onSnapshot(async (snap)=>{
     if(!snap.exists) return;
-    if(snap.metadata && snap.metadata.hasPendingWrites) return;   /* 這是自己剛寫、還沒被雲端確認的版本,不用處理 */
+    if(snap.metadata && snap.metadata.hasPendingWrites) return;
+    if(window.__tutActive){ window.__tutRemote = true; return; }     /* 新手教學期間先不套用(教學結束後會重新整理一次) */   /* 這是自己剛寫、還沒被雲端確認的版本,不用處理 */
     const remote = snap.data().value;
     if(remote === lastWrittenValue) return;
     /* 本機還有沒存完的修改(排隊中、存檔中、存檔失敗):先不要用雲端的版本蓋掉它。
@@ -2825,6 +2677,7 @@ function togglePushSwitch(){
 }
 
 async function writeReminderDoc(id, title, body, dueAtMs){
+  if(window.__tutActive) return;     /* 新手教學進行中(用練習資料):不存檔、不寫雲端 */
   if(!fbDb || !currentStorageKey) return;
   /* 已經過期超過 1 分鐘的時間不再寫(寫了後端會馬上補送一則「早就過了」的通知);順便清掉雲端上可能還留著的舊文件 */
   if(dueAtMs < Date.now()-60000){ deleteReminderDoc(id); return; }
@@ -2835,6 +2688,7 @@ async function writeReminderDoc(id, title, body, dueAtMs){
   }catch(e){ console.error('寫入提醒排程失敗', e); }
 }
 async function deleteReminderDoc(id){
+  if(window.__tutActive) return;     /* 新手教學進行中(用練習資料):不存檔、不寫雲端 */
   if(!fbDb) return;
   try{ await fbDb.collection('reminders').doc(id).delete(); }catch(e){}
 }
@@ -2895,6 +2749,7 @@ function notifyDocId(kind, dateStr){
 const __notifySig = {};
 let __notifyLastSync = 0;
 async function syncDailyNotifications(opts){
+  if(window.__tutActive) return;     /* 新手教學進行中(用練習資料):不存檔、不寫雲端 */
   opts = opts || {};
   if(!fbDb || !currentStorageKey || !data) return;
   ensureNotifySettings();
@@ -2988,6 +2843,7 @@ async function devListScheduledNotifications(){
   }
 }
 async function writeHabitReminderDoc(habit){
+  if(window.__tutActive) return;     /* 新手教學進行中(用練習資料):不存檔、不寫雲端 */
   if(!fbDb || !currentStorageKey) return;
   try{
     if(!habit.remindTime){
@@ -4000,6 +3856,7 @@ function isOverdueTask(t){
 function fmtTaskWhen(t){ return fmtDate(t.dueDate) + (t.dueTime ? ' '+t.dueTime : ''); }
 /* 依事項現在的狀態,寫入或取消「雲端提醒」+ 這個頁面開著時的本機提醒。提醒要有日期、開著、還沒完成才有效 */
 function syncTaskReminder(t){
+  if(window.__tutActive) return;     /* 新手教學進行中(用練習資料):不存檔、不寫雲端 */
   const ms = (t && t.reminder && t.dueDate && t.status!=='done') ? taskDueMs(t) : null;
   if(ms){ scheduleReminder(t); writeReminderDoc(t.id, t.title, fmtTaskWhen(t), ms); }
   else if(t) deleteReminderDoc(t.id);
@@ -4147,6 +4004,7 @@ function scheduleReminder(task){
 
 const habitReminderTimers = {};
 function scheduleHabitReminders(){
+  if(window.__tutActive) return;     /* 新手教學進行中(用練習資料):不存檔、不寫雲端 */
   Object.values(habitReminderTimers).forEach(t=> clearTimeout(t));
   data.habits.forEach(h=>{
     if(!h.remindTime) return;
@@ -4937,7 +4795,7 @@ function deleteHabit(id){
     delete data.habitLogs[id];
     renderHabitCheckin();
     renderHabitSidebarList();
-    if(fbDb) fbDb.collection('habitReminders').doc(id).delete().catch(()=>{});
+    if(fbDb && !window.__tutActive) fbDb.collection('habitReminders').doc(id).delete().catch(()=>{});
     showUndoToast('已刪除習慣「'+removed.name+'」', ()=>{
       data.habits.splice(idx,0,removed);
       if(removedLog) data.habitLogs[id] = removedLog;
@@ -7495,301 +7353,318 @@ function renderAll(){
 
 /* ============================================================
    新手教學
-   每個頁面第一次打開時，在一個「練習舞台」裡用假資料帶著做一遍；練習不會動到真正的資料。
-   看過的頁面記在這支裝置（localStorage），之後不再自動跳出。
-   入口：頂欄「⋯」→「看這一頁的教學」「從頭完整看一遍」；開發者工具也有播放按鈕。
+   在「真正的畫面」上亮起來、帶你點一遍。為了不動到你的資料，教學開始時會暫時換成一份練習用的資料，
+   結束時換回來；練習期間不會存檔、不會寫雲端、不會排通知(window.__tutActive 為 true 時，這些函式都直接返回)。
+   只有「新註冊」的帳號(資料裡有 tutorialSeen)才會在每頁第一次打開時自動跳出；其他人從設定頁的「新手教學」手動看。
 ============================================================ */
 (function(){
-const SEEN_PREFIX='jishibu_tutorial_seen_';
 const TAB_OF={habits:'habits',list:'list',cal:'cal',week:'cal',quicknotes:'notes',expense:'money',settings:'settings'};
 const VIEW_OF={habits:'habits',list:'list',cal:'cal',notes:'quicknotes',money:'expense',settings:'settings'};
-const ICON = {
-  habits:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M8 12.5l3 3 5-6"/></svg>',
-  list:'<svg viewBox="0 0 24 24"><rect x="3" y="5" width="3.2" height="3.2" rx=".6" fill="currentColor"/><rect x="3" y="10.4" width="3.2" height="3.2" rx=".6" fill="currentColor"/><rect x="3" y="15.8" width="3.2" height="3.2" rx=".6" fill="currentColor"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="9" y1="6.6" x2="21" y2="6.6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="9" y1="17.4" x2="21" y2="17.4"/></g></svg>',
-  cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4.5" width="18" height="15" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><g fill="currentColor" stroke="none"><circle cx="7.5" cy="13" r="1.3"/><circle cx="12" cy="13" r="1.3"/><circle cx="16.5" cy="13" r="1.3"/><circle cx="7.5" cy="17" r="1.3"/><circle cx="12" cy="17" r="1.3"/></g></svg>',
-  notes:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="M4 20l1-4 10-10 3 3-10 10z"/><line x1="15" y1="6" x2="18" y2="9"/></svg>',
-  money:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="6" width="17" height="13" rx="2"/><path d="M3.5 10h17"/><circle cx="12" cy="14.2" r="2.3" stroke-width="1.6"/></svg>'
-};
-const NAV=[['habits','習慣'],['list','清單'],['cal','行事曆'],['notes','隨手記'],['money','記帳']];
-const NAME={habits:'習慣',list:'清單',cal:'行事曆',notes:'隨手記',money:'記帳',settings:'設定'};
 const ORDER=['habits','list','cal','notes','money','settings'];
-const $=id=>document.getElementById('tut_'+id);
-const stage=()=>document.getElementById('tutStage');
-let phone=null;
-const fmt=n=>'$'+n.toLocaleString('en-US');
-
-/* 日期都從「今天」往後推，所以練習畫面永遠是當月、當天 */
+const NAME={habits:'習慣',list:'清單',cal:'行事曆',notes:'隨手記',money:'記帳',settings:'設定'};
+const $=id=>document.getElementById(id), qs=s=>document.querySelector(s);
 const TODAY=new Date();
-const FIRST_DOW=new Date(TODAY.getFullYear(),TODAY.getMonth(),1).getDay();
-const MONTH_DAYS=new Date(TODAY.getFullYear(),TODAY.getMonth()+1,0).getDate();
-const offDate=n=>{ const d=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+n); return d; };
-const md=n=>{ const d=offDate(n); return (d.getMonth()+1)+'/'+d.getDate(); };
+const offDate=n=>new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+n);
 const ymd=n=>{ const d=offDate(n); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
-/* 本月的第幾號（超出本月就回傳 0，不會畫點） */
-const dayOfOffset=n=>{ const d=offDate(n); return d.getMonth()===TODAY.getMonth()?d.getDate():0; };
 
-let chainTok=0, S, cur='habits', run=null, seen={}, autoTimer=null, autoTries=0, popped=false;
-function seenKey(){ return SEEN_PREFIX+(currentStorageKey||'guest'); }
-function loadSeen(){ try{ seen=JSON.parse(localStorage.getItem(seenKey())||'{}')||{}; }catch(e){ seen={}; } }
-function saveSeen(){ try{ localStorage.setItem(seenKey(),JSON.stringify(seen)); }catch(e){} }
+let seenDirty=false, sb=null, run=null, tok=0, raf=0, popped=false, autoTimer=null, autoTries=0, lastKey='';
 
-function base(){ return {
-  habits:[{n:'早起喝水',k:1,s:'連續 3 天'},{n:'閱讀',k:1,s:'連續 5 天'}],
-  tasks:[{t:'繳電話費',d:md(4),ds:4,c:'生活'}],
-  cat:'總覽', bar:'', notes:['想去的咖啡店\n・中山站那間','書單：\n《小王子》'],
-  specials:[], inc:42000, out:18350, rec:[{n:'早餐',a:-65},{n:'交通',a:-30}], paid:false,
-  remind:false, dlg:null
-};}
-
-/* ---------- 各頁畫面 ---------- */
-const SCREENS={
-  habits:()=>`<div class="rowr"><span class="btn" data-t="addHabit">＋ 新增習慣</span></div>
-    <div class="week">${['一','二','三','四','五','六','日'].map((w,i)=>`<b class="${i===(TODAY.getDay()+6)%7?'t':''}">${w}</b>`).join('')}</div>
-    ${S.habits.map(h=>`<div class="c"><i class="${h.k?'k':''}" ${h.n==='喝水'?'data-t="hNew"':''}></i>${h.n}<small>${h.k?h.s:'連續 0 天'}</small></div>`).join('')}`,
-  list:()=>{
-    const shown=S.tasks.filter(t=>S.cat==='總覽'||t.c===S.cat);
-    return `<div class="rowr"><span class="sortb" data-t="sortBtn" aria-label="排序">⇅</span><span class="btn" data-t="addTask">＋ 新增事項</span></div>
-    ${shown.map((t,ix)=>`<div class="tk"><div class="h"><span class="hd" ${ix===0?'data-t="handle"':''}><s></s><s></s><s></s></span><i class="${t.done?'k':''}"></i>
-      <div class="tm"><b>${t.t}</b>${t.d?`<div class="mt"><small class="tb" style="background:var(--chip)">${t.d}</small></div>`:''}</div>
-      <div class="acts2"><span class="ar ${t.new&&t.open?'o':''}" ${t.new?'data-t="arrow"':''} style="padding:5px 7px">▸</span><span class="tb" ${t.new?'data-t="noteBtn"':''}>備註</span><span>✎</span><span>✕</span></div></div>
-      ${t.new&&t.note?`<div class="np">${t.note}</div>`:''}
-      ${t.new&&t.open?`<div class="subs">${t.subs.map(s=>`<div class="sr"><i></i>${s}</div>`).join('')}<span class="addsub" data-t="addSub">＋ 新增細項</span></div>`:''}</div>`).join('')}
-    ${shown.length?'':'<div class="empty">這個分類目前沒有事項</div>'}`; },
-  cal:()=>`<div class="c" data-t="calHead" style="justify-content:space-between"><span>‹</span><b>${TODAY.getFullYear()} 年 ${TODAY.getMonth()+1} 月</b><span>›</span></div>
-    <div class="spstrip" data-t="spStrip">${S.specials.length?S.specials.map(x=>`<span class="chipS">${x.n}<b>還有 ${x.left} 天</b></span>`).join('')+'<span class="ad">＋</span>':'<span class="ad">＋ 加入日期或計算天數</span>'}</div>
-    <div class="grid">${['日','一','二','三','四','五','六'].map(d=>`<span>${d}</span>`).join('')}
-    ${Array.from({length:FIRST_DOW},()=>'<span></span>').join('')}${Array.from({length:MONTH_DAYS},(_,i)=>`<span class="${i+1===TODAY.getDate()?'t':(i+1===dayOfOffset(-3)||i+1===dayOfOffset(9)||(S.specials.length&&i+1===dayOfOffset(8)))?'d':''}">${i+1}</span>`).join('')}</div>`,
-  notes:()=>`<div class="notes">${S.notes.map((n,i)=>`<div>${n.replace(/\n/g,'<br>')}<span class="mv" ${i===S.notes.length-1&&S.sent?'data-t="mv"':''}>移至</span></div>`).join('')}</div>
-    <div class="bar2" data-t="noteBar"><span class="tx ${S.bar?'':'ph'}">${S.bar||'隨手記點什麼...'}</span><b data-t="send">傳送</b></div>`,
-  money:()=>`<div class="rowr" style="justify-content:flex-start"><span class="c" style="margin:0;padding:5px 10px;font-weight:700">‹ ${TODAY.getFullYear()}年${TODAY.getMonth()+1}月 ›</span><span class="btn g">分類設定</span><span class="btn g" data-t="payBtn">薪資設定</span></div>
-    <div class="sum"><div class="in">本月收入<b>${fmt(S.inc)}</b></div><div class="out">本月支出<b>${fmt(S.out)}</b></div></div>
-    ${S.paid?'<div class="c" style="font-size:12.5px">${TODAY.getMonth()+1}月薪資（5 號發放）<small class="pos">+$42,000</small></div>':''}
-    <div class="rowr"><span class="btn" data-t="addRec">＋ 記一筆</span></div>
-    ${S.rec.map(r=>`<div class="c">${r.n}<small class="${r.a>0?'pos':'neg'}">${r.a>0?'+':'-'}${fmt(Math.abs(r.a))}</small></div>`).join('')}`,
-  settings:()=>`<div class="c">帳戶<small>you@gmail.com</small></div>
-    <div class="c" data-t="remind" style="justify-content:space-between">通知提醒<span class="sw" style="margin:0"><i class="${S.remind?'on':''}"></i></span></div>
-    <div class="c" data-t="theme">整體配色風格<small>›</small></div>
-    <div class="c" data-t="backup">資料備份<small>›</small></div>`
-};
-
-/* ---------- 假對話框 ---------- */
-function dlgHTML(d){
-  const F=(l,inner,t)=>`<div class="fld"><label>${l}</label>${inner}</div>`;
-  const I=(v,t,cls)=>`<div class="inp ${cls||''}" ${t?`data-t="${t}"`:''}>${v}</div>`;
-  const P=(arr,on)=>`<div class="pills">${arr.map((x,i)=>`<span class="${i===on?'on':''}">${x}</span>`).join('')}</div>`;
-  const SW=(l,on)=>`<div class="sw"><span>${l}</span><i class="${on?'on':''}"></i></div>`;
-  const A=(ok,okT)=>`<div class="acts"><span class="b">取消</span><span class="b ok" data-t="dOk">${ok}</span></div>`;
-  switch(d.kind){
-    case 'habit': return ['c',`<h3>新增習慣</h3>${F('習慣名稱',I('喝水','dName'))}${F('重複頻率',P(['每天','每週','每月'],0))}${F('每日提醒時間(可留空)',I('',''))}${A('新增')}`];
-    case 'task': return ['c',`<h3>新增主要事項</h3>${F('分類',P(['工作','個人'],1))}${F('標題',I('買生日禮物','dName'))}${F('截止日期(可留空)',I(md(6),''))}${A('儲存')}`];
-    case 'sub': return ['c',`<h3>新增細項</h3>${F('標題',I('挑禮物','dName'))}${F('時間',I(md(4)+' 19:00',''))}${SW('開啟提醒',true)}${A('儲存')}`];
-    case 'note': return ['c',`<h3>備註</h3>${F('',I('預算 500 元以內，下班順路買','dName','area'))}${A('儲存')}`];
-    case 'cat': return ['b',`<h3>切換分類</h3><div class="row"><span class="dot" style="background:#6B6E76"></span>總覽</div><div class="row"><span class="dot" style="background:#4C7BD9"></span>工作</div><div class="row" data-t="catPersonal"><span class="dot" style="background:#3A8A5E"></span>個人</div>`];
-    case 'spList': return ['b',`<h3>特別的日子</h3>${S.specials.length?S.specials.map(x=>`<div class="row"><span class="dot" style="background:var(--accent)"></span><b style="flex:1">${x.n}</b><span style="color:var(--accent)">${x.left} 天後</span></div>`).join(''):'<div class="empty">還沒有特別的日子。\n按下方「＋ 新增」，可以加生日、紀念日，或是計算在一起、養寵物已經過了幾天。</div>'}<div class="acts"><span class="b" data-t="spAdd">＋ 新增</span><span class="b ok" data-t="spDone">完成</span></div>`];
-    case 'spNew': return ['b',`<h3>新增特別的日子</h3>${F('類型',P(['日期','計算天數'],0))}${F('名稱',I('媽媽生日','dName'))}${F('日期',I(ymd(8),''))}${SW('每年重複',true)}<div class="acts"><span class="b">取消</span><span class="b ok" data-t="dOk">儲存</span></div>`];
-    case 'move': return ['c',`<h3>移至...</h3>${F('移到哪裡',P(['清單','習慣'],0))}${F('分類',P(['工作','個人'],1))}${F('標題',I('週末買牛奶','dName'))}${F('截止日期(可留空)',I(''))}${A('確定')}`];
-    case 'pay': return ['c',`<h3>薪資試算設定</h3>${F('底薪',I('42,000','dName'))}${F('每月發薪日',I('5',''))}${F('薪資發放月份',P(['當月發','次月發'],0))}${F('薪資入帳帳戶',I('銀行帳戶',''))}${A('儲存')}`];
-    case 'rec': return ['c',`<h3>記一筆</h3>${F('類型',`<div data-t="dType">${P(['收入','支出'],d.type)}</div>`)}${F('金額',I(d.type?'150':'2,000','dAmt'))}${F('分類',P(d.type?['餐飲','交通','購物']:['薪資','獎金','其他'],d.type?0:1))}${F('備註（選填）',I(d.type?'午餐':'年終獎金補發',''))}${A('儲存')}`];
-    case 'sort': return ['c',`<h3>排序</h3><div class="row on"><span class="dot" style="background:var(--accent)"></span>日期</div><div class="row"><span class="dot" style="background:var(--line)"></span>名稱</div><div class="row"><span class="dot" style="background:var(--line)"></span>新增時間</div>${F('順序',P(['最早在前','最晚在前'],0))}<div class="acts"><span class="b">取消</span><span class="b ok" data-t="dOk">排序</span></div>`];
-    case 'theme': return ['b',`<h3>整體配色風格</h3><div class="swatches"><i style="background:#3A6B5E"></i><i style="background:#C2410C" data-t="swOrange"></i><i style="background:#2563EB"></i><i style="background:#7C3AED"></i><i style="background:#BE185D"></i></div><div class="cap">選一個顏色，整個 App 都會跟著換。</div>`];
-  }
+/* ---------- 練習用的資料 ---------- */
+function practiceData(){
+  const d=defaultData(), now=Date.now(), real=window.__tutReal||{};
+  d.globalPaletteId=real.globalPaletteId||'p01'; d.customPalettes=(real.customPalettes||[]).slice();
+  d.habits=[
+    {id:'p_h1',name:'早起喝水',type:'boolean',unit:'',remindTime:null,freq:'daily',weekdays:[],monthdays:[],createdAt:ymd(-8)},
+    {id:'p_h2',name:'閱讀',type:'boolean',unit:'',remindTime:null,freq:'daily',weekdays:[],monthdays:[],createdAt:ymd(-8)}
+  ];
+  d.habitLogs={p_h1:{},p_h2:{}};
+  [-1,-2,-3].forEach(n=>d.habitLogs.p_h1[ymd(n)]={value:true,checked:true});
+  [-1,-2,-3,-4,-5].forEach(n=>d.habitLogs.p_h2[ymd(n)]={value:true,checked:true});
+  d.tasks=[{id:'p_t0',categoryId:'work',title:'繳電話費',dueDate:ymd(4),dueTime:'',reminder:false,status:'pending',note:'',subtasks:[]}];
+  d.quickNotes=[
+    {id:'p_n1',text:'想去的咖啡店\n・中山站那間',createdAt:now-86400000},
+    {id:'p_n2',text:'書單：\n《小王子》',createdAt:now-3600000}
+  ];
+  const ec=(d.expenseCategories[0]||{}).id, ec2=(d.expenseCategories[1]||d.expenseCategories[0]||{}).id;
+  d.expenses=[
+    {id:'p_e1',type:'expense',amount:65,note:'早餐',date:ymd(0),accountId:'acc_bank',category:ec,createdAt:now-7200000},
+    {id:'p_e2',type:'expense',amount:30,note:'交通',date:ymd(0),accountId:'acc_bank',category:ec2,createdAt:now-3600000}
+  ];
+  return d;
 }
-function renderDlg(){
-  const w=$('dlgwrap');
-  if(!S.dlg){ w.hidden=true; w.innerHTML=''; return; }
-  const [mode,html]=dlgHTML(S.dlg);
-  w.className='dlgwrap '+(mode==='b'?'bottom':'center'); w.hidden=false;
-  w.innerHTML=`<div class="dlg">${html}</div>`;
+function closeAllModals(){
+  document.querySelectorAll('.overlay.show').forEach(e=>e.classList.remove('show'));
+  const cs=$('categorySheet'); if(cs) cs.classList.remove('open');
+  try{ closeHabitSidebar(); }catch(e){}
 }
-function refresh(){ $('screen').innerHTML=SCREENS[cur](); $('tPill').textContent=S.cat+' ▾'; renderDlg(); }
-function toast(msg){ const t=document.createElement('div'); t.className='toast'; t.textContent=msg; phone.appendChild(t); setTimeout(()=>t.remove(),1900); }
-const open=d=>{S.dlg=d;refresh()}, close=()=>{S.dlg=null;refresh()};
+function seed(){
+  data=practiceData();
+  try{ normalizeData(); }catch(e){ console.error('練習資料整理失敗',e); }
+  Object.assign(ui,{catId:'overview',filter:'pending',expanded:{},selectedDate:null,habitDate:null,habitWeekOffset:0,calDate:new Date(),weekDate:new Date()});
+  applyTheme(); renderTabs();
+}
+function enterSandbox(){
+  if(sb) return;
+  closeAllModals();
+  sb={data:data, ui:Object.assign({},ui), view:ui.mainView, y:window.scrollY};
+  window.__tutReal=sb.data; window.__tutActive=true;
+  seed();
+}
+function exitSandbox(goView){
+  if(!sb) return;
+  closeAllModals();
+  data=sb.data;
+  Object.keys(ui).forEach(k=>{ delete ui[k]; }); Object.assign(ui,sb.ui);
+  window.__tutActive=false; window.__tutReal=null;
+  try{ clearTimeout(undoTimer); undoState=null; const ut=$('undoToast'); if(ut) ut.classList.remove('show'); }catch(e){}
+  try{ const l=$('quickNoteAnimLayer'); if(l){ l.classList.remove('show','fading-out'); l.innerHTML=''; } clearTimeout(quickNoteAnimTimer); }catch(e){}
+  const view=goView||sb.view, y=sb.y; sb=null;
+  applyTheme(); renderTabs(); switchMainView(view);
+  window.scrollTo(0,goView?0:y);
+  if(window.__tutRemote){ window.__tutRemote=false; location.reload(); }
+}
 
-/* ---------- 每一頁的教學步驟 ----------
-   target=亮起來的地方;act=點亮起來的地方(或「知道了」)時做的事;card=置中卡片 */
+/* ---------- 找畫面上的東西 ---------- */
+const vis=el=>!!el && el.getClientRects().length>0;
+const taskEl=()=>[...document.querySelectorAll('#taskList .task')].find(e=>{ const t=e.querySelector('.task-title'); return t && t.textContent==='買生日禮物'; });
+const habitCheck=name=>{ const r=[...document.querySelectorAll('#habitCheckinView .habit-grid-row')].find(x=>{ const n=x.querySelector('.habit-name-col div'); return n && n.textContent.trim()===name; }); return r && r.querySelector('.check'); };
+const resolve=s=>{ let el=null; try{ el=typeof s.target==='function'?s.target():qs(s.target); }catch(e){} return vis(el)?el:null; };
+
+/* ---------- 每一頁的步驟 ----------
+   target=亮起來的地方(選取字串或函式);預設「幫我點」就是真的點它一下;info=只是說明(不點);
+   after=點完之後順手做的事(例如幫你把欄位填好) */
 const PAGES={
-  habits:[
-    {kind:'card',tag:'歡迎',title:'歡迎使用記事簿',text:'每個頁面第一次點開時，會帶你實際做一遍主要功能。\n練習用的是假資料，不會動到你的記事簿。',go:'開始'},
-    {target:'addHabit',title:'新增習慣',text:'想養成的習慣（喝水、運動、閱讀）從這裡新增。',act:()=>open({kind:'habit'})},
-    {target:'dName',title:'輸入習慣名稱',text:'名稱幫你填好了「喝水」。還可以選每天、每週或每月，也能設每日提醒時間。'},
-    {target:'dOk',title:'按「新增」',text:'習慣就加進清單了。',act:()=>{S.habits.push({n:'喝水',k:0,s:''});close();toast('已新增「喝水」')}},
-    {target:'hNew',title:'每天點一下圓圈打卡',text:'打完卡會累積連續天數，到「統計」可以看趨勢圖。',act:()=>{const h=S.habits.find(x=>x.n==='喝水');h.k=1;h.s='連續 1 天';refresh();toast('已打卡，連續 1 天')}},
-    {target:'more',title:'想再看一次教學',text:'點這個「⋯」，可以重看這一頁，或從頭完整看一遍。'}
-  ],
-  list:[
-    {target:'addTask',title:'新增事項',text:'要做的事從這裡新增。',act:()=>open({kind:'task'})},
-    {target:'dName',title:'輸入標題',text:'幫你填好了「買生日禮物」。可以選分類，也能設截止日期。'},
-    {target:'dOk',title:'按「儲存」',text:'事項就出現在清單裡了。',act:()=>{S.tasks.unshift({t:'買生日禮物',d:md(6),ds:6,c:'個人',new:1,open:0,subs:[],note:''});close();toast('已新增事項')}},
-    {target:'arrow',title:'展開細項',text:'一件事可以拆成好幾個細項。點事項左邊的箭頭，展開或收合細項。',act:()=>{S.tasks[0].open=1;refresh()}},
-    {target:'addSub',title:'新增細項',text:'點「＋ 新增細項」。',act:()=>open({kind:'sub'})},
-    {target:'dName',title:'輸入細項名稱',text:'幫你填好了「挑禮物」。細項可以有自己的時間，也能單獨開提醒。'},
-    {target:'dOk',title:'按「儲存」',text:'細項就加好了，之後可以逐項勾掉。',act:()=>{S.tasks[0].subs.push('挑禮物');close();toast('已新增細項')}},
-    {target:'noteBtn',title:'寫備註',text:'事項和細項右邊都有「備註」，可以記下想法或注意事項。',act:()=>open({kind:'note'})},
-    {target:'dOk',title:'按「儲存」',text:'備註會顯示在事項下面。',act:()=>{S.tasks[0].note='預算 500 元以內，下班順路買';close();toast('已儲存備註')}},
-    {target:'sortBtn',title:'整理順序',text:'想照日期、名稱或新增時間排，按這裡。',act:()=>open({kind:'sort'})},
-    {target:'dOk',title:'按「排序」',text:'清單依你選的方式整理一次。整理完就是普通順序：之後改日期、拖動、新增，都不會自己跑掉。按錯了 5 秒內可以「復原」。',act:()=>{S.tasks.sort((a,b)=>(a.d?0:1)-(b.d?0:1)||(a.ds||0)-(b.ds||0));close();toast('已依日期排序　復原')}},
-    {target:'handle',title:'長按拖動換順序',text:'每張卡左邊有三條線。按住一下再拖，想放哪裡就放哪裡。'},
-    {target:'pill',title:'切換分類',text:'點這裡在「總覽」和各個分類（工作、個人…）之間切換，清單和行事曆都適用。',act:()=>open({kind:'cat'})},
-    {target:'catPersonal',title:'選「個人」',text:'畫面只留下「個人」分類的事項。想看全部，再選回「總覽」。',act:()=>{S.cat='個人';close()}}
-  ],
-  cal:[
-    {target:'calHead',title:'切換月份',text:'左右箭頭換月份。有事項的日子會有小點，也會顯示農曆。'},
-    {target:'spStrip',title:'加入特別的日子',text:'生日、紀念日，或是「在一起幾天」「養寵物幾天」，都可以記在這裡。',act:()=>open({kind:'spList'})},
-    {target:'spAdd',title:'按「＋ 新增」',text:'先看到目前有哪些特別的日子，再從這裡新增一個。',act:()=>open({kind:'spNew'})},
-    {target:'dName',title:'輸入名稱',text:'幫你填好了「媽媽生日」。類型選「日期」是生日、節日；選「計算天數」會算第幾天。'},
-    {target:'dOk',title:'按「儲存」',text:'媽媽生日就記進去了，月曆上會有小點。',act:()=>{S.specials.push({n:'媽媽生日',left:8});S.dlg={kind:'spList'};refresh()}},
-    {target:'spDone',title:'按「完成」',text:'當天打開 App，會有慶祝動畫。整百天、週年也會慶祝。',act:()=>close()}
-  ],
-  notes:[
-    {target:'noteBar',title:'馬上輸入',text:'打開這一頁就能直接打字。點輸入列看看。',act:()=>{S.bar='週末要記得買牛奶';refresh()}},
-    {target:'send',title:'按「傳送」',text:'便利貼會貼到牆上。',act:()=>{S.notes.push('週末要記得買牛奶');S.bar='';S.sent=1;refresh();toast('已貼上便利貼')}},
-    {target:'mv',title:'移至清單或習慣',text:'便利貼右下角的「移至」，可以把它變成清單事項或習慣。',act:()=>open({kind:'move'})},
-    {target:'dOk',title:'按「確定」',text:'便利貼就搬進清單了，不用重打一次。',act:()=>{S.notes.pop();S.sent=0;S.tasks.unshift({t:'週末買牛奶',d:'',c:'個人'});close();toast('已移動便利貼')}}
-  ],
-  money:[
-    {target:'payBtn',title:'薪資設定',text:'先設定薪資，每月發薪日會自動記成一筆收入。',act:()=>open({kind:'pay'})},
-    {target:'dName',title:'填底薪和發薪日',text:'幫你填好了底薪 42,000、每月 5 號發。還能填勞保、健保、勞退自提。'},
-    {target:'dOk',title:'按「儲存」',text:'從下個發薪日開始，薪水會自動入帳。',act:()=>{S.paid=true;close();toast('已儲存薪資設定')}},
-    {target:'addRec',title:'記一筆支出',text:'每一筆收入或支出，點「＋ 記一筆」。',act:()=>open({kind:'rec',type:1})},
-    {target:'dAmt',title:'填金額',text:'先選類型（收入或支出），再填金額、分類和備註。這一筆是午餐 150 元。'},
-    {target:'dOk',title:'按「儲存」',text:'本月支出會跟著增加。',act:()=>{S.rec.unshift({n:'午餐',a:-150});S.out+=150;close();toast('已記一筆支出')}},
-    {target:'addRec',title:'再記一筆收入',text:'收入的記法一樣，只是類型改選「收入」。',act:()=>open({kind:'rec',type:0})},
-    {target:'dOk',title:'按「儲存」',text:'本月收入增加了，也會算進結餘。',act:()=>{S.rec.unshift({n:'年終獎金補發',a:2000});S.inc+=2000;close();toast('已記一筆收入')}}
-  ],
-  settings:[
-    {target:'remind',title:'開啟提醒通知',text:'打開後，事項到期、習慣提醒會在手機上跳出通知。要準時，請在瀏覽器出現詢問時按「允許」。',act:()=>{S.remind=true;refresh();toast('已開啟提醒通知')}},
-    {target:'theme',title:'換配色',text:'整體配色風格可以換成你喜歡的顏色。',act:()=>open({kind:'theme'})},
-    {target:'swOrange',title:'選一個顏色',text:'整個 App，連頂欄的葉子都會跟著換。',act:()=>{phone.style.setProperty('--accent','#C2410C');phone.style.setProperty('--accent-soft','#C2410C22');close()}},
-    {target:'backup',title:'資料備份',text:'隨時可以匯出備份檔，也能從備份檔還原。換手機或重要修改前，建議先備份一份。'}
-  ]
+  habits:{
+    setup(){ switchMainView('habits'); setHabitTab('checkin'); },
+    steps:[
+      {kind:'card',tag:'歡迎',title:'歡迎使用記事簿',text:'每個頁面第一次打開時，會帶你實際做一遍主要功能。\n用的是練習資料，不會動到你真正的記事簿。',go:'開始'},
+      {target:'#view-habits .toolbar .btn-primary',title:'新增習慣',text:'想養成的習慣（喝水、運動、閱讀）從這裡新增。',after(){ $('habitName').value='喝水'; }},
+      {target:'#habitName',info:1,title:'輸入習慣名稱',text:'名稱幫你填好了「喝水」。還可以選記錄方式（打卡、時間、數量）和重複頻率，也能設每日提醒時間。'},
+      {target:'#habitSaveBtn',title:'按「新增」',text:'習慣就加進清單了。'},
+      {target:()=>habitCheck('喝水'),title:'點圓圈打卡',text:'每天點一下圓圈打卡，會累積連續天數。'},
+      {target:'#habitStatsBtn',info:1,title:'看統計',text:'打卡紀錄累積之後，到「統計」可以看趨勢圖。'},
+      {target:'.top-bar-actions button[onclick*="settings"]',info:1,title:'想再看一次教學',text:'到「設定」頁的「新手教學」，可以重看每一頁，或從頭完整看一遍。'}
+    ]},
+  list:{
+    setup(){ ui.catId='overview'; ui.filter='pending'; renderTabs(); switchMainView('list'); },
+    steps:[
+      {target:'#addTaskBtn',title:'新增事項',text:'要做的事從這裡新增。',after(){ $('taskTitle').value='買生日禮物'; const c=$('taskCatSelect'); if(c && [...c.options].some(o=>o.value==='personal')) c.value='personal'; toggleTaskDt('d'); $('taskDueDate').value=ymd(6); }},
+      {target:'#taskTitle',info:1,title:'輸入標題',text:'幫你填好了「買生日禮物」和截止日期。可以選分類，也能設時間和提醒。'},
+      {target:'#taskModal .modal-actions .btn-primary',title:'按「儲存」',text:'事項就出現在清單裡了。'},
+      {target:()=>{ const t=taskEl(); return t && t.querySelector('.expand-arrow'); },info:1,title:'收合與展開細項',text:'一件事可以拆成好幾個細項。點事項右邊的箭頭，可以收合或展開細項。'},
+      {target:()=>{ const t=taskEl(); return t && t.querySelector('.add-sub-btn'); },title:'新增細項',text:'點「＋ 新增細項」。',after(){ $('subTitle').value='挑禮物'; }},
+      {target:'#subTitle',info:1,title:'輸入細項名稱',text:'幫你填好了「挑禮物」。'},
+      {target:'#subModal .modal-actions .btn-primary',title:'按「儲存」',text:'細項就加好了，之後可以逐項勾掉。'},
+      {target:()=>{ const t=taskEl(); return t && t.querySelector('.task-row .note-btn'); },title:'寫備註',text:'事項和細項右邊都有「備註」，可以記下想法或注意事項。',after(){ $('noteTextarea').value='預算 500 元以內，下班順路買'; }},
+      {target:'#noteModal .modal-actions .btn-primary',title:'按「儲存」',text:'備註會顯示在事項下面。'},
+      {target:'#sortBtn',title:'整理順序',text:'想照日期、名稱或新增時間排，按這裡。'},
+      {target:'#sortModal .modal-actions .btn-primary',title:'按「排序」',text:'清單依你選的方式整理一次。整理完就是普通順序：之後改日期、拖動、新增，都不會自己跑掉。按錯了 5 秒內可以「復原」。'},
+      {target:()=>{ const t=taskEl(); return t && t.querySelector('.drag-handle'); },info:1,title:'長按拖動換順序',text:'每張卡左邊有三條線。按住一下再拖，想放哪裡就放哪裡。'},
+      {target:'#catIndicator',title:'切換分類',text:'點這裡在「總覽」和各個分類（工作、私人…）之間切換，清單和行事曆都適用。'},
+      {target:()=>[...document.querySelectorAll('#categorySheetList .category-option')].find(e=>e.textContent.includes('私人')),title:'選「私人」',text:'畫面只留下「私人」分類的事項。想看全部，再選回「總覽」。'}
+    ]},
+  cal:{
+    setup(){ switchMainView('cal'); },
+    steps:[
+      {target:'#view-cal .cal-header',info:1,title:'切換月份',text:'左右箭頭換月份。有事項的日子會有小點，也會顯示農曆。'},
+      {target:'#view-cal .sp-add',title:'加入特別的日子',text:'生日、紀念日，或是「在一起幾天」「養寵物幾天」，都可以記在這裡。'},
+      {target:'#specialDaysModal .modal-actions button[onclick="openSpecialEdit()"]',title:'按「＋ 新增」',text:'先看到目前有哪些特別的日子，再從這裡新增一個。',after(){ $('spName').value='媽媽生日'; $('spDate').value=ymd(8); }},
+      {target:'#spName',info:1,title:'輸入名稱和日期',text:'幫你填好了「媽媽生日」。類型選「日期」是生日、節日；選「計算天數」會算已經過了第幾天。'},
+      {target:'#specialEditModal .modal-actions .btn-primary',title:'按「儲存」',text:'媽媽生日就記進去了，月曆上會有小點。'},
+      {target:'#specialDaysModal .modal-actions .btn-primary',title:'按「完成」',text:'當天打開 App，會有慶祝動畫。整百天、週年也會慶祝。'}
+    ]},
+  notes:{
+    setup(){ switchMainView('quicknotes'); const i=$('quickNoteInput'); if(i){ i.value='週末要記得買牛奶'; i.blur(); } },
+    steps:[
+      {target:'#quickNoteInputBar',info:1,title:'馬上輸入',text:'打開這一頁就能直接打字，寫完按傳送。幫你填好了「週末要記得買牛奶」。'},
+      {target:'#quickNoteInputBar .btn-primary',title:'按「傳送」',text:'便利貼會貼到牆上。'},
+      {target:()=>qs('#quickNoteWall .quicknote-move'),title:'移至清單或習慣',text:'便利貼右上角的「移至」，可以把它變成清單事項或習慣。',after(){ $('moveNoteTitleInput').value='週末買牛奶'; }},
+      {target:'#moveNoteModal .modal-actions .btn-primary',title:'按「確定」',text:'便利貼就搬進清單了，不用重打一次。'}
+    ]},
+  money:{
+    setup(){ switchMainView('expense'); try{ setExpenseTab('record'); }catch(e){} },
+    steps:[
+      {target:'#view-expense button[onclick="openPayrollModal()"]',title:'薪資設定',text:'先設定薪資，每月發薪日會自動記成一筆收入。',after(){ const b=$('payrollBaseSalary'); b.value=42000; b.dispatchEvent(new Event('input')); $('payrollSalaryDay').value=5; }},
+      {target:'#payrollBaseSalary',info:1,title:'填底薪和發薪日',text:'幫你填好了底薪 42,000、每月 5 號發。還能填勞保、健保、勞退自提和請假規則。'},
+      {target:'#payrollModal button[onclick="savePayrollSettings()"]',title:'按「儲存」',text:'從發薪日開始，薪水會自動入帳。'},
+      {target:'#view-expense button[onclick="openExpenseModal()"]',title:'記一筆支出',text:'每一筆收入或支出，點「＋ 記一筆」。',after(){ setExpenseType('expense'); $('expenseAmountInput').value=150; $('expenseNoteInput').value='午餐'; }},
+      {target:'#expenseAmountInput',info:1,title:'填金額',text:'上面可以選支出、收入或轉帳，再填金額、帳戶、分類和備註。這一筆是午餐 150 元。'},
+      {target:'#expenseModal button[onclick="saveExpense()"]',title:'按「儲存」',text:'本月支出會跟著增加。'},
+      {target:'#view-expense button[onclick="openExpenseModal()"]',title:'再記一筆收入',text:'收入的記法一樣，只是類型改選「收入」。',after(){ setExpenseType('income'); $('expenseAmountInput').value=2000; $('expenseNoteInput').value='年終獎金補發'; }},
+      {target:'#expenseModal button[onclick="saveExpense()"]',title:'按「儲存」',text:'本月收入增加了，也會算進結餘。'}
+    ]},
+  settings:{
+    setup(){ switchMainView('settings'); },
+    steps:[
+      {target:'#pushSwitch',info:1,title:'開啟提醒通知',text:'打開後，事項到期、習慣提醒會跳出通知。要準時，請在瀏覽器詢問時按「允許」。（練習時不會真的打開）'},
+      {target:()=>qs('#paletteGrid .palette-card:nth-child(4)'),title:'換配色',text:'整體配色風格可以換成你喜歡的顏色，整個 App 都會跟著換。'},
+      {target:()=>[...document.querySelectorAll('#view-settings .setting-block')].find(b=>{ const h=b.querySelector('h3'); return h && h.textContent.trim()==='資料備份'; }),info:1,title:'資料備份',text:'隨時可以匯出備份檔，也能從備份檔還原。換手機或重要修改前，建議先備份一份。'},
+      {target:'#tutSettingsBlock',info:1,title:'想再看一次',text:'這裡可以重看每一頁的教學，或從頭完整看一遍。'}
+    ]}
 };
 
-function resetPhoneTheme(){ phone.style.removeProperty('--accent'); phone.style.removeProperty('--accent-soft'); }
-function drawNav(){
-  $('nav').innerHTML=NAV.map(([k,n])=>`<button class="${k===cur?'on':''}" aria-label="${n}" tabindex="-1">${ICON[k]}</button>`).join('');
-}
-function setTab(tab){
-  cur=tab;
-  const withPill = tab==='list'||tab==='cal';
-  $('pillrow').hidden=!withPill;
-  $('screen').className='screen'+(withPill?' p':'');
-  drawNav(); refresh();
-}
+/* ---------- 畫面 ---------- */
+function layer(){ return $('tutLayer'); }
+function hideSpot(){ $('tutHole').style.display='none'; $('tutCatch').style.display='none'; $('tutTip').style.display='none'; }
+function currentStep(){ return run && PAGES[run.tab].steps[run.i]; }
 
-function start(tab,chain){
-  stage().hidden=false;
-  document.body.style.overflow='hidden';
-  phone=$('phone');
-  S=base(); resetPhoneTheme(); setTab(tab);
-  run={tab,i:0,chain:!!chain};
-  if(!popped){ try{ history.pushState({tut:1},''); popped=true; }catch(e){} }
+function startTab(tab){
+  tok++; cancelAnimationFrame(raf);
+  closeAllModals();
+  seed();
+  PAGES[tab].setup(); window.scrollTo(0,0);
+  run.tab=tab; run.i=0;
   render();
-}
-function closeStage(){
-  chainTok++; run=null; stage().hidden=true; $('ov').hidden=true; document.body.style.overflow='';
-  if(popped){ popped=false; try{ if(history.state&&history.state.tut) history.back(); }catch(e){} }
-}
-function finish(skipped){
-  const r=run; if(!r) return;
-  seen[r.tab]=true;
-  if(r.chain && !skipped){
-    const nx=ORDER[ORDER.indexOf(r.tab)+1];
-    if(nx){
-      saveSeen(); S.dlg=null; $('ov').hidden=true; run=null; setTab(nx);
-      const tok=++chainTok;
-      setTimeout(()=>{ if(chainTok===tok && !stage().hidden) start(nx,true); },450);
-      return;
-    }
-  }
-  if(r.chain){ ORDER.forEach(k=>seen[k]=true); }
-  saveSeen();
-  closeStage();
-  /* 從頭看完（或中途離開）就回到習慣頁；只看單頁則留在原本那一頁 */
-  if(r.chain && typeof switchMainView==='function') switchMainView('habits');
-}
-
-function place(target){
-  const t=phone.querySelector(`[data-t="${target}"]`); if(!t) return null;
-  const p=phone.getBoundingClientRect(), r=t.getBoundingClientRect();
-  return {x:r.left-p.left, y:r.top-p.top, w:r.width, h:r.height, W:p.width, H:p.height};
 }
 function render(){
   if(!run) return;
-  const steps=PAGES[run.tab], s=steps[run.i], total=steps.length;
-  $('ov').hidden=false;
-  const hole=$('hole'), tip=$('tip'), dim=$('dim'), cc=$('catch');
-  const next=()=>{ if(!run) return; if(s.act) s.act(); run.i++; if(run.i>=total) finish(false); else render(); };
+  const s=currentStep(), my=++tok;
+  cancelAnimationFrame(raf);
+  try{ if(document.activeElement && document.activeElement.blur) document.activeElement.blur(); }catch(e){}
   if(s.kind==='card'){
-    hole.style.display='none'; cc.style.display='none'; tip.style.display='none'; tip.innerHTML=''; dim.hidden=false;
-    $('card').innerHTML=`<span class="tag">${s.tag}</span><h2>${s.title}</h2><p>${s.text}</p>
-     <div class="btns" style="margin-top:14px"><button class="skip" id="tut_skip">略過</button><span class="sp"></span><button class="primary" id="tut_next">${s.go}</button></div>`;
-    $('next').onclick=next; $('skip').onclick=()=>finish(true);
-    try{ $('next').focus({preventScroll:true}); }catch(e){}
+    hideSpot(); $('tutTip').innerHTML=''; $('tutDim').hidden=false;
+    $('tutCard').innerHTML=`<span class="tut-tag">${s.tag}</span><h2>${s.title}</h2><p>${s.text}</p>
+      <div class="tut-btns"><button class="tut-skip" id="tutSkip">略過</button><span class="tut-sp"></span><button class="tut-next" id="tutNext">${s.go}</button></div>`;
+    $('tutNext').onclick=advance; $('tutSkip').onclick=()=>finishPage(true);
+    try{ $('tutNext').focus({preventScroll:true}); }catch(e){}
     return;
   }
-  dim.hidden=true; $('card').innerHTML=''; tip.style.display=''; hole.style.display=''; cc.style.display='';
-  const myRun=run, myI=run.i;
-  const draw=()=>{
-    if(run!==myRun||run.i!==myI) return;
-    const q=place(s.target); if(!q) return;
-    const pad=6;
-    const box=`left:${q.x-pad}px;top:${q.y-pad}px;width:${q.w+pad*2}px;height:${q.h+pad*2}px`;
-    hole.style.cssText=box; cc.style.cssText=box;
-    const below = q.y < q.H*0.5;
-    tip.className='tip'+(below?'':' up');
-    const last = run.i===total-1;
-    tip.innerHTML=`<div class="prog">${NAME[run.tab]}頁　${run.i+1} / ${total}</div><h2>${s.title}</h2><p>${s.text}</p>${s.act?'<div class="hint">👆 點亮起來的地方</div>':''}
-      <div class="btns"><button class="skip" id="tut_skip">略過</button><span class="sp"></span><button class="primary" id="tut_next">${last?'完成':(s.act?'幫我點':'知道了')}</button></div>`;
-    const tipH=tip.offsetHeight;
-    tip.style.top = below ? (q.y+q.h+pad+14)+'px' : Math.max(8,(q.y-pad-14-tipH))+'px';
-    tip.style.setProperty('--ax',Math.min(Math.max(q.x+q.w/2,24),q.W-24)+'px');
-    $('next').onclick=next; $('skip').onclick=()=>finish(true);
-    cc.onclick=next;
-    if(!draw.focused){ draw.focused=true; try{ $('next').focus({preventScroll:true}); }catch(e){} }
+  $('tutDim').hidden=true; $('tutCard').innerHTML=''; hideSpot();
+  const t0=performance.now();
+  const poll=()=>{
+    if(tok!==my||!run) return;
+    const el=resolve(s);
+    if(el){ showStep(s,el,my); return; }
+    if(performance.now()-t0>3500){ advance(); return; }       /* 找不到就略過這一步，不卡住 */
+    setTimeout(poll,60);
   };
-  requestAnimationFrame(()=>{ draw(); setTimeout(draw,120); });
+  poll();
+}
+function showStep(s,el,my){
+  try{ el.scrollIntoView({block:'center',inline:'nearest'}); }catch(e){}
+  const steps=PAGES[run.tab].steps, last=run.i===steps.length-1;
+  const tip=$('tutTip');
+  tip.innerHTML=`<div class="tut-prog">${NAME[run.tab]}頁　${run.i+1} / ${steps.length}</div><h2>${s.title}</h2><p>${s.text}</p>${s.info?'':'<div class="tut-hint">👆 點亮起來的地方</div>'}
+    <div class="tut-btns"><button class="tut-skip" id="tutSkip">略過</button><span class="tut-sp"></span><button class="tut-next" id="tutNext">${last?'完成':(s.info?'知道了':'幫我點')}</button></div>`;
+  $('tutNext').onclick=doStep; $('tutSkip').onclick=()=>finishPage(true);
+  $('tutCatch').onclick=doStep;
+  $('tutHole').style.display=''; $('tutCatch').style.display=''; tip.style.display='';
+  lastKey='';
+  try{ $('tutNext').focus({preventScroll:true}); }catch(e){}
+  const loop=()=>{
+    if(tok!==my||!run) return;
+    const cur=resolve(s);
+    if(cur){
+      const r=cur.getBoundingClientRect(), key=[r.left,r.top,r.width,r.height,innerWidth,innerHeight].map(Math.round).join();
+      if(key!==lastKey){ lastKey=key; place(r); }
+    }
+    raf=requestAnimationFrame(loop);
+  };
+  loop();
+}
+function place(r){
+  const pad=6, hole=$('tutHole'), cc=$('tutCatch'), tip=$('tutTip');
+  const box={left:r.left-pad+'px',top:r.top-pad+'px',width:r.width+pad*2+'px',height:r.height+pad*2+'px'};
+  Object.assign(hole.style,box); Object.assign(cc.style,box);
+  const H=innerHeight, W=innerWidth, tipH=tip.offsetHeight, tipW=tip.offsetWidth;
+  let top, up=false, none=false;
+  const below=r.top+r.height/2 < H*0.5;
+  const topBelow=r.bottom+pad+14, topAbove=r.top-pad-14-tipH;
+  if(below && topBelow+tipH<=H-8) top=topBelow;
+  else if(topAbove>=8){ top=topAbove; up=true; }
+  else if(topBelow+tipH<=H-8) top=topBelow;
+  else { top=H-tipH-12; none=true; }
+  tip.style.top=Math.max(8,top)+'px';
+  tip.className='tut-tip'+(up?' up':'')+(none?' none':'');
+  const left=tip.getBoundingClientRect().left, cx=r.left+r.width/2-left;
+  tip.style.setProperty('--ax',Math.min(Math.max(cx,24),tipW-24)+'px');
+}
+function doStep(){
+  const s=currentStep(); if(!s) return;
+  if(!s.info && s.kind!=='card'){
+    const el=resolve(s);
+    try{ if(el) el.click(); }catch(e){ console.error('教學步驟失敗',e); }
+    try{ if(s.after) s.after(); }catch(e){ console.error(e); }
+  }
+  advance();
+}
+function advance(){
+  if(!run) return;
+  tok++; cancelAnimationFrame(raf); hideSpot();
+  run.i++;
+  if(run.i>=PAGES[run.tab].steps.length){ finishPage(false); return; }
+  setTimeout(render,s_delay());
+}
+const s_delay=()=>260;
+
+function markSeen(tabs){
+  const rd=window.__tutReal||data;
+  if(rd && rd.tutorialSeen && typeof rd.tutorialSeen==='object') tabs.forEach(t=>{ if(!rd.tutorialSeen[t]){ rd.tutorialSeen[t]=true; seenDirty=true; } });
+}
+function finishPage(skipped){
+  const r=run; if(!r) return;
+  if(r.chain && skipped){ markSeen(ORDER); closeTut(true); return; }
+  markSeen([r.tab]);
+  if(r.chain && !skipped){
+    const nx=ORDER[ORDER.indexOf(r.tab)+1];
+    if(nx){ tok++; cancelAnimationFrame(raf); hideSpot(); $('tutDim').hidden=true; setTimeout(()=>{ if(run===r) startTab(nx); },400); return; }
+    markSeen(ORDER); closeTut(true); return;
+  }
+  closeTut(false);
+}
+function closeTut(toHabits){
+  tok++; cancelAnimationFrame(raf);
+  run=null; layer().hidden=true; document.body.style.overflow='';
+  if(popped){ popped=false; try{ if(history.state && history.state.tut) history.back(); }catch(e){} }
+  exitSandbox(toHabits?'habits':null);
+  if(seenDirty){ seenDirty=false; persist(); }
+}
+function begin(tab,chain){
+  if(run) return;
+  if(!data) return;
+  enterSandbox();
+  layer().hidden=false; document.body.style.overflow='hidden';
+  run={tab,i:0,chain:!!chain};
+  if(!popped){ try{ history.pushState({tut:1},''); popped=true; }catch(e){} }
+  startTab(tab);
 }
 
-/* 返回鍵、Esc：只略過目前這一頁 */
-window.addEventListener('popstate',()=>{ if(run){ popped=false; const r=run; seen[r.tab]=true; if(r.chain) ORDER.forEach(k=>seen[k]=true); saveSeen(); closeStage(); } });
-document.addEventListener('keydown',e=>{ if(run && e.key==='Escape'){ e.preventDefault(); finish(true); } });
-window.addEventListener('resize',()=>{ if(run) render(); });
+window.addEventListener('popstate',()=>{ if(run){ popped=false; const r=run; if(r.chain) markSeen(ORDER); else markSeen([r.tab]); closeTut(r.chain); } });
+document.addEventListener('keydown',e=>{ if(run && e.key==='Escape'){ e.preventDefault(); finishPage(true); } });
+window.addEventListener('resize',()=>{ lastKey=''; });
+/* 教學跑到一半程式出錯：先把真正的資料換回來，不要卡在練習資料上 */
+window.addEventListener('error',()=>{ if(sb){ try{ run=null; layer().hidden=true; document.body.style.overflow=''; exitSandbox(); }catch(e){} } });
 
-/* ---------- 自動跳出：每頁第一次打開 ---------- */
+/* ---------- 新註冊的帳號：每頁第一次打開自動跳出 ---------- */
 function busy(){
-  const shell=document.getElementById('appShell');
+  const shell=$('appShell');
   if(!shell || shell.style.display!=='block' || !data) return true;
-  const bs=document.getElementById('blackScreen'); if(bs && bs.style.display!=='none') return true;
+  const bs=$('blackScreen'); if(bs && bs.style.display!=='none') return true;
   return !!(typeof celebrateAnyOverlayOpen==='function' && celebrateAnyOverlayOpen());
 }
 window.tutOnView=function(view){
+  if(window.__tutActive || run) return;
   const tab=TAB_OF[view]; if(!tab) return;
-  loadSeen();
-  if(seen[tab]) return;
+  const ts=data && data.tutorialSeen;
+  if(!ts || typeof ts!=='object' || ts[tab]) return;
   clearTimeout(autoTimer); autoTries=0;
   const tick=()=>{
-    if(run) return;
-    if(TAB_OF[ui.mainView]!==tab || seen[tab]) return;
+    if(run || window.__tutActive) return;
+    const ts2=data && data.tutorialSeen;
+    if(!ts2 || ts2[tab] || TAB_OF[ui.mainView]!==tab) return;
     if(busy()){ if(++autoTries<40) autoTimer=setTimeout(tick,1500); return; }
-    start(tab);
+    begin(tab,false);
   };
-  autoTimer=setTimeout(tick,600);
+  autoTimer=setTimeout(tick,700);
 };
 
-/* ---------- 入口 ---------- */
-window.tutOpenMenu=function(){ document.getElementById('tutMenuModal').classList.add('show'); };
-window.tutPlayThisPage=function(){
-  closeModal('tutMenuModal');
-  const tab=TAB_OF[ui.mainView]||'habits';
-  start(tab);
-};
-window.tutPlayAll=function(){
-  closeModal('tutMenuModal'); closeModal('devToolsModal');
-  start('habits',true);
-};
+/* ---------- 入口(設定頁「新手教學」、開發者工具) ---------- */
+window.tutPlay=function(tab){ closeModal('devToolsModal'); begin(tab,false); };
+window.tutPlayAll=function(){ closeModal('devToolsModal'); begin('habits',true); };
 window.tutResetSeen=function(){
-  try{ localStorage.removeItem(seenKey()); }catch(e){}
-  seen={};
+  if(!data) return;
+  data.tutorialSeen={};
+  persist();
   if(typeof flashToast==='function') flashToast('已重設，各頁下次打開會再自動跳出教學');
 };
 })();
