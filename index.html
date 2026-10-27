@@ -197,7 +197,6 @@
   .subtask-row.done .subtask-title{color:var(--ink-soft);text-decoration:line-through;}
   /* 線條圖示(鉛筆、叉叉、鈴鐺):跟其他圖示同一種畫法 */
   .ic{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
-  .ic-bell{width:12px;height:12px;margin-left:5px;vertical-align:-1.5px;}
   /* 清單裡「今天」的分隔線:標在今天的事項開始的地方,不改順序 */
   .today-divider{display:flex;align-items:center;gap:10px;margin:0 2px 12px;font-size:11.5px;font-weight:700;color:var(--accent);letter-spacing:.04em;}
   .today-divider::before,.today-divider::after{content:'';flex:1;height:1.5px;border-radius:2px;background:var(--accent);opacity:.35;}
@@ -1123,7 +1122,6 @@
         <div id="categoryPaletteList"></div>
       </div>
       <button class="btn-ghost" onclick="resetTheme()">重設為預設外觀</button>
-      <button class="btn-ghost" style="margin-left:8px;color:var(--danger);border-color:var(--danger)" onclick="clearAllDataConfirm()">清除所有資料</button>
     </div>
 
     <div id="view-expense" style="display:none">
@@ -3384,12 +3382,10 @@ function renderDataInfo(){
   /* 要把整份資料轉成文字才算得出大小,資料多的時候要幾十毫秒,所以等畫面切換完再算,不卡住切換 */
   dataInfoTimer = setTimeout(async ()=>{
     if(!data) return;
-    let bytes = 0, parts = [], arch = [];
+    let bytes = 0, arch = [];
     try{
       const built = await buildStoredValue(data, serializeData(data));
       bytes = utf8Bytes(built.json); arch = built.years;
-      const label = { expenses:'記帳', habitLogs:'習慣打卡紀錄', tasks:'事項', quickNotes:'隨手記', dayRecaps:'每日回顧' };
-      parts = Object.keys(label).map(k=>({ name:label[k], n:utf8Bytes(JSON.stringify(k==='habitLogs' ? compactHabitLogs(data.habitLogs||{}) : (data[k]||[]))) })).sort((a,b)=>b.n-a.n).filter(x=>x.n>0).slice(0,3);
     }catch(e){}
     lastDataBytes = bytes;
     const pct = Math.min(100, Math.round(bytes/SIZE_BLOCK_BYTES*100));
@@ -3887,7 +3883,6 @@ function fmtDate(d){
 }
 const ICON_CAL_BTN = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14" rx="2.5"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg>';
 const ICON_BELL_BTN = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 17V11a6 6 0 0 1 12 0v6l1.5 2h-15z"/><path d="M10 21.5a2.2 2.2 0 0 0 4 0"/></svg>';
-const ICON_BELL = '<svg class="ic ic-bell" viewBox="0 0 24 24" role="img" aria-label="有提醒"><path d="M6 17V11a6 6 0 0 1 12 0v6l1.5 2h-15z"/><path d="M10 21.5a2.2 2.2 0 0 0 4 0"/></svg>';
 const ICON_EDIT = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1-4 10-10 3 3-10 10z"/><line x1="15" y1="6" x2="18" y2="9"/></svg>';
 const ICON_DEL = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>';
 /* 事項到期的時間點(毫秒)。只設日期沒設時間 → 當天 08:00(提醒也是這個時間);沒有日期 → null */
@@ -4989,6 +4984,7 @@ function rowHandlePointerDown(e, rowSel, onCommit){
   const pressTimer = setTimeout(()=>{
     document.removeEventListener('pointermove', cancelWatch);
     document.removeEventListener('pointerup', cancelUp);
+    document.removeEventListener('pointercancel', cancelUp);
     startRowDrag(rowEl, rowSel, onCommit, e);
   }, 380);
   function cancelWatch(ev){
@@ -4996,15 +4992,18 @@ function rowHandlePointerDown(e, rowSel, onCommit){
       clearTimeout(pressTimer);
       document.removeEventListener('pointermove', cancelWatch);
       document.removeEventListener('pointerup', cancelUp);
+      document.removeEventListener('pointercancel', cancelUp);
     }
   }
   function cancelUp(){
     clearTimeout(pressTimer);
     document.removeEventListener('pointermove', cancelWatch);
     document.removeEventListener('pointerup', cancelUp);
+    document.removeEventListener('pointercancel', cancelUp);
   }
   document.addEventListener('pointermove', cancelWatch);
   document.addEventListener('pointerup', cancelUp);
+  document.addEventListener('pointercancel', cancelUp);
 }
 function startRowDrag(rowEl, rowSel, onCommit, e){
   const rect = rowEl.getBoundingClientRect();
@@ -5893,7 +5892,7 @@ function saveSalaryDetail(){
   flashToast('已更新這筆薪水：'+fmtMoney(net));
 }
 function renderSalaryBlockHeader(){
-  const y = expenseUi.monthDate.getFullYear(), m = expenseUi.monthDate.getMonth();
+  const m = expenseUi.monthDate.getMonth();
   const key = expenseMonthKeyOf(expenseUi.monthDate);
   document.getElementById('salaryBlockTitle').textContent = (m+1)+'月薪資';
   document.getElementById('salaryBlockHint').textContent =
@@ -7229,9 +7228,12 @@ function openSummary(range){
   const dateList = [];
   for(let i=days-1;i>=0;i--) dateList.push(dateStrOffset(-i));
 
+  /* 完成了幾項:只算這段期間(本週 7 天 / 本月 30 天)內打勾完成的事項和細項,用完成當天(completedAt)判斷 */
   let completedTasks = 0;
+  const inRange = x=> x && x.status==='done' && dateList.includes(x.completedAt);
   data.tasks.forEach(t=>{
-    if(t.status==='done') completedTasks++;
+    if(inRange(t)) completedTasks++;
+    (t.subtasks||[]).forEach(st=>{ if(inRange(st)) completedTasks++; });
   });
 
   const habitRows = data.habits.map(h=>{
@@ -7474,18 +7476,6 @@ function resetTheme(){
   data.categories.forEach(c=> c.paletteId = null);
   applyTheme(); persist(); renderSettings();
 }
-function clearAllDataConfirm(){
-  showConfirm('確定要清除所有資料嗎？所有事項、習慣、書籤、自訂分類與配色都會被清空，只保留最基本的預設內容，此動作無法復原。', ()=>{
-    data = defaultData();
-    lastPersistedCount = 0;
-    lastPersistedCounts = {tasks:0, habits:0, quickNotes:0, dayRecaps:0};
-    ui.expanded = {}; ui.selectedDate = null; ui.habitDate = null; ui.habitWeekOffset = 0; ui.catId = 'overview'; ui.filter = 'pending';
-    applyTheme();
-    persist();
-    renderTabs();
-    switchMainView('list');
-  });
-}
 
 
 /* ============================================================
@@ -7522,7 +7512,6 @@ function renderAll(){
 ============================================================ */
 (function(){
 const TAB_OF={habits:'habits',list:'list',cal:'cal',week:'cal',quicknotes:'notes',expense:'money',settings:'settings'};
-const VIEW_OF={habits:'habits',list:'list',cal:'cal',notes:'quicknotes',money:'expense',settings:'settings'};
 const ORDER=['habits','list','cal','notes','money','settings'];
 const NAME={habits:'習慣',list:'清單',cal:'行事曆',notes:'隨手記',money:'記帳',settings:'設定'};
 const $=id=>document.getElementById(id), qs=s=>document.querySelector(s);
@@ -7729,7 +7718,7 @@ function place(r){
   const pad=6, hole=$('tutHole'), cc=$('tutCatch'), tip=$('tutTip');
   const box={left:r.left-pad+'px',top:r.top-pad+'px',width:r.width+pad*2+'px',height:r.height+pad*2+'px'};
   Object.assign(hole.style,box); Object.assign(cc.style,box);
-  const H=innerHeight, W=innerWidth, tipH=tip.offsetHeight, tipW=tip.offsetWidth;
+  const H=innerHeight, tipH=tip.offsetHeight, tipW=tip.offsetWidth;
   let top, up=false, none=false;
   const below=r.top+r.height/2 < H*0.5;
   const topBelow=r.bottom+pad+14, topAbove=r.top-pad-14-tipH;
