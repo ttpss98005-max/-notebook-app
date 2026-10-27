@@ -260,17 +260,16 @@
   .sp-sortbar{display:flex;justify-content:flex-end;margin:0 0 10px;}
   .sp-kind-btn{flex:1 1 auto;min-width:0;padding:10px 6px;border:1.5px solid var(--border);border-radius:999px;background:#fff;font-size:12.5px;font-weight:700;color:var(--ink-soft);font-family:inherit;white-space:nowrap;transition:background .15s,border-color .15s,color .15s;}
   .sp-kind-btn.on{background:var(--accent);border-color:var(--accent);color:#fff;}
-  .sp-strip{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px;align-items:center;}
-  .sp-chip{display:inline-flex;align-items:baseline;gap:7px;background:var(--accent-soft);color:#1A1A1A;border:1.5px solid transparent;border-radius:999px;padding:6px 13px;font-size:12px;font-family:inherit;max-width:100%;}
-  .sp-chip .sp-name{max-width:8.5em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .sp-chip b{font-size:13px;color:var(--accent);white-space:nowrap;}
   .sp-boxes{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:0 0 16px;}
   .sp-box{display:flex;flex-direction:column;gap:2px;min-width:0;text-align:left;font-family:inherit;background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:10px 13px;box-shadow:var(--shadow-sm);color:#1A1A1A;}
   .sp-box .sp-name{font-size:11.5px;color:var(--ink-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .sp-prog{display:flex;align-items:center;gap:8px;margin-top:5px;min-height:15px;}
+  .sp-bar{flex:1;height:4px;border-radius:99px;background:var(--accent-soft);overflow:hidden;min-width:16px;}
+  .sp-bar u{display:block;height:100%;background:var(--accent);border-radius:99px;}
+  .sp-prog em{font-style:normal;font-size:13px;font-weight:700;color:var(--accent);line-height:1;white-space:nowrap;margin-left:auto;}
   .sp-box b{font-size:16px;line-height:1.3;color:var(--accent);white-space:nowrap;}
   .sp-box-add{align-items:center;justify-content:center;background:#fff;border-style:dashed;box-shadow:none;color:var(--ink-soft);font-size:12.5px;font-weight:700;min-height:52px;}
   .sp-box-wide{grid-column:1/-1;min-height:46px;}
-  .sp-add{background:transparent;border:1.5px dashed var(--border);color:var(--ink-soft);border-radius:999px;padding:6px 13px;font-size:12px;font-family:inherit;}
   .cal-lunar.special{color:var(--accent);font-weight:700;}
   .cal-special-tag{position:absolute;right:6px;bottom:5px;font-size:10px;line-height:1;color:var(--accent);}
   .week-holiday{font-size:8px;color:#fff;background:var(--danger);border-radius:5px;padding:0 3px;line-height:1.5;}
@@ -291,10 +290,6 @@
   .sp-box .sp-box-main{display:flex;flex-direction:column;gap:2px;min-width:0;width:100%;text-align:left;font-family:inherit;background:none;border:none;padding:0;color:inherit;}
   .sp-box.has-tg .sp-name{padding-right:26px;}
   .sp-box.has-tg .sp-tg{position:absolute;top:9px;right:10px;}
-  .sp-chip.has-tg{align-items:center;gap:8px;padding-right:8px;}
-  .sp-chip .sp-chip-main{display:inline-flex;align-items:baseline;gap:7px;min-width:0;background:none;border:none;padding:0;font:inherit;color:inherit;}
-  .sp-chip .sp-tg{width:20px;height:20px;}
-  .sp-chip .sp-tg .ic{width:11px;height:11px;}
   .sp-row .sp-kind{font-size:10.5px;font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:1px 8px;white-space:nowrap;}
   .sp-row .sp-main{flex:1;min-width:0;}
   .sp-row .sp-title{font-size:13.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -4427,32 +4422,46 @@ function spFmtBtn(sd){
   const on = sd.fmt==='ymd';
   return `<button type="button" class="sp-tg ${on?'on':''}" role="switch" aria-checked="${on}" aria-label="用年月天顯示" title="${on?'目前用年月天顯示，點一下改回天數':'點一下改用年月天顯示'}" onclick="toggleSpecialFmt('${sd.id}')">${ICON_CAL_BTN}</button>`;
 }
-function spChipHtml(sd, numText){
-  if(sd.kind!=='festival') return `<span class="sp-chip has-tg"><button type="button" class="sp-chip-main" onclick="openSpecialEdit('${sd.id}')"><span class="sp-name">${escapeHtml(sd.name)}</span><b>${numText}</b></button>${spFmtBtn(sd)}</span>`;
-  return `<button class="sp-chip" onclick="openSpecialEdit('${sd.id}')"><span class="sp-name">${escapeHtml(sd.name)}</span><b>${numText}</b></button>`;
-}
 /* 最上面要顯示的項目:所有特別的日子,照「特別的日子」裡排好的順序。
    「計算天數」:今天是第幾天。「日期」:下一次是哪天、還有幾天(一次性的、已經過去的,顯示已過幾天) */
+/* 「日期」類(每年重複的才有):從那一天到今天已經滿了幾年(不滿一年或還沒到就空白),只放數字。一次性的、計算天數的都不顯示 */
+function festYears(sd, today){
+  if(sd.kind!=='festival' || !sd.yearly || today<sd.date) return '';
+  const y = elapsedYMD(sd.date, today).y;
+  return y>=1 ? String(y) : '';
+}
+/* 每年的日期:離「下一次」有多近,0~1(上一次到下一次之間走了幾成;還沒滿一年就從起算日算起;就是今天 = 1)。一次性的、還沒到的不畫條 */
+function festProgress(sd, today){
+  if(sd.kind!=='festival' || !sd.yearly || today<sd.date) return null;
+  const nx = nextFestivalDate(sd, today);
+  if(!nx) return null;
+  if(nx===today) return 1;
+  const py=+nx.slice(0,4)-1, m=+sd.date.slice(5,7), d=+sd.date.slice(8,10);
+  let prev = ymdStr(py, m, (m===2 && d===29 && !isLeapYear(py)) ? 28 : d);
+  if(prev<sd.date) prev = sd.date;
+  const span = daysBetween(prev, nx);
+  return span>0 ? Math.max(0, Math.min(1, daysBetween(prev, today)/span)) : 1;
+}
 function specialStripItems(){
   const today = todayStr();
   return data.specialDays.map(sd=>{
     if(sd.kind!=='festival') return { sd, num: counterText(sd, today) };
-    const nx = nextFestivalDate(sd, today);
-    if(nx){ const dd = daysBetween(today, nx); return { sd, num: dd===0 ? '就是今天' : '還有 '+dd+' 天' }; }
-    return { sd, num:'已過 '+daysBetween(sd.date, today)+' 天' };
+    const nx = nextFestivalDate(sd, today), yr = festYears(sd, today), bar = festProgress(sd, today);
+    if(nx){ const dd = daysBetween(today, nx); return { sd, num: dd===0 ? '就是今天' : '還有 '+dd+' 天', yr, bar }; }
+    return { sd, num:'已過 '+daysBetween(sd.date, today)+' 天', yr, bar };
   });
 }
-/* 月曆:小膠囊 */
-function renderSpecialStrip(){
-  const chips = specialStripItems().map(it=> spChipHtml(it.sd, it.num));
-  if(!chips.length) return `<div class="sp-strip"><button class="sp-add" onclick="openSpecialDays()">＋ 加入日期或計算天數</button></div>`;
-  return `<div class="sp-strip">${chips.join('')}<button class="sp-add" onclick="openSpecialDays()" title="管理特別的日子" aria-label="新增或管理特別的日子">＋</button></div>`;
-}
 /* 周曆:白底有框的方塊,放在周曆最上面。上面是名稱、下面是大大的天數 */
+/* 方塊最下面一行:左邊細進度條(離下一次有多近),右邊是已經過了幾年的數字(主色字) */
+function spProgHtml(it){
+  if(it.bar==null && !it.yr) return '';
+  const bar = it.bar==null ? '' : `<span class="sp-bar" role="img" aria-label="離下一次 ${Math.round(it.bar*100)}%"><u style="width:${Math.round(it.bar*100)}%"></u></span>`;
+  return `<span class="sp-prog">${bar}${it.yr?`<em aria-label="已過 ${it.yr} 年">${it.yr}</em>`:''}</span>`;
+}
 function renderSpecialBoxes(){
   const boxes = specialStripItems().map(it=> it.sd.kind!=='festival'
     ? `<div class="sp-box has-tg"><button type="button" class="sp-box-main" onclick="openSpecialEdit('${it.sd.id}')"><span class="sp-name">${escapeHtml(it.sd.name)}</span><b>${it.num}</b></button>${spFmtBtn(it.sd)}</div>`
-    : `<button class="sp-box" onclick="openSpecialEdit('${it.sd.id}')"><span class="sp-name">${escapeHtml(it.sd.name)}</span><b>${it.num}</b></button>`);
+    : `<button class="sp-box" onclick="openSpecialEdit('${it.sd.id}')"><span class="sp-name">${escapeHtml(it.sd.name)}</span><b>${it.num}</b>${spProgHtml(it)}</button>`);
   if(!boxes.length) return `<div class="sp-boxes"><button class="sp-box sp-box-add sp-box-wide" onclick="openSpecialDays()">＋ 加入日期或計算天數</button></div>`;
   return `<div class="sp-boxes">${boxes.join('')}<button class="sp-box sp-box-add" onclick="openSpecialDays()">＋ 新增或管理</button></div>`;
 }
@@ -4627,7 +4636,7 @@ function renderCalendar(){
       <div class="cal-title">${y}年 ${m+1}月</div>
       <button class="cal-nav-btn" onclick="changeMonth(1)" aria-label="下個月">›</button>
     </div>
-    ${renderSpecialStrip()}
+    ${renderSpecialBoxes()}
     <div class="cal-grid">
       ${['日','一','二','三','四','五','六'].map(d=>`<div class="cal-dow">${d}</div>`).join('')}
       ${cells}
@@ -7619,7 +7628,7 @@ const PAGES={
     setup(){ switchMainView('cal'); },
     steps:[
       {target:'#view-cal .cal-header',info:1,title:'切換月份',text:'左右箭頭換月份。有事項的日子會有小點，也會顯示農曆。'},
-      {target:'#view-cal .sp-add',title:'加入特別的日子',text:'生日、紀念日，或是「在一起幾天」「養寵物幾天」，都可以記在這裡。'},
+      {target:'#view-cal .sp-box-add',title:'加入特別的日子',text:'生日、紀念日，或是「在一起幾天」「養寵物幾天」，都可以記在這裡。'},
       {target:'#specialDaysModal .modal-actions button[onclick="openSpecialEdit()"]',title:'按「＋ 新增」',text:'先看到目前有哪些特別的日子，再從這裡新增一個。',after(){ $('spName').value='媽媽生日'; $('spDate').value=ymd(8); }},
       {target:'#spName',info:1,title:'輸入名稱和日期',text:'幫你填好了「媽媽生日」。類型選「日期」是生日、節日；選「計算天數」會算已經過了第幾天。'},
       {target:'#specialEditModal .modal-actions .btn-primary',title:'按「儲存」',text:'媽媽生日就記進去了，月曆上會有小點。'},
