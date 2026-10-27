@@ -258,10 +258,7 @@
   .dev-group{font-size:12px;font-weight:700;color:var(--ink-soft);margin:18px 0 8px;}
   .dev-btns{display:flex;flex-direction:column;gap:8px;}
   .sp-kinds{display:flex;gap:8px;}
-  .sp-sortbar{display:flex;align-items:center;gap:10px;margin:0 0 12px;}
-  .sp-sortbar .sp-sort-label{font-size:12px;font-weight:700;color:var(--ink-soft);flex:none;}
-  .sp-sortbar .pill-tabs{flex:1 1 auto;min-width:0;display:flex;}
-  .sp-sortbar .pill-tab{flex:1 1 0;min-width:0;white-space:nowrap;padding:7px 4px;font-size:12.5px;text-align:center;}
+  .sp-sortbar{display:flex;justify-content:flex-end;margin:0 0 10px;}
   .sp-kind-btn{flex:1 1 auto;min-width:0;padding:10px 6px;border:1.5px solid var(--border);border-radius:999px;background:#fff;font-size:12.5px;font-weight:700;color:var(--ink-soft);font-family:inherit;white-space:nowrap;transition:background .15s,border-color .15s,color .15s;}
   .sp-kind-btn.on{background:var(--accent);border-color:var(--accent);color:#fff;}
   .sp-strip{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px;align-items:center;}
@@ -284,11 +281,25 @@
   .sp-line{display:flex;align-items:baseline;gap:8px;font-size:12.5px;background:var(--accent-soft);border-radius:12px;padding:8px 12px;color:#1A1A1A;}
   .sp-line b{color:var(--accent);}
   .sp-line .sp-badge{margin-left:auto;font-size:10.5px;font-weight:700;color:#fff;background:var(--accent);border-radius:999px;padding:1px 8px;white-space:nowrap;}
-  .sp-row{display:flex;align-items:center;gap:10px;width:100%;text-align:left;font-family:inherit;padding:11px 14px;border:1.5px solid var(--border);border-radius:14px;background:#FDFDFB;margin-bottom:8px;color:#1A1A1A;}
+  .sp-row{display:flex;align-items:center;gap:6px;width:100%;box-sizing:border-box;padding:8px 12px 8px 4px;border:1.5px solid var(--border);border-radius:14px;background:#FDFDFB;margin-bottom:8px;color:#1A1A1A;}
+  .sp-row .sp-edit{flex:1;min-width:0;display:flex;align-items:center;gap:10px;text-align:left;font-family:inherit;padding:4px 0;border:none;background:none;color:inherit;}
+  .sp-row .drag-handle{flex:none;padding:6px 5px;}
+  .sp-tg{width:24px;height:24px;padding:0;border-radius:50%;border:1.5px solid var(--border);background:transparent;color:var(--ink-soft);opacity:.7;display:inline-flex;align-items:center;justify-content:center;flex:none;transition:background .15s,color .15s,opacity .15s;}
+  .sp-tg .ic{width:13px;height:13px;margin:0;}
+  .sp-tg.on{background:var(--accent);border-color:var(--accent);color:#fff;opacity:1;}
+  .sp-tg:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .sp-box.has-tg{position:relative;}
+  .sp-box .sp-box-main{display:flex;flex-direction:column;gap:2px;min-width:0;width:100%;text-align:left;font-family:inherit;background:none;border:none;padding:0;color:inherit;}
+  .sp-box.has-tg .sp-name{padding-right:26px;}
+  .sp-box.has-tg .sp-tg{position:absolute;top:9px;right:10px;}
+  .sp-chip.has-tg{align-items:center;gap:8px;padding-right:8px;}
+  .sp-chip .sp-chip-main{display:inline-flex;align-items:baseline;gap:7px;min-width:0;background:none;border:none;padding:0;font:inherit;color:inherit;}
+  .sp-chip .sp-tg{width:20px;height:20px;}
+  .sp-chip .sp-tg .ic{width:11px;height:11px;}
   .sp-row .sp-kind{font-size:10.5px;font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:1px 8px;white-space:nowrap;}
   .sp-row .sp-main{flex:1;min-width:0;}
   .sp-row .sp-title{font-size:13.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .sp-row .sp-sub{font-size:11px;color:var(--ink-soft);margin-top:2px;}
+  .sp-row .sp-sub{font-size:11px;color:var(--ink-soft);margin-top:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
   .sp-row .sp-num{font-size:13px;font-weight:700;color:var(--accent);white-space:nowrap;}
   .day-detail h3{font-size:13.5px;margin:0 0 10px;}
   .item-line{font-size:12.5px;padding:9px 12px;border-radius:12px;background:#FDFDFB;border:1.5px solid var(--border);border-left:4px solid var(--border);margin-bottom:6px;color:#1A1A1A;}
@@ -1562,16 +1573,7 @@
       </div>
     </div>
     <div class="field"><label>名稱</label><input type="text" id="spName" maxlength="30"></div>
-    <div class="field"><label id="spDateLabel">日期</label><input type="date" id="spDate" min="1900-01-01" max="2200-12-31" onchange="updateSpecialFmt()"></div>
-    <div class="field" id="spFmtField" style="display:none">
-      <label>顯示方式</label>
-      <input type="hidden" id="spFmt" value="days">
-      <div class="sp-kinds" id="spFmts">
-        <button type="button" class="sp-kind-btn on" data-fmt="days" onclick="setSpecialFmt('days')">天數</button>
-        <button type="button" class="sp-kind-btn" data-fmt="ymd" onclick="setSpecialFmt('ymd')">年月天</button>
-      </div>
-      <div class="fee-hint" id="spFmtHint" style="margin-top:6px;"></div>
-    </div>
+    <div class="field"><label id="spDateLabel">日期</label><input type="date" id="spDate" min="1900-01-01" max="2200-12-31"></div>
     <div class="row-inline" id="spYearlyRow" style="max-width:300px;margin-bottom:6px;">
       <label style="margin:0;font-size:13px;">每年重複</label>
       <button class="switch on" id="spYearlySwitch" role="switch" aria-label="每年重複" onclick="this.classList.toggle('on')"></button>
@@ -1580,6 +1582,21 @@
       <button class="btn-ghost" id="spDeleteBtn" style="color:var(--danger);margin-right:auto;" onclick="deleteSpecial()">刪除</button>
       <button class="btn-ghost" onclick="closeModal('specialEditModal')">取消</button>
       <button class="btn-primary" onclick="saveSpecial()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="spSortModal">
+  <div class="modal">
+    <h3>排序</h3>
+    <div id="spSortModeList"></div>
+    <div class="field" id="spSortDirField" style="margin-top:14px;margin-bottom:0;">
+      <label>順序</label>
+      <div class="pill-tabs" id="spSortDirSeg"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal('spSortModal')">取消</button>
+      <button class="btn-primary" onclick="applySpecialSort()">排序</button>
     </div>
   </div>
 </div>
@@ -2159,7 +2176,11 @@ function normalizeData(){
   data.specialDays.forEach(x=>{ if(x.kind==='together' || x.kind==='raising') x.kind = 'count'; });   /* 舊版分成「在一起」「開始養」,現在合併成「計算天數」(名稱、日期都保留) */
   data.specialDays = data.specialDays.filter(x=> SPECIAL_KINDS[x.kind] && typeof x.name==='string' && x.name.trim() && validYmd(x.date));
   data.specialDays.forEach(x=>{ if(x.kind==='count' && x.fmt==='ymd') x.fmt='ymd'; else delete x.fmt; });
-  if(data.specialSort!==undefined && !['type','name','date','new'].includes(data.specialSort)) delete data.specialSort;
+  if(data.specialSort!==undefined){      /* 舊版把排序方式存起來、自動套用;現在改成按「排序」才整理一次,舊的設定就照它整理一次後拿掉 */
+    const legacy = {type:['default','asc'], name:['name','asc'], date:['date','asc'], new:['created','desc']}[data.specialSort];
+    if(legacy) data.specialDays = sortSpecialsBy(data.specialDays, legacy[0], legacy[1]);
+    delete data.specialSort;
+  }
   data.specialDays.forEach(x=>{ x.name = x.name.trim().slice(0,30); if(!/^[\w-]+$/.test(String(x.id||''))) x.id = uid(); x.yearly = x.kind==='festival' ? x.yearly!==false : false; });
   delete data.calShowLunar;     /* 舊版有「月曆顯示農曆」的開關,已經拿掉,農曆固定顯示 */
   delete data.theme;
@@ -3864,6 +3885,7 @@ function fmtDate(d){
   const dt = new Date(d+'T00:00');
   return `${dt.getMonth()+1}/${dt.getDate()}`;
 }
+const ICON_CAL_BTN = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14" rx="2.5"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg>';
 const ICON_BELL_BTN = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 17V11a6 6 0 0 1 12 0v6l1.5 2h-15z"/><path d="M10 21.5a2.2 2.2 0 0 0 4 0"/></svg>';
 const ICON_BELL = '<svg class="ic ic-bell" viewBox="0 0 24 24" role="img" aria-label="有提醒"><path d="M6 17V11a6 6 0 0 1 12 0v6l1.5 2h-15z"/><path d="M10 21.5a2.2 2.2 0 0 0 4 0"/></svg>';
 const ICON_EDIT = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1-4 10-10 3 3-10 10z"/><line x1="15" y1="6" x2="18" y2="9"/></svg>';
@@ -4341,27 +4363,42 @@ function elapsedYMD(startStr, dateStr){
   const days=daysBetween(addMonthsClamp(startStr,months), dateStr);
   return {y:Math.floor(months/12), m:months%12, d:days};
 }
-/* 計算天數要顯示的文字。n>=1:依這個項目選的顯示方式(天數 = 第 N 天;年月天 = X 年 Y 個月 Z 天);還沒開始就一律「還有 N 天」 */
+/* 計算天數要顯示的文字。n>=1:依這個項目選的顯示方式(天數 = 第 N 天;年月天 = X年Y月Z天);還沒開始就一律「還有 N 天」 */
 function counterText(sd, dateStr){
   const n=counterN(sd, dateStr);
   if(n<1) return '還有 '+(1-n)+' 天';
   if(sd.fmt!=='ymd') return '第 '+n+' 天';
   const e=elapsedYMD(sd.date, dateStr), parts=[];
-  if(e.y) parts.push(e.y+' 年');
-  if(e.m) parts.push(e.m+' 個月');
-  if(e.d || !parts.length) parts.push(e.d+' 天');
-  return parts.join(' ');
+  if(e.y) parts.push(e.y+'年');
+  if(e.m) parts.push(e.m+'月');
+  if(e.d || !parts.length) parts.push(e.d+'天');
+  return parts.join('');
 }
-/* 特別的日子的排序方式(存在 data.specialSort;預設 type = 計算天數在前、日期依遠近) */
-const SPECIAL_SORTS = [['type','預設'],['name','名稱'],['date','日期'],['new','新增']];
-function specialSortMode(){ const m=data && data.specialSort; return SPECIAL_SORTS.some(x=>x[0]===m) ? m : 'type'; }
-function sortSpecialsBy(list, mode){
-  const idx=new Map(data.specialDays.map((x,i)=>[x,i]));
-  const cmpName=(a,b)=>String(a.name).localeCompare(String(b.name),'zh-TW');
-  const l=list.slice();
-  if(mode==='name') l.sort((a,b)=>cmpName(a,b)||idx.get(a)-idx.get(b));
-  else if(mode==='date') l.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:cmpName(a,b));
-  else if(mode==='new') l.sort((a,b)=>(taskCreatedMs(b)-taskCreatedMs(a))||(idx.get(b)-idx.get(a)));
+/* 特別的日子的排序:跟清單一樣,按「排序」才整理一次(整理完就是普通順序,可以再拖動;之後新增、改日期都不會自己跑掉) */
+const SPECIAL_SORT_MODES = [['default','預設'],['name','名稱'],['date','日期'],['created','新增時間']];
+const SPECIAL_SORT_DIRS = {
+  name:    ['正序','倒序'],
+  date:    ['最早在前','最晚在前'],
+  created: ['最舊在前','最新在前']
+};
+let spSortPick = { mode:'default', dir:'asc' };
+function sortSpecialsBy(list, mode, dir){
+  const idx = new Map(data.specialDays.map((x,i)=>[x,i]));
+  const sgn = dir==='desc' ? -1 : 1, today = todayStr();
+  const cmpName = (a,b)=>String(a.name).localeCompare(String(b.name),'zh-TW');
+  const stable = (c,a,b)=> c || (idx.get(a)-idx.get(b));
+  const l = list.slice();
+  if(mode==='name') l.sort((a,b)=>stable(cmpName(a,b)*sgn,a,b));
+  else if(mode==='date') l.sort((a,b)=>stable((a.date<b.date?-1:a.date>b.date?1:0)*sgn,a,b));
+  else if(mode==='created') l.sort((a,b)=>stable((taskCreatedMs(a)-taskCreatedMs(b))*sgn,a,b));
+  else{       /* 預設:計算天數在前;日期依下一次的遠近,已經過的排最後 */
+    const key = sd=>{
+      if(sd.kind!=='festival') return -1;
+      const nx = nextFestivalDate(sd, today);
+      return nx ? daysBetween(today,nx) : 100000+daysBetween(sd.date,today);
+    };
+    l.sort((a,b)=>stable(key(a)-key(b),a,b));
+  }
   return l;
 }
 function specialsOn(dateStr){
@@ -4390,27 +4427,25 @@ function nextFestivalDate(sd, todayS){
 }
 
 /* ----- 畫面:計數條、設定頁、管理清單、新增/編輯 ----- */
+/* 計算天數旁邊的小圖示開關:亮 = 用「年月天」顯示 */
+function spFmtBtn(sd){
+  const on = sd.fmt==='ymd';
+  return `<button type="button" class="sp-tg ${on?'on':''}" role="switch" aria-checked="${on}" aria-label="用年月天顯示" title="${on?'目前用年月天顯示，點一下改回天數':'點一下改用年月天顯示'}" onclick="toggleSpecialFmt('${sd.id}')">${ICON_CAL_BTN}</button>`;
+}
 function spChipHtml(sd, numText){
+  if(sd.kind!=='festival') return `<span class="sp-chip has-tg"><button type="button" class="sp-chip-main" onclick="openSpecialEdit('${sd.id}')"><span class="sp-name">${escapeHtml(sd.name)}</span><b>${numText}</b></button>${spFmtBtn(sd)}</span>`;
   return `<button class="sp-chip" onclick="openSpecialEdit('${sd.id}')"><span class="sp-name">${escapeHtml(sd.name)}</span><b>${numText}</b></button>`;
 }
-/* 最上面要顯示的項目:所有特別的日子都列出來。
-   「計算天數」:今天是第幾天。「日期」:下一次是哪天、還有幾天(一次性的、已經過去的,顯示已過幾天)。順序:計算天數 → 最近的日期 → 已過的 */
+/* 最上面要顯示的項目:所有特別的日子,照「特別的日子」裡排好的順序。
+   「計算天數」:今天是第幾天。「日期」:下一次是哪天、還有幾天(一次性的、已經過去的,顯示已過幾天) */
 function specialStripItems(){
-  const today = todayStr(), counters = [], dates = [];
-  for(const sd of data.specialDays){
-    if(sd.kind!=='festival'){
-      counters.push({ sd, num: counterText(sd, today) });
-      continue;
-    }
+  const today = todayStr();
+  return data.specialDays.map(sd=>{
+    if(sd.kind!=='festival') return { sd, num: counterText(sd, today) };
     const nx = nextFestivalDate(sd, today);
-    if(nx){ const dd = daysBetween(today, nx); dates.push({ sd, key:dd, num: dd===0 ? '就是今天' : '還有 '+dd+' 天' }); }
-    else{ const past = daysBetween(sd.date, today); dates.push({ sd, key:100000+past, num:'已過 '+past+' 天' }); }
-  }
-  dates.sort((a,b)=>a.key-b.key);
-  const mode = specialSortMode();
-  if(mode==='type') return counters.concat(dates);
-  const all = counters.concat(dates), by = new Map(all.map(it=>[it.sd,it]));
-  return sortSpecialsBy(all.map(it=>it.sd), mode).map(sd=>by.get(sd));
+    if(nx){ const dd = daysBetween(today, nx); return { sd, num: dd===0 ? '就是今天' : '還有 '+dd+' 天' }; }
+    return { sd, num:'已過 '+daysBetween(sd.date, today)+' 天' };
+  });
 }
 /* 月曆:小膠囊 */
 function renderSpecialStrip(){
@@ -4420,7 +4455,9 @@ function renderSpecialStrip(){
 }
 /* 周曆:白底有框的方塊,放在周曆最上面。上面是名稱、下面是大大的天數 */
 function renderSpecialBoxes(){
-  const boxes = specialStripItems().map(it=>`<button class="sp-box" onclick="openSpecialEdit('${it.sd.id}')"><span class="sp-name">${escapeHtml(it.sd.name)}</span><b>${it.num}</b></button>`);
+  const boxes = specialStripItems().map(it=> it.sd.kind!=='festival'
+    ? `<div class="sp-box has-tg"><button type="button" class="sp-box-main" onclick="openSpecialEdit('${it.sd.id}')"><span class="sp-name">${escapeHtml(it.sd.name)}</span><b>${it.num}</b></button>${spFmtBtn(it.sd)}</div>`
+    : `<button class="sp-box" onclick="openSpecialEdit('${it.sd.id}')"><span class="sp-name">${escapeHtml(it.sd.name)}</span><b>${it.num}</b></button>`);
   if(!boxes.length) return `<div class="sp-boxes"><button class="sp-box sp-box-add sp-box-wide" onclick="openSpecialDays()">＋ 加入日期或計算天數</button></div>`;
   return `<div class="sp-boxes">${boxes.join('')}<button class="sp-box sp-box-add" onclick="openSpecialDays()">＋ 新增或管理</button></div>`;
 }
@@ -4443,26 +4480,61 @@ function openSpecialDays(){ specialSnap = JSON.stringify(data.specialDays); rend
 function finishSpecialDays(){ specialSnap = null; closeModal('specialDaysModal'); }
 function cancelSpecialDays(){
   const sn = specialSnap; specialSnap = null;
-  if(sn && JSON.stringify(data.specialDays)!==sn){ data.specialDays = JSON.parse(sn); persist(); refreshSpecialViews(); }
+  if(sn && JSON.stringify(data.specialDays)!==sn){
+    const cur = new Map(data.specialDays.map(x=>[x.id,x]));
+    const back = JSON.parse(sn);
+    back.forEach(x=>{ const c = cur.get(x.id); if(x.kind==='count' && c && c.kind==='count'){ if(c.fmt==='ymd') x.fmt='ymd'; else delete x.fmt; } });     /* 「年月天」開關只是顯示方式,取消不跟著還原 */
+    data.specialDays = back; persist(); refreshSpecialViews();
+  }
   closeModal('specialDaysModal');
-}
-function setSpecialSort(mode){
-  if(!SPECIAL_SORTS.some(x=>x[0]===mode)) return;
-  data.specialSort = mode; persist(); refreshSpecialViews();
 }
 function renderSpecialSortBar(){
   const bar = document.getElementById('specialSortBar'); if(!bar) return;
-  const mode = specialSortMode();
   bar.style.display = data.specialDays.length>1 ? '' : 'none';
-  bar.innerHTML = '<span class="sp-sort-label">排序</span><div class="pill-tabs">'+SPECIAL_SORTS.map(x=>`<button type="button" class="pill-tab ${x[0]===mode?'active':''}" onclick="setSpecialSort('${x[0]}')">${x[1]}</button>`).join('')+'</div>';
+  bar.innerHTML = '<button class="sort-btn" type="button" onclick="openSpecialSort()" title="排序" aria-label="排序"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5L8 19M4.5 15.5L8 19L11.5 15.5M16 19L16 5M12.5 8.5L16 5L19.5 8.5"/></svg></button>';
+}
+function openSpecialSort(){ spSortPick = { mode:'default', dir:'asc' }; renderSpecialSortModal(); document.getElementById('spSortModal').classList.add('show'); }
+function pickSpecialSortMode(mode){ spSortPick = { mode, dir:'asc' }; renderSpecialSortModal(); }
+function pickSpecialSortDir(dir){ spSortPick.dir = dir; renderSpecialSortModal(); }
+function renderSpecialSortModal(){
+  const {mode, dir} = spSortPick;
+  document.getElementById('spSortModeList').innerHTML = SPECIAL_SORT_MODES.map(m=>
+    `<button type="button" class="sort-opt ${m[0]===mode?'sel':''}" role="radio" aria-checked="${m[0]===mode}" onclick="pickSpecialSortMode('${m[0]}')"><span class="rd"></span>${m[1]}</button>`).join('');
+  const dirs = SPECIAL_SORT_DIRS[mode];
+  document.getElementById('spSortDirField').style.display = dirs ? '' : 'none';
+  document.getElementById('spSortDirSeg').innerHTML = dirs ? dirs.map((l,i)=>{
+    const d = i===0 ? 'asc' : 'desc';
+    return `<button type="button" class="pill-tab ${d===dir?'active':''}" onclick="pickSpecialSortDir('${d}')">${l}</button>`;
+  }).join('') : '';
+}
+/* 按「排序」:整理一次;在「特別的日子」視窗裡按「取消」會連排序一起還原 */
+function applySpecialSort(){
+  const {mode, dir} = spSortPick;
+  closeModal('spSortModal');
+  if(data.specialDays.length<2) return;
+  data.specialDays = sortSpecialsBy(data.specialDays, mode, dir);
+  persist(); refreshSpecialViews();
+}
+function commitSpecialDrag(container, rowSel){
+  const ids = Array.from(container.querySelectorAll(rowSel)).map(r=> r.dataset.spId);
+  const by = new Map(data.specialDays.map(x=>[x.id,x]));
+  const out = ids.map(id=>by.get(id)).filter(Boolean);
+  if(out.length===data.specialDays.length) data.specialDays = out;
+  persist(); refreshSpecialViews();
+}
+function specialHandlePointerDown(e){ rowHandlePointerDown(e, '.sp-row', commitSpecialDrag); }
+/* 「年月天」開關:只改顯示方式,馬上存 */
+function toggleSpecialFmt(id){
+  const sd = data.specialDays.find(x=>x.id===id); if(!sd || sd.kind!=='count') return;
+  if(sd.fmt==='ymd') delete sd.fmt; else sd.fmt = 'ymd';
+  persist(); refreshSpecialViews();
 }
 function renderSpecialDaysList(){
   renderSpecialSortBar();
   const box = document.getElementById('specialDaysList'); if(!box) return;
   if(!data.specialDays.length){ box.innerHTML = `<div class="empty-state" style="padding:18px 8px;">還沒有特別的日子。<br>按下方「＋ 新增」，可以加生日、紀念日，或是計算在一起、養寵物已經過了幾天。</div>`; return; }
-  const today = todayStr(), order = { count:0, festival:1 }, mode = specialSortMode();
-  const sorted = mode==='type' ? data.specialDays.slice().sort((a,b)=> order[a.kind]-order[b.kind]) : sortSpecialsBy(data.specialDays, mode);
-  const rows = sorted.map(sd=>{
+  const today = todayStr();
+  const rows = data.specialDays.map(sd=>{
     let num, sub;
     if(sd.kind==='festival'){
       const nx = nextFestivalDate(sd, today);
@@ -4470,9 +4542,9 @@ function renderSpecialDaysList(){
       sub = sd.date + (sd.yearly ? '・每年' : '');
     }else{
       num = counterText(sd, today);
-      sub = '從 '+sd.date+' 起算'+(sd.fmt==='ymd' ? '・年月天' : '');
+      sub = sd.date;
     }
-    return `<button class="sp-row" onclick="openSpecialEdit('${sd.id}')"><span class="sp-kind">${SPECIAL_KINDS[sd.kind].label}</span><span class="sp-main"><div class="sp-title">${escapeHtml(sd.name)}</div><div class="sp-sub">${sub}</div></span><span class="sp-num">${num}</span></button>`;
+    return `<div class="sp-row" data-sp-id="${sd.id}"><button type="button" class="drag-handle" aria-label="拖曳排序" onpointerdown="specialHandlePointerDown(event)"><span></span><span></span><span></span></button><button type="button" class="sp-edit" onclick="openSpecialEdit('${sd.id}')"><span class="sp-main"><div class="sp-title">${escapeHtml(sd.name)}</div><div class="sp-sub"><span class="sp-kind">${SPECIAL_KINDS[sd.kind].label}</span>${sub}</div></span><span class="sp-num">${num}</span></button></div>`;
   });
   box.innerHTML = rows.join('');
 }
@@ -4487,17 +4559,6 @@ function updateSpecialForm(){
   document.getElementById('spName').placeholder = k.namePh;
   document.getElementById('spDateLabel').textContent = k.dateLabel;
   document.getElementById('spYearlyRow').style.display = kind==='festival' ? 'flex' : 'none';
-  document.getElementById('spFmtField').style.display = kind==='count' ? '' : 'none';
-  updateSpecialFmt();
-}
-function setSpecialFmt(f){ document.getElementById('spFmt').value = f==='ymd' ? 'ymd' : 'days'; updateSpecialFmt(); }
-function updateSpecialFmt(){
-  const f = document.getElementById('spFmt').value;
-  document.querySelectorAll('#spFmts .sp-kind-btn').forEach(b=> b.classList.toggle('on', b.dataset.fmt===f));
-  const d = document.getElementById('spDate').value;
-  let ex = '';
-  if(validYmd(d)){ const t = todayStr(), probe = {date:d, fmt:f}; ex = '今天會顯示：'+counterText(probe, t); }
-  document.getElementById('spFmtHint').textContent = ex;
 }
 function openSpecialEdit(id){
   const sd = id ? data.specialDays.find(x=>x.id===id) : null;
@@ -4507,7 +4568,6 @@ function openSpecialEdit(id){
   document.getElementById('spName').value = sd ? sd.name : '';
   document.getElementById('spDate').value = sd ? sd.date : todayStr();
   document.getElementById('spYearlySwitch').classList.toggle('on', sd ? sd.yearly!==false : true);
-  document.getElementById('spFmt').value = (sd && sd.fmt==='ymd') ? 'ymd' : 'days';
   document.getElementById('spDeleteBtn').style.display = sd ? '' : 'none';
   updateSpecialForm();
   document.getElementById('specialEditModal').classList.add('show');
@@ -4520,9 +4580,8 @@ function saveSpecial(){
   if(!validYmd(date)){ notify('請選擇正確的日期。'); return; }
   const yearly = kind==='festival' ? document.getElementById('spYearlySwitch').classList.contains('on') : false;
   const sd = id ? data.specialDays.find(x=>x.id===id) : null;
-  const fmt = (kind==='count' && document.getElementById('spFmt').value==='ymd') ? 'ymd' : 'days';
-  if(sd){ sd.kind = kind; sd.name = name; sd.date = date; sd.yearly = yearly; if(fmt==='ymd') sd.fmt = 'ymd'; else delete sd.fmt; }
-  else{ const it = { id:uid(), kind, name, date, yearly }; if(fmt==='ymd') it.fmt = 'ymd'; data.specialDays.push(it); }
+  if(sd){ sd.kind = kind; sd.name = name; sd.date = date; sd.yearly = yearly; if(kind!=='count') delete sd.fmt; }      /* 年月天是在清單裡開關的,編輯時保留原本的設定 */
+  else{ data.specialDays.push({ id:uid(), kind, name, date, yearly }); }
   persist();
   closeModal('specialEditModal');
   refreshSpecialViews();
