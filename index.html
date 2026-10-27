@@ -198,6 +198,10 @@
   /* 線條圖示(鉛筆、叉叉、鈴鐺):跟其他圖示同一種畫法 */
   .ic{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
   .ic-bell{width:12px;height:12px;margin-left:5px;vertical-align:-1.5px;}
+  /* 清單裡「今天」的分隔線:標在今天的事項開始的地方,不改順序 */
+  .today-divider{display:flex;align-items:center;gap:10px;margin:0 2px 12px;font-size:11.5px;font-weight:700;color:var(--accent);letter-spacing:.04em;}
+  .today-divider::before,.today-divider::after{content:'';flex:1;height:1.5px;border-radius:2px;background:var(--accent);opacity:.35;}
+  .today-divider::before{flex:0 0 14px;}
   /* 事項日期旁的提醒開關:點一下開/關,不用進編輯 */
   .bell-toggle{width:26px;height:26px;padding:0;border-radius:50%;border:1.5px solid var(--border);background:transparent;color:var(--ink-soft);opacity:.7;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,color .15s,opacity .15s;}
   .bell-toggle .ic{width:14px;height:14px;margin:0;}
@@ -3888,13 +3892,16 @@ function buildTaskHtml(list){
   if(list.length===0){
     return `<div class="empty-state">目前沒有事項</div>`;
   }
-  return list.map(t=>{
+  /* 「今天」分隔線:第一個今天到期的事項上面畫一條線(只在還有別的日子的事項時才畫) */
+  const todayAt = list.length>1 ? list.findIndex(t=> t.dueDate===todayStr()) : -1;
+  const hasOther = todayAt>=0 && list.some(t=> t.dueDate!==todayStr());
+  return list.map((t,i)=>{
     const cat = categoryOf(t.categoryId);
     const subs = t.subtasks||[];
     const doneSub = subs.filter(s=>s.status==='done').length;
     const expanded = ui.expanded[t.id] !== false;
     const taskOverdue = isOverdueTask(t);
-    return `
+    return `${(i===todayAt && hasOther)? '<div class="today-divider" role="separator" aria-label="今天">今天</div>':''}
     <div class="task ${t.status==='done'?'done':''}" data-task-id="${t.id}">
       <div class="task-row has-handle">
         <button type="button" class="drag-handle" aria-label="拖曳排序" onpointerdown="taskHandlePointerDown(event)"><span></span><span></span><span></span></button>
