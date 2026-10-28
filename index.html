@@ -4631,12 +4631,12 @@ function renderCalendar(){
   }
 
   el.innerHTML = `
+    ${renderSpecialBoxes()}
     <div class="cal-header">
       <button class="cal-nav-btn" onclick="changeMonth(-1)" aria-label="上個月">‹</button>
       <div class="cal-title">${y}年 ${m+1}月</div>
       <button class="cal-nav-btn" onclick="changeMonth(1)" aria-label="下個月">›</button>
     </div>
-    ${renderSpecialBoxes()}
     <div class="cal-grid">
       ${['日','一','二','三','四','五','六'].map(d=>`<div class="cal-dow">${d}</div>`).join('')}
       ${cells}
@@ -7627,8 +7627,8 @@ const PAGES={
   cal:{
     setup(){ switchMainView('cal'); },
     steps:[
-      {target:'#view-cal .cal-header',info:1,title:'切換月份',text:'左右箭頭換月份。有事項的日子會有小點，也會顯示農曆。'},
       {target:'#view-cal .sp-box-add',title:'加入特別的日子',text:'生日、紀念日，或是「在一起幾天」「養寵物幾天」，都可以記在這裡。'},
+      {target:'#view-cal .cal-header',info:1,title:'切換月份',text:'左右箭頭換月份。有事項的日子會有小點，也會顯示農曆。'},
       {target:'#specialDaysModal .modal-actions button[onclick="openSpecialEdit()"]',title:'按「＋ 新增」',text:'先看到目前有哪些特別的日子，再從這裡新增一個。',after(){ $('spName').value='媽媽生日'; $('spDate').value=ymd(8); }},
       {target:'#spName',info:1,title:'輸入名稱和日期',text:'幫你填好了「媽媽生日」。類型選「日期」是生日、節日；選「計算天數」會算已經過了第幾天。'},
       {target:'#specialEditModal .modal-actions .btn-primary',title:'按「儲存」',text:'媽媽生日就記進去了，月曆上會有小點。'},
