@@ -3464,6 +3464,7 @@ function enterAppDirectly(){
     applyTheme();
     renderAll();
     syncDailyNotifications({ force:true });
+    syncTaskReminders();
     pruneOldDailyNotifications();
     refreshPushRegistration();
     const recapShown = maybeShowNightRecap();
@@ -3519,7 +3520,7 @@ window.addEventListener('resize', ()=>{
 document.addEventListener('visibilitychange', ()=>{
   if(document.visibilityState==='hidden'){
     flushPendingSave();                    /* 切到別的App:不等 250 毫秒,馬上存 */
-    if(data) syncDailyNotifications();
+    if(data){ syncDailyNotifications(); runTaskReminderSync(); }
   }else{
     updateSyncBadge();
     if(saveFailed==='network') retrySaveNow();
@@ -3892,13 +3893,10 @@ function isOverdueTask(t){
   return new Date(t.dueDate+'T23:59:59').getTime() < Date.now();
 }
 function fmtTaskWhen(t){ return fmtDate(t.dueDate) + (t.dueTime ? ' '+t.dueTime : ''); }
-/* 依事項現在的狀態,寫入或取消「雲端提醒」+ 這個頁面開著時的本機提醒。提醒要有日期、開著、還沒完成才有效 */
-function syncTaskReminder(t){
-  if(window.__tutActive) return;     /* 新手教學進行中(用練習資料):不存檔、不寫雲端 */
-  const ms = (t && t.reminder && t.dueDate && t.status!=='done') ? taskDueMs(t) : null;
-  if(ms){ scheduleReminder(t); writeReminderDoc(t.id, t.title, fmtTaskWhen(t), ms); }
-  else if(t) deleteReminderDoc(t.id);
-}
+/* 事項提醒:提醒時間相同的事項合成一則通知(只有一件就是「提醒：標題」;多件是「提醒：N 項事項」,把到期的和延誤的都寫在內容裡)。
+   事項有變動(新增、改、完成、刪除、開關提醒)就整批重排:雲端提醒文件的 id = slot_時間_使用者,同一個時間只會有一份。
+   提醒要有日期、開著、還沒完成才有效。 */
+function syncTaskReminder(){ syncTaskReminders(); }
 
 function buildTaskHtml(list){
   if(list.length===0){
@@ -4020,7 +4018,7 @@ function deleteTask(id){
     const removed = data.tasks[idx];
     data.tasks.splice(idx,1);
     refreshAll();
-    deleteReminderDoc(removed.id);     /* 事項刪掉了,它的提醒也要一起取消,不然到時間還會跳通知 */
+    syncTaskReminders();     /* 事項刪掉了,它的提醒也要一起取消(同一個時間還有別件事項就只少一行),不然到時間還會跳通知 */
     showUndoToast('已刪除「'+removed.title+'」', ()=>{
       data.tasks.splice(idx,0,removed);
       syncTaskReminder(removed);
@@ -4037,22 +4035,93 @@ function deleteSubtask(tid,sid){
     t.subtasks.splice(idx,0,removed);
   }, renderTaskList);
 }
-/* 這個頁面開著的時候,到時間跳出本機通知(頁面關著時由雲端提醒負責)。 */
-function scheduleReminder(task){
-  const dueMs = taskDueMs(task);
-  if(!dueMs) return;
-  const ms = dueMs - Date.now();
-  if(ms<=0 || ms > 24*60*60*1000*7) return;
-  setTimeout(()=>{
-    /* 到時間再確認一次:事項還在、還沒做完、提醒沒關、時間沒被改過,才跳通知(用 id 找最新的資料,不用舊的物件) */
-    const tk = data && data.tasks.find(x=>x.id===task.id);
-    if(!tk || !tk.reminder || tk.status==='done' || taskDueMs(tk)!==dueMs) return;
-    if('Notification' in window && Notification.permission==='granted'){
-      new Notification('提醒：'+tk.title, {body: fmtTaskWhen(tk), icon:'icon-192.png', badge:'icon-notification.png'});
-    }else{
-      notify('提醒：'+tk.title);
-    }
-  }, ms);
+/* ===== 事項提醒(合併版) ===== */
+const TASK_SLOT_MAX_LINES = 8;      /* 一則通知最多列幾項,其餘寫「還有 N 項…」 */
+function taskRemindList(){ return (data && data.tasks || []).filter(t=> t && t.reminder && t.dueDate && t.status!=='done'); }
+/* 到了 slotMs 這個時間,這件事算不算「延誤」:有時間的過了那個時間;只有日期的,過了那一天 */
+function taskLateAt(t, slotMs){
+  if(t.dueTime) return taskDueMs(t) < slotMs;
+  const d = new Date(slotMs);
+  return t.dueDate < `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function taskSlotTimes(list){ return Array.from(new Set(list.map(taskDueMs).filter(Boolean))).sort((a,b)=>a-b); }
+/* 某個提醒時間要送的通知內容;那個時間沒有事項就回 null */
+function buildTaskSlotContent(slotMs, list){
+  list = list || taskRemindList();
+  const due = list.filter(t=> taskDueMs(t)===slotMs);
+  if(!due.length) return null;
+  const late = list.filter(t=> taskDueMs(t)<slotMs && taskLateAt(t, slotMs)).sort((a,b)=> taskDueMs(a)-taskDueMs(b));
+  if(due.length===1 && !late.length) return { title:'提醒：'+due[0].title, body:fmtTaskWhen(due[0]) };
+  const lines = [fmtTaskWhen(due[0])];
+  const items = due.map(t=>({ t, late:false })).concat(late.map(t=>({ t, late:true })));
+  const shown = items.slice(0, TASK_SLOT_MAX_LINES);
+  let lateHead = false;
+  shown.forEach(it=>{
+    if(it.late && !lateHead){ lines.push('延誤'); lateHead = true; }
+    lines.push('• '+it.t.title+(it.late ? '（'+fmtDate(it.t.dueDate)+(it.t.dueTime ? ' '+it.t.dueTime : '')+'）' : ''));
+  });
+  if(items.length>shown.length) lines.push('還有 '+(items.length-shown.length)+' 項…');
+  return { title:'提醒：'+items.length+' 項事項', body:lines.join('\n') };
+}
+function taskSlotDocId(slotMs){ return 'slot_'+slotMs+'_'+String(currentStorageKey||'').replace(/[^A-Za-z0-9_-]/g,'_'); }
+/* 這個頁面開著的時候,到時間跳出本機通知(頁面關著時由雲端提醒負責)。每個提醒時間一個計時器,到時間用最新的資料重新組內容 */
+let taskSlotTimers = [];
+function scheduleTaskSlotTimers(){
+  taskSlotTimers.forEach(clearTimeout); taskSlotTimers = [];
+  const now = Date.now();
+  taskSlotTimes(taskRemindList()).forEach(slotMs=>{
+    const ms = slotMs - now;
+    if(ms<=0 || ms > 24*60*60*1000*7) return;
+    taskSlotTimers.push(setTimeout(()=>{
+      const c = data && buildTaskSlotContent(slotMs);     /* 事項改過、做完、提醒關掉了,內容會跟著變,沒有了就不跳 */
+      if(!c) return;
+      if('Notification' in window && Notification.permission==='granted'){
+        new Notification(c.title, {body:c.body, icon:'icon-192.png', badge:'icon-notification.png'});
+      }else{
+        notify(c.title);
+      }
+    }, ms));
+  });
+}
+let taskSyncTimer = null, taskSyncBusy = false, taskSyncAgain = false;
+function syncTaskReminders(){
+  if(window.__tutActive) return;     /* 新手教學進行中(用練習資料):不存檔、不寫雲端 */
+  clearTimeout(taskSyncTimer);
+  taskSyncTimer = setTimeout(runTaskReminderSync, 1200);
+}
+async function runTaskReminderSync(){
+  if(window.__tutActive || !data) return;
+  scheduleTaskSlotTimers();
+  if(!fbDb || !currentStorageKey) return;
+  if(taskSyncBusy){ taskSyncAgain = true; return; }
+  taskSyncBusy = true;
+  try{
+    do{
+      taskSyncAgain = false;
+      const list = taskRemindList(), now = Date.now();
+      const want = new Map();     /* 文件 id → {title, body, dueAt} */
+      taskSlotTimes(list).forEach(ms=>{
+        if(ms < now-60000) return;     /* 已經過期超過 1 分鐘的不送(送了後端會馬上補發一則「早就過了」的通知) */
+        const c = buildTaskSlotContent(ms, list);
+        if(c) want.set(taskSlotDocId(ms), { title:c.title, body:c.body, dueAt:ms });
+      });
+      const snap = await fbDb.collection('reminders').where('uid','==',currentStorageKey).get();
+      const taskIds = new Set(data.tasks.map(t=>t && t.id));
+      const have = new Map();
+      for(const d of snap.docs){
+        const r = d.data(); if(!r || r.sent===true) continue;
+        const id = d.id;
+        if(id.startsWith('slot_')){ have.set(id, r); if(!want.has(id)) await deleteReminderDoc(id); }
+        else if(taskIds.has(id)) await deleteReminderDoc(id);     /* 舊版一件事項一則的提醒文件:換成合併版,清掉 */
+      }
+      for(const [id, w] of want){
+        const r = have.get(id);
+        if(r && r.title===w.title && r.body===w.body && Number(r.dueAt)===w.dueAt) continue;
+        await writeReminderDoc(id, w.title, w.body, w.dueAt);
+      }
+    }while(taskSyncAgain);
+  }catch(e){ console.error('同步事項提醒失敗', e); }
+  finally{ taskSyncBusy = false; }
 }
 
 const habitReminderTimers = {};
