@@ -191,6 +191,29 @@
   .expand-arrow .arrow-glyph{display:inline-block;transition:transform .15s;}
   .expand-arrow.expanded .arrow-glyph{transform:rotate(90deg);}
   .progress-chip{font-size:10.5px;background:var(--accent-soft);color:var(--accent);padding:3px 9px;border-radius:999px;white-space:nowrap;font-weight:700;flex-shrink:0;}
+  .rng-st{font-size:11.5px;font-weight:700;color:var(--accent);white-space:nowrap;flex-shrink:0;}
+  .rng-st.soft{color:var(--ink-soft);font-weight:400;}
+  .rng-bar{flex:1 0 100%;max-width:240px;height:4px;border-radius:99px;background:var(--accent-soft);overflow:hidden;}
+  .rng-bar u{display:block;height:100%;background:var(--accent);border-radius:99px;}
+  .rng-bar.late u{background:var(--danger);}
+  .rm-note{font-size:11px;color:var(--ink-soft);white-space:nowrap;flex-shrink:0;margin-left:-2px;}
+  .dt-range{display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:14px;background:var(--accent-soft);margin-bottom:12px;}
+  .dt-range.off{opacity:.6;background:transparent;border:1.5px dashed var(--border);padding:10.5px;}
+  .dt-range label{margin:0;font-size:13px;color:var(--ink);font-weight:700;}
+  .dt-range input{padding:8px 6px;font-size:13px;min-width:0;}
+  #taskRangeFields label{display:block;margin-bottom:6px;}
+  #taskRangeFields input{width:100%;}
+  .rng-hint{font-size:11.5px;color:var(--ink-soft);line-height:1.5;}
+  .rm-box{margin:0 4px 12px;display:flex;flex-direction:column;gap:10px;}
+  .rm-chips{display:flex;flex-wrap:wrap;gap:6px;}
+  .rm-chip{border:1.5px solid var(--border);background:transparent;color:var(--ink-soft);border-radius:999px;padding:6px 12px;font-size:12.5px;cursor:pointer;}
+  .rm-chip.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700;}
+  .rm-add{display:flex;gap:8px;align-items:center;}
+  .rm-add input{flex:1 1 0;min-width:0;padding:8px 6px;font-size:13px;}
+  .rm-add .btn-ghost{flex-shrink:0;padding:8px 12px;font-size:12.5px;white-space:nowrap;}
+  .rm-dates{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .rm-date{display:inline-flex;align-items:center;gap:4px;background:var(--accent-soft);color:var(--accent);font-size:12px;font-weight:700;padding:4px 6px 4px 11px;border-radius:999px;}
+  .rm-date button{background:none;border:none;color:var(--accent);font-size:14px;line-height:1;padding:0 4px;cursor:pointer;}
   .subtasks{padding:4px 16px 14px 48px;background:#F9F8F4;color:#1A1A1A;}
   .subtask-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px dotted var(--border);}
   .subtask-title{flex:1 1 0;font-size:13px;min-width:0;overflow-wrap:anywhere;}
@@ -1465,17 +1488,32 @@
     <div class="field"><label>標題</label><input id="taskTitle" placeholder="例如：完成季報"></div>
     <div class="dt-row">
       <div class="dt-col off" id="taskDateCol">
-        <div class="row-inline"><label>日期</label><button class="switch" id="taskDateSwitch" role="switch" aria-checked="false" aria-label="日期" onclick="toggleTaskDt('d')"></button></div>
-        <input type="date" id="taskDueDate" aria-label="日期" disabled>
+        <div class="row-inline"><label id="taskDateLbl">日期</label><button class="switch" id="taskDateSwitch" role="switch" aria-checked="false" aria-label="日期" onclick="toggleTaskDt('d')"></button></div>
+        <input type="date" id="taskDueDate" aria-label="日期" disabled onchange="taskDtPaint()">
       </div>
       <div class="dt-col off" id="taskTimeCol">
         <div class="row-inline"><label>時間</label><button class="switch" id="taskTimeSwitch" role="switch" aria-checked="false" aria-label="時間" onclick="toggleTaskDt('t')"></button></div>
         <input type="time" id="taskDueTime" aria-label="時間" disabled>
       </div>
     </div>
+    <div class="dt-range off" id="taskRangeBox">
+      <div class="row-inline"><label>多天（時段）</label><button class="switch" id="taskRangeSwitch" role="switch" aria-checked="false" aria-label="多天" onclick="toggleTaskDt('g')"></button></div>
+      <div id="taskRangeFields" style="display:none">
+        <label for="taskStartDate">開始日</label>
+        <input type="date" id="taskStartDate" aria-label="開始日" onchange="taskDtPaint()">
+        <div class="rng-hint">上面的「日期」就是結束日。時間是提醒的時刻，沒設時間就是早上 8:00。</div>
+      </div>
+    </div>
     <div class="row-inline dt-reminder">
       <span class="dt-bell" aria-label="提醒"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 17V11a6 6 0 0 1 12 0v6l1.5 2h-15z"/><path d="M10 21.5a2.2 2.2 0 0 0 4 0"/></svg></span>
       <button class="switch" id="taskReminderSwitch" role="switch" aria-checked="false" aria-label="提醒" onclick="toggleTaskDt('r')"></button>
+    </div>
+    <div class="rm-box" id="taskRemindBox" style="display:none">
+      <div class="rm-chips" id="taskRemindChips" role="radiogroup" aria-label="提醒方式"></div>
+      <div id="taskRemindCustom" style="display:none">
+        <div class="rm-add"><input type="date" id="taskCustomDate" aria-label="提醒日"><button type="button" class="btn-ghost" onclick="addTaskCustomDate()">＋ 新增提醒日</button></div>
+        <div class="rm-dates" id="taskCustomList"></div>
+      </div>
     </div>
     <div class="modal-actions">
       <button class="btn-ghost" onclick="closeModal('taskModal')">取消</button>
@@ -2163,6 +2201,7 @@ function normalizeData(){
     if(!/^\d{4}-\d{2}-\d{2}$/.test(String(t.dueDate||''))) t.dueDate = '';
     if(!t.dueDate || !/^([01]\d|2[0-3]):[0-5]\d$/.test(String(t.dueTime||''))) t.dueTime = '';
     t.reminder = !!t.dueDate && t.reminder===true;
+    sanitizeTaskRange(t);
   });
   /* 特別的日子:格式不對的(沒有名稱、日期不是正確格式、類型不認得)濾掉,id 只允許安全字元(會放進按鈕的 onclick 裡) */
   needArr('specialDays', ()=>[]);
@@ -3814,7 +3853,7 @@ function sortTasks(list, mode, dir){
   return list.slice().sort((a,b)=>{
     let c = 0;
     if(mode==='date'){
-      const x = taskDueMs(a), y = taskDueMs(b);
+      const x = taskSortMs(a), y = taskSortMs(b);
       if(x==null && y==null) c = 0;
       else if(x==null) return 1;          /* 沒日期的永遠排在最後 */
       else if(y==null) return -1;
@@ -3893,6 +3932,74 @@ function isOverdueTask(t){
   return new Date(t.dueDate+'T23:59:59').getTime() < Date.now();
 }
 function fmtTaskWhen(t){ return fmtDate(t.dueDate) + (t.dueTime ? ' '+t.dueTime : ''); }
+/* ===== 時段:事項可以有「開始日」(startDate)到「結束日」(dueDate)。沒有 startDate 的就是原本的單日事項 =====
+   remindMode:end 結束日(預設) / start 開始日 / both 開始與結束 / daily 每天 / custom 自訂(remindDates)。時段最長 366 天。 */
+const REMIND_MODES = {end:'結束日', start:'開始日', both:'開始與結束', daily:'每天', custom:'自訂'};
+const REMIND_MODE_KEYS = ['daily','start','end','both','custom'];
+const TASK_RANGE_MAX = 366, TASK_DAILY_HORIZON_DAYS = 14, TASK_CUSTOM_MAX = 60;
+function isRangeTask(t){ return !!(t && t.startDate && t.dueDate && t.startDate < t.dueDate); }
+function taskRangeDays(t){ return isRangeTask(t) ? daysBetween(t.startDate, t.dueDate)+1 : 1; }
+/* day 是時段的第幾天(第 1 天 = 開始日);不在時段裡或不是時段事項 → 0 */
+function taskRangeDayNo(t, day){ return (isRangeTask(t) && day>=t.startDate && day<=t.dueDate) ? daysBetween(t.startDate, day)+1 : 0; }
+function fmtTaskRange(t){ return fmtDate(t.startDate)+' – '+fmtDate(t.dueDate)+(t.dueTime ? ' '+t.dueTime : ''); }
+/* 資料整理:不合理的時段欄位直接拿掉(沒設時段的事項不會多出任何欄位) */
+function sanitizeTaskRange(t){
+  if(t.startDate!==undefined && !(t.dueDate && validYmd(t.startDate) && t.startDate<t.dueDate && daysBetween(t.startDate,t.dueDate)+1<=TASK_RANGE_MAX)) delete t.startDate;
+  if(!t.startDate){ delete t.remindMode; delete t.remindDates; return; }
+  if(t.remindMode!==undefined && !REMIND_MODES[t.remindMode]) delete t.remindMode;
+  if(t.remindMode!=='custom'){ delete t.remindDates; return; }
+  const ds = Array.isArray(t.remindDates) ? t.remindDates : [];
+  const ok = Array.from(new Set(ds.filter(d=> validYmd(d) && d>=t.startDate && d<=t.dueDate))).sort().slice(0, TASK_CUSTOM_MAX);
+  if(ok.length) t.remindDates = ok; else delete t.remindDates;
+}
+function ymdOfMs(ms){ const d=new Date(ms), p=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
+/* 這件事要在哪些日子提醒。單日事項 = 結束日那天;每天只排最近 14 天(之後每次打開頁面會再往後補) */
+function taskRemindDates(t){
+  if(!t || !t.dueDate) return [];
+  if(!isRangeTask(t)) return [t.dueDate];
+  const m = t.remindMode || 'end';
+  if(m==='end') return [t.dueDate];
+  if(m==='start') return [t.startDate];
+  if(m==='both') return [t.startDate, t.dueDate];
+  if(m==='custom') return (t.remindDates||[]).filter(d=> d>=t.startDate && d<=t.dueDate);
+  const out = [], limit = shiftDay(todayStr(), TASK_DAILY_HORIZON_DAYS);
+  let d = t.startDate > todayStr() ? t.startDate : todayStr();
+  for(; d<=t.dueDate && d<=limit; d=shiftDay(d,1)) out.push(d);
+  return out;
+}
+function taskRemindMsList(t){
+  const tm = t.dueTime || '08:00';
+  return taskRemindDates(t).map(d=> new Date(d+'T'+tm+':00').getTime());
+}
+/* 排序用的時間:時段事項照開始日排,其他照到期時間 */
+function taskSortMs(t){
+  if(isRangeTask(t)) return new Date(t.startDate+'T00:00:00').getTime();
+  return taskDueMs(t);
+}
+/* 卡片上的日期標籤:單日 = 原本的樣子;時段 = 「開始 – 結束」+ 現在進行到哪(第 N / M 天、N 天後開始、今天結束)+ 進度條 */
+function taskRangeProgress(t){     /* 時段進行到哪:{st: 狀態字, pct: 0~100};已完成的沒有 */
+  const today = todayStr(), n = taskRangeDays(t);
+  let st = '', pct = 0;
+  if(t.status==='done') return {st, pct};
+  if(today < t.startDate){ st = `<span class="rng-st soft">${daysBetween(today, t.startDate)} 天後開始</span>`; }
+  else if(today > t.dueDate){ pct = 100; }
+  else{
+    const i = daysBetween(t.startDate, today)+1;
+    pct = Math.round(i/n*100);
+    st = `<span class="rng-st">${today===t.dueDate ? '今天結束' : '第 '+i+' / '+n+' 天'}</span>`;
+  }
+  return {st, pct};
+}
+function taskWhenHtml(t, overdue){
+  if(!isRangeTask(t)) return `<span class="${overdue?'overdue-tag':'time-chip'}">${overdue?'延誤 ':''}${fmtTaskWhen(t)}</span>`;
+  return `<span class="${overdue?'overdue-tag':'time-chip'}">${overdue?'延誤 ':''}${fmtTaskRange(t)}</span>` + taskRangeProgress(t).st;
+}
+/* 進度條放在整排的最後面(鈴鐺後面),自己佔一整行 */
+function taskBarHtml(t, overdue){
+  if(!isRangeTask(t) || t.status==='done') return '';
+  const pct = taskRangeProgress(t).pct;
+  return (pct>0 || overdue) ? `<span class="rng-bar ${overdue?'late':''}"><u style="width:${overdue?100:pct}%"></u></span>` : '';
+}
 /* 事項提醒:提醒時間相同的事項合成一則通知(只有一件就是「提醒：標題」;多件是「提醒：N 項事項」,把到期的和延誤的都寫在內容裡)。
    事項有變動(新增、改、完成、刪除、開關提醒)就整批重排:雲端提醒文件的 id = slot_時間_使用者,同一個時間只會有一份。
    提醒要有日期、開著、還沒完成才有效。 */
@@ -3903,8 +4010,9 @@ function buildTaskHtml(list){
     return `<div class="empty-state">目前沒有事項</div>`;
   }
   /* 「今天」分隔線:第一個今天到期的事項上面畫一條線(只在還有別的日子的事項時才畫) */
-  const todayAt = list.length>1 ? list.findIndex(t=> t.dueDate===todayStr()) : -1;
-  const hasOther = todayAt>=0 && list.some(t=> t.dueDate!==todayStr());
+  const onToday = t=> t.dueDate===todayStr() || taskRangeDayNo(t, todayStr())>0;
+  const todayAt = list.length>1 ? list.findIndex(onToday) : -1;
+  const hasOther = todayAt>=0 && list.some(t=> !onToday(t));
   return list.map((t,i)=>{
     const cat = categoryOf(t.categoryId);
     const subs = t.subtasks||[];
@@ -3920,8 +4028,9 @@ function buildTaskHtml(list){
           <div>${ui.catId==='overview' && cat ? `<span class="cat-dot" style="background:${cat.color}"></span>`:''}<span class="task-title">${escapeHtml(t.title)}</span></div>
           ${(subs.length||t.dueDate)? `<div class="task-meta">
             ${subs.length? `<span class="progress-chip">${doneSub}/${subs.length}</span>`:''}
-            ${t.dueDate? `<span class="${taskOverdue?'overdue-tag':'time-chip'}">${taskOverdue?'延誤 ':''}${fmtTaskWhen(t)}</span>`:''}
-            ${t.dueDate && t.status!=='done'? `<button type="button" class="bell-toggle ${t.reminder?'on':''}" aria-label="提醒" aria-pressed="${!!t.reminder}" title="${t.reminder?'提醒已開，點一下關閉':'點一下開啟提醒'}" onclick="toggleTaskReminder('${t.id}')">${ICON_BELL_BTN}</button>`:''}
+            ${t.dueDate? taskWhenHtml(t, taskOverdue):''}
+            ${t.dueDate && t.status!=='done'? `<button type="button" class="bell-toggle ${t.reminder?'on':''}" aria-label="提醒" aria-pressed="${!!t.reminder}" title="${t.reminder?'提醒已開，點一下關閉':'點一下開啟提醒'}" onclick="toggleTaskReminder('${t.id}')">${ICON_BELL_BTN}</button>${t.reminder && isRangeTask(t) ? `<span class="rm-note">${REMIND_MODES[t.remindMode||'end']}</span>`:''}`:''}
+            ${t.dueDate? taskBarHtml(t, taskOverdue):''}
           </div>`:''}
         </div>
         <div class="task-acts">
@@ -3997,11 +4106,11 @@ function toggleTaskReminder(id){
   const t = data.tasks.find(x=>x.id===id);
   if(!t || !t.dueDate || t.status==='done') return;
   const nowOn = !t.reminder;
-  if(nowOn && taskDueMs(t) <= Date.now()){ flashToast('這個時間已經過了，沒辦法提醒'); return; }
+  if(nowOn && !taskRemindMsList(t).some(ms=> ms > Date.now())){ flashToast(isRangeTask(t) ? '提醒的日子都已經過了，沒辦法提醒' : '這個時間已經過了，沒辦法提醒'); return; }
   t.reminder = nowOn;
   persist(); refreshAll();
   syncTaskReminder(t);
-  flashToast(nowOn ? (t.dueTime ? '已開啟提醒' : '已開啟提醒（當天早上 8:00）') : '已關閉提醒');
+  flashToast(nowOn ? (isRangeTask(t) ? '已開啟提醒（'+REMIND_MODES[t.remindMode||'end']+(t.dueTime ? '' : '，早上 8:00')+'）' : (t.dueTime ? '已開啟提醒' : '已開啟提醒（當天早上 8:00）')) : '已關閉提醒');
 }
 function toggleSubtask(tid,sid){
   const t = data.tasks.find(x=>x.id===tid);
@@ -4044,21 +4153,38 @@ function taskLateAt(t, slotMs){
   const d = new Date(slotMs);
   return t.dueDate < `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
-function taskSlotTimes(list){ return Array.from(new Set(list.map(taskDueMs).filter(Boolean))).sort((a,b)=>a-b); }
+function taskSlotTimes(list){
+  const set = new Set();
+  list.forEach(t=> taskRemindMsList(t).forEach(ms=>{ if(ms) set.add(ms); }));
+  return Array.from(set).sort((a,b)=>a-b);
+}
+/* 時段事項在某個提醒時間的說明:開始 / 結束 / 第 N / M 天(單日事項沒有) */
+function taskSlotNote(t, slotMs){
+  if(!isRangeTask(t)) return '';
+  const day = ymdOfMs(slotMs);
+  if(day===t.startDate) return '開始';
+  if(day===t.dueDate) return '結束';
+  return '第 '+(daysBetween(t.startDate, day)+1)+' / '+taskRangeDays(t)+' 天';
+}
+function taskSlotWhen(t, slotMs){ return fmtDate(ymdOfMs(slotMs)) + (t.dueTime ? ' '+t.dueTime : ''); }
 /* 某個提醒時間要送的通知內容;那個時間沒有事項就回 null */
 function buildTaskSlotContent(slotMs, list){
   list = list || taskRemindList();
-  const due = list.filter(t=> taskDueMs(t)===slotMs);
+  const due = list.filter(t=> taskRemindMsList(t).includes(slotMs));
   if(!due.length) return null;
-  const late = list.filter(t=> taskDueMs(t)<slotMs && taskLateAt(t, slotMs)).sort((a,b)=> taskDueMs(a)-taskDueMs(b));
-  if(due.length===1 && !late.length) return { title:'提醒：'+due[0].title, body:fmtTaskWhen(due[0]) };
-  const lines = [fmtTaskWhen(due[0])];
+  const late = list.filter(t=> !due.includes(t) && taskDueMs(t)<slotMs && taskLateAt(t, slotMs)).sort((a,b)=> taskDueMs(a)-taskDueMs(b));
+  if(due.length===1 && !late.length){
+    const t0 = due[0], note = taskSlotNote(t0, slotMs);
+    return { title:'提醒：'+t0.title, body: isRangeTask(t0) ? taskSlotWhen(t0, slotMs)+' '+note+'（'+fmtTaskRange(t0)+'）' : fmtTaskWhen(t0) };
+  }
+  const lines = [taskSlotWhen(due[0], slotMs)];
   const items = due.map(t=>({ t, late:false })).concat(late.map(t=>({ t, late:true })));
   const shown = items.slice(0, TASK_SLOT_MAX_LINES);
   let lateHead = false;
   shown.forEach(it=>{
     if(it.late && !lateHead){ lines.push('延誤'); lateHead = true; }
-    lines.push('• '+it.t.title+(it.late ? '（'+fmtDate(it.t.dueDate)+(it.t.dueTime ? ' '+it.t.dueTime : '')+'）' : ''));
+    const note = it.late ? '' : taskSlotNote(it.t, slotMs);
+    lines.push('• '+it.t.title+(it.late ? '（'+fmtDate(it.t.dueDate)+(it.t.dueTime ? ' '+it.t.dueTime : '')+'）' : (note ? '（'+note+'）' : '')));
   });
   if(items.length>shown.length) lines.push('還有 '+(items.length-shown.length)+' 項…');
   return { title:'提醒：'+items.length+' 項事項', body:lines.join('\n') };
@@ -4267,19 +4393,51 @@ function saveNote(){
 function taskDtPaint(){
   const g = id=>document.getElementById(id);
   const dOn = g('taskDateSwitch').classList.contains('on');
-  if(!dOn){ g('taskTimeSwitch').classList.remove('on'); g('taskReminderSwitch').classList.remove('on'); }
-  const tOn = g('taskTimeSwitch').classList.contains('on'), rOn = g('taskReminderSwitch').classList.contains('on');
+  if(!dOn){ g('taskTimeSwitch').classList.remove('on'); g('taskReminderSwitch').classList.remove('on'); g('taskRangeSwitch').classList.remove('on'); }
+  const tOn = g('taskTimeSwitch').classList.contains('on'), rOn = g('taskReminderSwitch').classList.contains('on'), gOn = g('taskRangeSwitch').classList.contains('on');
   g('taskDateCol').classList.toggle('off',!dOn); g('taskTimeCol').classList.toggle('off',!tOn);
   g('taskDueDate').disabled = !dOn; g('taskTimeSwitch').disabled = !dOn; g('taskDueTime').disabled = !tOn; g('taskReminderSwitch').disabled = !dOn;
   g('taskDateSwitch').setAttribute('aria-checked',dOn); g('taskTimeSwitch').setAttribute('aria-checked',tOn); g('taskReminderSwitch').setAttribute('aria-checked',rOn);
+  g('taskRangeBox').classList.toggle('off',!gOn); g('taskRangeSwitch').disabled = !dOn; g('taskRangeSwitch').setAttribute('aria-checked',gOn);
+  g('taskRangeFields').style.display = gOn ? 'block' : 'none'; g('taskStartDate').disabled = !gOn;
+  g('taskDateLbl').textContent = gOn ? '結束日' : '日期';
+  g('taskRemindBox').style.display = (rOn && gOn) ? 'block' : 'none';
+  if(rOn && gOn) renderTaskRemindBox();
 }
+/* 時段的提醒方式(每天 / 開始日 / 結束日 / 開始與結束 / 自訂)。自訂:一個一個新增提醒日 */
+let taskRemindSel = 'end', taskCustomDates = [];
+function renderTaskRemindBox(){
+  const g = id=>document.getElementById(id);
+  g('taskRemindChips').innerHTML = REMIND_MODE_KEYS.map(k=>`<button type="button" class="rm-chip ${taskRemindSel===k?'on':''}" role="radio" aria-checked="${taskRemindSel===k}" onclick="setTaskRemindMode('${k}')">${REMIND_MODES[k]}</button>`).join('');
+  g('taskRemindCustom').style.display = taskRemindSel==='custom' ? 'block' : 'none';
+  const st = g('taskStartDate').value, du = g('taskDueDate').value;
+  g('taskCustomDate').min = validYmd(st) ? st : ''; g('taskCustomDate').max = validYmd(du) ? du : '';
+  g('taskCustomList').innerHTML = taskCustomDates.map(d=>`<span class="rm-date">${fmtDate(d)}<button type="button" aria-label="移除 ${fmtDate(d)}" onclick="removeTaskCustomDate('${d}')">✕</button></span>`).join('');
+}
+function setTaskRemindMode(m){ if(!REMIND_MODES[m]) return; taskRemindSel = m; renderTaskRemindBox(); }
+function addTaskCustomDate(){
+  const g = id=>document.getElementById(id);
+  const v = g('taskCustomDate').value, st = g('taskStartDate').value, du = g('taskDueDate').value;
+  if(!validYmd(v)){ notify('請選擇提醒日'); return; }
+  if(!validYmd(st) || !validYmd(du) || v<st || v>du){ notify('提醒日要在開始日和結束日之間'); return; }
+  if(taskCustomDates.includes(v)){ notify('這一天已經加過了'); return; }
+  if(taskCustomDates.length>=TASK_CUSTOM_MAX){ notify('最多 '+TASK_CUSTOM_MAX+' 個提醒日'); return; }
+  taskCustomDates.push(v); taskCustomDates.sort();
+  g('taskCustomDate').value = '';
+  renderTaskRemindBox();
+}
+function removeTaskCustomDate(d){ taskCustomDates = taskCustomDates.filter(x=>x!==d); renderTaskRemindBox(); }
 function toggleTaskDt(which){
-  const id = which==='d' ? 'taskDateSwitch' : which==='t' ? 'taskTimeSwitch' : 'taskReminderSwitch';
+  const id = which==='d' ? 'taskDateSwitch' : which==='t' ? 'taskTimeSwitch' : which==='g' ? 'taskRangeSwitch' : 'taskReminderSwitch';
   const sw = document.getElementById(id);
   if(sw.disabled) return;
   sw.classList.toggle('on');
   if(which==='d' && sw.classList.contains('on') && !document.getElementById('taskDueDate').value) document.getElementById('taskDueDate').value = todayStr();
   if(which==='t' && sw.classList.contains('on') && !document.getElementById('taskDueTime').value) document.getElementById('taskDueTime').value = '08:00';
+  if(which==='g' && sw.classList.contains('on') && !document.getElementById('taskStartDate').value){
+    const du = document.getElementById('taskDueDate').value, td = todayStr();
+    document.getElementById('taskStartDate').value = (validYmd(du) && td < du) ? td : (validYmd(du) ? shiftDay(du,-1) : td);
+  }
   if(which==='r' && sw.classList.contains('on') && 'Notification' in window && Notification.permission==='default') Notification.requestPermission();
   taskDtPaint();
 }
@@ -4303,6 +4461,11 @@ function openTaskModal(taskId){
   document.getElementById('taskDateSwitch').classList.toggle('on', !!(task && task.dueDate));
   document.getElementById('taskTimeSwitch').classList.toggle('on', !!(task && task.dueDate && task.dueTime));
   document.getElementById('taskReminderSwitch').classList.toggle('on', !!(task && task.dueDate && task.reminder));
+  document.getElementById('taskRangeSwitch').classList.toggle('on', isRangeTask(task));
+  document.getElementById('taskStartDate').value = isRangeTask(task) ? task.startDate : '';
+  taskRemindSel = (isRangeTask(task) && REMIND_MODES[task.remindMode]) ? task.remindMode : 'end';
+  taskCustomDates = isRangeTask(task) && Array.isArray(task.remindDates) ? task.remindDates.slice() : [];
+  document.getElementById('taskCustomDate').value = '';
   taskDtPaint();
   document.getElementById('taskModal').classList.add('show');
 }
@@ -4316,6 +4479,14 @@ function saveTask(){
   const dueTime = tOn ? document.getElementById('taskDueTime').value : '';
   if(tOn && !/^\d{2}:\d{2}$/.test(dueTime)){ notify('請選擇時間'); return; }
   const reminder = dOn && document.getElementById('taskReminderSwitch').classList.contains('on');
+  const gOn = dOn && document.getElementById('taskRangeSwitch').classList.contains('on');
+  const startDate = gOn ? document.getElementById('taskStartDate').value : '';
+  if(gOn){
+    if(!validYmd(startDate)){ notify('請選擇開始日'); return; }
+    if(startDate >= dueDate){ notify('開始日要比結束日早'); return; }
+    if(daysBetween(startDate, dueDate)+1 > TASK_RANGE_MAX){ notify('時段最長 '+TASK_RANGE_MAX+' 天'); return; }
+    if(reminder && taskRemindSel==='custom' && !taskCustomDates.length){ notify('請至少新增一個提醒日'); return; }
+  }
   const catField = document.getElementById('taskCatField');
   let categoryId = ui.catId;
   if(catField.style.display==='block'){
@@ -4331,6 +4502,13 @@ function saveTask(){
     t = {id:uid(), categoryId, title, dueDate, dueTime, reminder, status:'pending', subtasks:[]};
     data.tasks.push(t);
   }
+  /* 時段欄位:沒開「多天」就整組拿掉(單日事項不多出任何欄位) */
+  delete t.startDate; delete t.remindMode; delete t.remindDates;
+  if(gOn){
+    t.startDate = startDate; t.remindMode = taskRemindSel;
+    if(taskRemindSel==='custom') t.remindDates = taskCustomDates.filter(d=> d>=startDate && d<=dueDate).sort();
+  }
+  sanitizeTaskRange(t);
   editingTaskId = null;
   closeModal('taskModal');
   persist(); refreshAll();
@@ -4367,12 +4545,23 @@ function saveSubtask(){
 /* ============================================================
    月曆 / 週曆
 ============================================================ */
+function itemTag(it){ return it.tag || (it.isDate ? '截止' : fmtTime(it.time).split(' ')[1]); }
 function allTimedItems(){
   let items = [];
   const src = ui.catId==='overview' ? data.tasks : data.tasks.filter(t=>t.categoryId===ui.catId);
   src.forEach(t=>{
     if(!t.dueDate) return;
     const cat = categoryOf(t.categoryId);
+    if(isRangeTask(t)){
+      /* 時段:範圍內每一天都列出來(開始 / 第 N 天 / 結束),結束那天有設時間就顯示時間 */
+      const n = taskRangeDays(t);
+      for(let i=0, d=t.startDate; i<n; i++, d=shiftDay(d,1)){
+        const last = i===n-1;
+        items.push({title:t.title, time:d+'T'+(last && t.dueTime ? t.dueTime : '00:00'), color:cat?cat.color:'#999', status:t.status,
+          isDate: !(last && t.dueTime), tag: i===0 ? '開始' : (last ? '' : (i+1)+'/'+n)});
+      }
+      return;
+    }
     /* 有設時間的事項顯示在那個時間;只有日期的顯示「截止」 */
     items.push({title:t.title, time:t.dueDate+'T'+(t.dueTime||'00:00'), color:cat?cat.color:'#999', status:t.status, isDate:!t.dueTime});
   });
@@ -4732,7 +4921,7 @@ function renderDayDetail(){
   const selStr = ymdStr(ui.selectedDate.getFullYear(), ui.selectedDate.getMonth()+1, ui.selectedDate.getDate());
   box.innerHTML = `<h3>${label} 的事項<span style="font-weight:400;color:var(--ink-soft);font-size:11.5px;margin-left:8px;">${escapeHtml(infoLine)}</span></h3>` + specialDetailHtml(selStr) + (items.length? items.map(i=>`
     <div class="item-line" style="border-left-color:${i.color}">
-      <span class="t">${i.isDate? '截止' : fmtTime(i.time).split(' ')[1]}</span>${escapeHtml(i.title)}
+      <span class="t">${itemTag(i)}</span>${escapeHtml(i.title)}
     </div>`).join('') : `<div class="empty-state" style="padding:14px">當日無事項</div>`);
 }
 
@@ -4871,7 +5060,7 @@ function renderWeek(){
       <div class="week-col-head ${isToday?'today':''}">
         <span class="week-col-date">${dows[i]} ${d.getMonth()+1}/${d.getDate()}</span>${info.holiday?'<span class="week-holiday">休</span>':''}
       </div>${tags.join('')}
-      ${dayItems.length? dayItems.map(it=>`<div class="week-item" style="border-left-color:${it.color}"><span class="t">${it.isDate? '截止' : fmtTime(it.time).split(' ')[1]}</span>${escapeHtml(it.title)}</div>`).join('') : `<div class="no-item">無事項</div>`}
+      ${dayItems.length? dayItems.map(it=>`<div class="week-item" style="border-left-color:${it.color}"><span class="t">${itemTag(it)}</span>${escapeHtml(it.title)}</div>`).join('') : `<div class="no-item">無事項</div>`}
     </div>`;
   }
   const endLabel = new Date(start); endLabel.setDate(start.getDate()+6);
@@ -7018,13 +7207,15 @@ function showDailyBrief(withGreeting, briefOff){
   dailyBriefContentSkipped = !!briefOff;
   const day = todayStr();
   const dueTasks = data.tasks.filter(t=> t.status!=='done' && t.dueDate && t.dueDate<=day);
+  const ongoing = data.tasks.filter(t=> t.status!=='done' && isRangeTask(t) && t.startDate<=day && t.dueDate>day);     /* 進行中的時段事項(還沒到結束日) */
   const pendingHabits = data.habits.filter(h=> !habitHasLog(h, day));
 
   let html = `<h2 style="margin:0 0 16px;font-size:18px;">今天要做的事</h2>`;
-  if(dueTasks.length===0 && pendingHabits.length===0){
+  if(dueTasks.length===0 && ongoing.length===0 && pendingHabits.length===0){
     html += `<p class="brief-empty">今天沒有排定的事項，輕鬆的一天！</p>`;
   }else{
     if(dueTasks.length) html += `<div class="brief-section"><div class="brief-label">到期或逾期的事項</div>${dueTasks.map(t=>`<div class="brief-item">${escapeHtml(t.title)}</div>`).join('')}</div>`;
+    if(ongoing.length) html += `<div class="brief-section"><div class="brief-label">進行中的時段事項</div>${ongoing.map(t=>`<div class="brief-item">${escapeHtml(t.title)}　${taskRangeDayNo(t, day)} / ${taskRangeDays(t)} 天</div>`).join('')}</div>`;
     if(pendingHabits.length) html += `<div class="brief-section"><div class="brief-label">今天還沒打卡的習慣</div>${pendingHabits.map(h=>`<div class="brief-item">${escapeHtml(h.name)}</div>`).join('')}</div>`;
   }
   document.getElementById('dailyBriefContent').innerHTML = html;
