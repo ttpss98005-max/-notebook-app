@@ -260,6 +260,7 @@
   .cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;}   /* minmax(0,…):格子裡的字太長時縮成「…」,不會把整欄撐寬、擠掉旁邊的欄 */
   .cal-cell{min-width:0;}
   .cal-dow{text-align:center;font-size:11px;color:var(--ink-soft);font-weight:700;padding:6px 0;}
+  .cal-week.calm .cal-cell{min-height:0 !important;}
   .cal-cell{min-height:74px;padding:6px;font-size:11.5px;background:#FDFDFB;border:1.5px solid var(--border);border-radius:16px;box-shadow:var(--shadow-sm);cursor:pointer;transition:.15s;position:relative;color:#1A1A1A;}
   .cal-cell:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);}
   .cal-lunar{font-size:9px;color:var(--ink-soft);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -4939,7 +4940,8 @@ function renderCalendar(){
       const g = sg.g;
       return `<div class="cal-rng ${sg.cl?'cl':''} ${sg.cr?'cr':''} ${g.done?'done':''}" style="--c:${g.color};grid-column:${sg.a+1} / ${sg.b+2};grid-row:${2+sg.lane}" onclick="selectDate(${y},${m},${dayAt(sg.a)})" title="${escapeAttr(g.title)}"><span>${sg.cl?'‹ ':''}${escapeHtml(g.title)}<small>${fmtDate(g.s)}–${fmtDate(g.e)}</small>${sg.cr?' ›':''}</span></div>`;
     }).join('');
-    weeksHtml += `<div class="cal-week" style="grid-template-rows:minmax(74px,auto)${L?` repeat(${L},22px)`:''}">${cells}${boxes}</div>`;
+    const busy = L || /cal-dots"><span/.test(cells) || /cal-(holiday|special)-tag/.test(cells);
+    weeksHtml += `<div class="cal-week${busy?'':' calm'}" style="grid-template-rows:minmax(${busy?74:46}px,auto)${L?` repeat(${L},22px)`:''}">${cells}${boxes}</div>`;
   }
 
   el.innerHTML = `
