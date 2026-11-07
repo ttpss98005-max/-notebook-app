@@ -201,9 +201,6 @@
   .dt-range.off{opacity:.6;background:transparent;border:1.5px dashed var(--border);padding:10.5px;}
   .dt-range label{margin:0;font-size:13px;color:var(--ink);font-weight:700;}
   .dt-range input{padding:8px 6px;font-size:13px;min-width:0;}
-  #taskRangeFields label{display:block;margin-bottom:6px;}
-  #taskRangeFields input{width:100%;}
-  .rng-hint{font-size:11.5px;color:var(--ink-soft);line-height:1.5;}
   .rm-box{margin:0 4px 12px;display:flex;flex-direction:column;gap:10px;}
   .rm-chips{display:flex;flex-wrap:wrap;gap:6px;}
   .rm-chip{border:1.5px solid var(--border);background:transparent;color:var(--ink-soft);border-radius:999px;padding:6px 12px;font-size:12.5px;cursor:pointer;}
@@ -274,6 +271,16 @@
   .cal-cell.selected{background:var(--accent-soft);border-color:var(--accent);}
   .cal-cell .num{display:inline-flex;align-items:center;justify-content:center;}
   .cal-cell.today .num{font-weight:700;color:#fff;background:var(--accent);width:20px;height:20px;border-radius:50%;}
+  /* 時段事項在月曆上是一條接在一起的長條(跨過格子之間的空隙);--lanes = 這個月最多同時幾條,格子底下留出位置 */
+  .cal-grid.has-bars .cal-cell{padding-bottom:calc(6px + var(--lanes)*9px);}
+  .cal-grid.has-bars .cal-special-tag{bottom:calc(5px + var(--lanes)*9px);}
+  .cal-bar{position:absolute;height:6px;background:var(--bc);left:-1.5px;right:-1.5px;pointer-events:none;}
+  .cal-bar.done{opacity:.4;}
+  .cal-bar.s{left:6px;border-radius:3px 0 0 3px;}
+  .cal-bar.e{right:6px;border-radius:0 3px 3px 0;}
+  .cal-bar.s.e{border-radius:3px;}
+  .cal-bar.cl{left:-7.5px;}
+  .cal-bar.cr{right:-7.5px;}
   .cal-dots{display:flex;gap:3px;margin-top:5px;flex-wrap:wrap;}
   .cal-dots span{width:6px;height:6px;border-radius:50%;display:inline-block;}
   .day-detail{margin-top:20px;border-top:1.5px solid var(--border);padding-top:16px;}
@@ -1488,7 +1495,7 @@
     <div class="field"><label>標題</label><input id="taskTitle" placeholder="例如：完成季報"></div>
     <div class="dt-row">
       <div class="dt-col off" id="taskDateCol">
-        <div class="row-inline"><label id="taskDateLbl">日期</label><button class="switch" id="taskDateSwitch" role="switch" aria-checked="false" aria-label="日期" onclick="toggleTaskDt('d')"></button></div>
+        <div class="row-inline"><label id="taskDateLbl">開始日</label><button class="switch" id="taskDateSwitch" role="switch" aria-checked="false" aria-label="日期" onclick="toggleTaskDt('d')"></button></div>
         <input type="date" id="taskDueDate" aria-label="日期" disabled onchange="taskDtPaint()">
       </div>
       <div class="dt-col off" id="taskTimeCol">
@@ -1497,12 +1504,8 @@
       </div>
     </div>
     <div class="dt-range off" id="taskRangeBox">
-      <div class="row-inline"><label>多天（時段）</label><button class="switch" id="taskRangeSwitch" role="switch" aria-checked="false" aria-label="多天" onclick="toggleTaskDt('g')"></button></div>
-      <div id="taskRangeFields" style="display:none">
-        <label for="taskStartDate">開始日</label>
-        <input type="date" id="taskStartDate" aria-label="開始日" onchange="taskDtPaint()">
-        <div class="rng-hint">上面的「日期」就是結束日。時間是提醒的時刻，沒設時間就是早上 8:00。</div>
-      </div>
+      <div class="row-inline"><label>結束日</label><button class="switch" id="taskRangeSwitch" role="switch" aria-checked="false" aria-label="結束日" onclick="toggleTaskDt('g')"></button></div>
+      <input type="date" id="taskEndDate" aria-label="結束日" onchange="taskDtPaint()" disabled>
     </div>
     <div class="row-inline dt-reminder">
       <span class="dt-bell" aria-label="提醒"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 17V11a6 6 0 0 1 12 0v6l1.5 2h-15z"/><path d="M10 21.5a2.2 2.2 0 0 0 4 0"/></svg></span>
@@ -4399,8 +4402,7 @@ function taskDtPaint(){
   g('taskDueDate').disabled = !dOn; g('taskTimeSwitch').disabled = !dOn; g('taskDueTime').disabled = !tOn; g('taskReminderSwitch').disabled = !dOn;
   g('taskDateSwitch').setAttribute('aria-checked',dOn); g('taskTimeSwitch').setAttribute('aria-checked',tOn); g('taskReminderSwitch').setAttribute('aria-checked',rOn);
   g('taskRangeBox').classList.toggle('off',!gOn); g('taskRangeSwitch').disabled = !dOn; g('taskRangeSwitch').setAttribute('aria-checked',gOn);
-  g('taskRangeFields').style.display = gOn ? 'block' : 'none'; g('taskStartDate').disabled = !gOn;
-  g('taskDateLbl').textContent = gOn ? '結束日' : '日期';
+  g('taskEndDate').disabled = !gOn;
   g('taskRemindBox').style.display = (rOn && gOn) ? 'block' : 'none';
   if(rOn && gOn) renderTaskRemindBox();
 }
@@ -4410,14 +4412,14 @@ function renderTaskRemindBox(){
   const g = id=>document.getElementById(id);
   g('taskRemindChips').innerHTML = REMIND_MODE_KEYS.map(k=>`<button type="button" class="rm-chip ${taskRemindSel===k?'on':''}" role="radio" aria-checked="${taskRemindSel===k}" onclick="setTaskRemindMode('${k}')">${REMIND_MODES[k]}</button>`).join('');
   g('taskRemindCustom').style.display = taskRemindSel==='custom' ? 'block' : 'none';
-  const st = g('taskStartDate').value, du = g('taskDueDate').value;
+  const st = g('taskDueDate').value, du = g('taskEndDate').value;
   g('taskCustomDate').min = validYmd(st) ? st : ''; g('taskCustomDate').max = validYmd(du) ? du : '';
   g('taskCustomList').innerHTML = taskCustomDates.map(d=>`<span class="rm-date">${fmtDate(d)}<button type="button" aria-label="移除 ${fmtDate(d)}" onclick="removeTaskCustomDate('${d}')">✕</button></span>`).join('');
 }
 function setTaskRemindMode(m){ if(!REMIND_MODES[m]) return; taskRemindSel = m; renderTaskRemindBox(); }
 function addTaskCustomDate(){
   const g = id=>document.getElementById(id);
-  const v = g('taskCustomDate').value, st = g('taskStartDate').value, du = g('taskDueDate').value;
+  const v = g('taskCustomDate').value, st = g('taskDueDate').value, du = g('taskEndDate').value;
   if(!validYmd(v)){ notify('請選擇提醒日'); return; }
   if(!validYmd(st) || !validYmd(du) || v<st || v>du){ notify('提醒日要在開始日和結束日之間'); return; }
   if(taskCustomDates.includes(v)){ notify('這一天已經加過了'); return; }
@@ -4434,9 +4436,9 @@ function toggleTaskDt(which){
   sw.classList.toggle('on');
   if(which==='d' && sw.classList.contains('on') && !document.getElementById('taskDueDate').value) document.getElementById('taskDueDate').value = todayStr();
   if(which==='t' && sw.classList.contains('on') && !document.getElementById('taskDueTime').value) document.getElementById('taskDueTime').value = '08:00';
-  if(which==='g' && sw.classList.contains('on') && !document.getElementById('taskStartDate').value){
-    const du = document.getElementById('taskDueDate').value, td = todayStr();
-    document.getElementById('taskStartDate').value = (validYmd(du) && td < du) ? td : (validYmd(du) ? shiftDay(du,-1) : td);
+  if(which==='g' && sw.classList.contains('on') && !document.getElementById('taskEndDate').value){
+    const st = document.getElementById('taskDueDate').value;
+    document.getElementById('taskEndDate').value = shiftDay(validYmd(st) ? st : todayStr(), 1);
   }
   if(which==='r' && sw.classList.contains('on') && 'Notification' in window && Notification.permission==='default') Notification.requestPermission();
   taskDtPaint();
@@ -4456,13 +4458,13 @@ function openTaskModal(taskId){
   }
   document.getElementById('taskModalTitle').textContent = task ? '編輯主要事項' : '新增主要事項';
   document.getElementById('taskTitle').value = task ? task.title : '';
-  document.getElementById('taskDueDate').value = task ? (task.dueDate||'') : '';
+  document.getElementById('taskDueDate').value = task ? (isRangeTask(task) ? task.startDate : (task.dueDate||'')) : '';
   document.getElementById('taskDueTime').value = task ? (task.dueTime||'') : '';
   document.getElementById('taskDateSwitch').classList.toggle('on', !!(task && task.dueDate));
   document.getElementById('taskTimeSwitch').classList.toggle('on', !!(task && task.dueDate && task.dueTime));
   document.getElementById('taskReminderSwitch').classList.toggle('on', !!(task && task.dueDate && task.reminder));
   document.getElementById('taskRangeSwitch').classList.toggle('on', isRangeTask(task));
-  document.getElementById('taskStartDate').value = isRangeTask(task) ? task.startDate : '';
+  document.getElementById('taskEndDate').value = isRangeTask(task) ? task.dueDate : '';
   taskRemindSel = (isRangeTask(task) && REMIND_MODES[task.remindMode]) ? task.remindMode : 'end';
   taskCustomDates = isRangeTask(task) && Array.isArray(task.remindDates) ? task.remindDates.slice() : [];
   document.getElementById('taskCustomDate').value = '';
@@ -4479,14 +4481,17 @@ function saveTask(){
   const dueTime = tOn ? document.getElementById('taskDueTime').value : '';
   if(tOn && !/^\d{2}:\d{2}$/.test(dueTime)){ notify('請選擇時間'); return; }
   const reminder = dOn && document.getElementById('taskReminderSwitch').classList.contains('on');
+  /* 上面的日期是「開始日」;打開「結束日」才是時段(開始日 → 結束日),沒打開就是單日事項(資料裡的 dueDate) */
   const gOn = dOn && document.getElementById('taskRangeSwitch').classList.contains('on');
-  const startDate = gOn ? document.getElementById('taskStartDate').value : '';
+  const startDate = gOn ? dueDate : '';
+  const endDate = gOn ? document.getElementById('taskEndDate').value : '';
   if(gOn){
-    if(!validYmd(startDate)){ notify('請選擇開始日'); return; }
-    if(startDate >= dueDate){ notify('開始日要比結束日早'); return; }
-    if(daysBetween(startDate, dueDate)+1 > TASK_RANGE_MAX){ notify('時段最長 '+TASK_RANGE_MAX+' 天'); return; }
+    if(!validYmd(endDate)){ notify('請選擇結束日'); return; }
+    if(endDate <= startDate){ notify('結束日要比開始日晚'); return; }
+    if(daysBetween(startDate, endDate)+1 > TASK_RANGE_MAX){ notify('時段最長 '+TASK_RANGE_MAX+' 天'); return; }
     if(reminder && taskRemindSel==='custom' && !taskCustomDates.length){ notify('請至少新增一個提醒日'); return; }
   }
+  const finalDue = gOn ? endDate : dueDate;
   const catField = document.getElementById('taskCatField');
   let categoryId = ui.catId;
   if(catField.style.display==='block'){
@@ -4497,16 +4502,16 @@ function saveTask(){
   if(editingTaskId){
     t = data.tasks.find(x=>x.id===editingTaskId);
     if(!t){ editingTaskId = null; closeModal('taskModal'); notify('這個事項已經不存在了'); return; }     /* 編輯到一半,它被刪掉了(例如另一台裝置) */
-    t.title = title; t.dueDate = dueDate; t.dueTime = dueTime; t.reminder = reminder; t.categoryId = categoryId;
+    t.title = title; t.dueDate = finalDue; t.dueTime = dueTime; t.reminder = reminder; t.categoryId = categoryId;
   }else{
-    t = {id:uid(), categoryId, title, dueDate, dueTime, reminder, status:'pending', subtasks:[]};
+    t = {id:uid(), categoryId, title, dueDate:finalDue, dueTime, reminder, status:'pending', subtasks:[]};
     data.tasks.push(t);
   }
   /* 時段欄位:沒開「多天」就整組拿掉(單日事項不多出任何欄位) */
   delete t.startDate; delete t.remindMode; delete t.remindDates;
   if(gOn){
     t.startDate = startDate; t.remindMode = taskRemindSel;
-    if(taskRemindSel==='custom') t.remindDates = taskCustomDates.filter(d=> d>=startDate && d<=dueDate).sort();
+    if(taskRemindSel==='custom') t.remindDates = taskCustomDates.filter(d=> d>=startDate && d<=finalDue).sort();
   }
   sanitizeTaskRange(t);
   editingTaskId = null;
@@ -4558,7 +4563,7 @@ function allTimedItems(){
       for(let i=0, d=t.startDate; i<n; i++, d=shiftDay(d,1)){
         const last = i===n-1;
         items.push({title:t.title, time:d+'T'+(last && t.dueTime ? t.dueTime : '00:00'), color:cat?cat.color:'#999', status:t.status,
-          isDate: !(last && t.dueTime), tag: i===0 ? '開始' : (last ? '' : (i+1)+'/'+n)});
+          isDate: !(last && t.dueTime), tag: i===0 ? '開始' : (last ? '' : (i+1)+'/'+n), rid:t.id, rs:t.startDate, re:t.dueDate});
       }
       return;
     }
@@ -4866,12 +4871,31 @@ function renderCalendar(){
   const today = new Date();
   const isSameDay=(a,b)=> a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
 
+  /* 時段事項的長條:每件事整個月固定在同一條「車道」(同時重疊的才會分到不同條),最多 3 條,放不下的退回成小點 */
+  const monthFirst = ymdStr(y,m+1,1), monthLast = ymdStr(y,m+1,daysInMonth);
+  const spans = new Map();
+  items.forEach(it=>{ if(it.rid && !spans.has(it.rid)) spans.set(it.rid, {id:it.rid, s:it.rs, e:it.re, color:it.color, done:it.status==='done', lane:-1}); });
+  const laneEnd = [];
+  Array.from(spans.values()).filter(g=> g.e>=monthFirst && g.s<=monthLast).sort((a,b)=> a.s.localeCompare(b.s) || b.e.localeCompare(a.e) || a.id.localeCompare(b.id)).forEach(g=>{
+    let l = laneEnd.findIndex(end=> end < g.s);
+    if(l<0){ if(laneEnd.length>=3) return; l = laneEnd.length; laneEnd.push(''); }
+    laneEnd[l] = g.e; g.lane = l;
+  });
+  const lanes = laneEnd.length;
+  const barOf = Array.from(spans.values()).filter(g=> g.lane>=0);
+
   let cells='';
   for(let i=0;i<startOffset;i++) cells+=`<div class="cal-cell pad"></div>`;
   for(let d=1; d<=daysInMonth; d++){
     const cellDate = new Date(y,m,d);
     const dayItems = items.filter(it=> isSameDay(new Date(it.time), cellDate));
-    const colors = [...new Set(dayItems.map(i=>i.color))].slice(0,4);
+    const barIds = new Set(barOf.map(g=>g.id));
+    const colors = [...new Set(dayItems.filter(i=> !(i.rid && barIds.has(i.rid))).map(i=>i.color))].slice(0,4);
+    const dayStr0 = ymdStr(y, m+1, d), col = (startOffset + d - 1) % 7;
+    const bars = barOf.filter(g=> g.s<=dayStr0 && dayStr0<=g.e).map(g=>{
+      const cont = (g.s<dayStr0 && col>0), contR = (dayStr0<g.e && col<6);
+      return `<i class="cal-bar ${g.s===dayStr0?'s':''} ${g.e===dayStr0?'e':''} ${cont?'cl':''} ${contR?'cr':''} ${g.done?'done':''}" style="--bc:${g.color};bottom:calc(6px + ${g.lane}*9px)"></i>`;
+    }).join('');
     const isToday = isSameDay(cellDate, today);
     const isSel = ui.selectedDate && isSameDay(cellDate, ui.selectedDate);
     const info = getDayInfo(y, m+1, d);
@@ -4884,7 +4908,7 @@ function renderCalendar(){
       <div class="num">${d}</div>
       <div class="${lunarClass}">${escapeHtml(lunarLabel)}</div>
       ${info.holiday? '<div class="cal-holiday-tag">休</div>' : ''}${spTag}
-      <div class="cal-dots">${colors.map(c=>`<span style="background:${c}"></span>`).join('')}</div>
+      <div class="cal-dots">${colors.map(c=>`<span style="background:${c}"></span>`).join('')}</div>${bars}
     </div>`;
   }
 
@@ -4895,7 +4919,7 @@ function renderCalendar(){
       <div class="cal-title">${y}年 ${m+1}月</div>
       <button class="cal-nav-btn" onclick="changeMonth(1)" aria-label="下個月">›</button>
     </div>
-    <div class="cal-grid">
+    <div class="cal-grid ${lanes?'has-bars':''}" style="--lanes:${lanes}">
       ${['日','一','二','三','四','五','六'].map(d=>`<div class="cal-dow">${d}</div>`).join('')}
       ${cells}
     </div>
