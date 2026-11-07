@@ -206,6 +206,7 @@
   .rm-chip{border:1.5px solid var(--border);background:transparent;color:var(--ink-soft);border-radius:999px;padding:6px 12px;font-size:12.5px;cursor:pointer;}
   .rm-chip.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700;}
   .rm-add{display:flex;gap:8px;align-items:center;}
+  .rm-add .dt-pick{flex:1 1 0;}
   .rm-add input{flex:1 1 0;min-width:0;padding:8px 6px;font-size:13px;}
   .rm-add .btn-ghost{flex-shrink:0;padding:8px 12px;font-size:12.5px;white-space:nowrap;}
   .rm-dates{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
@@ -242,7 +243,20 @@
   .sort-opt .rd{width:18px;height:18px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;position:relative;}
   .sort-opt.sel .rd{border-color:var(--accent);}
   .sort-opt.sel .rd::after{content:'';position:absolute;inset:3px;border-radius:50%;background:var(--accent);}
-  .dt-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+  /* 日期欄:同一年就不顯示年份。原本的日期欄透明蓋在上面,點下去照樣開系統的日期選擇 */
+  .dt-pick{position:relative;display:block;min-width:0;}
+  .dt-pick input,.dt-col .dt-pick input:disabled,.dt-range .dt-pick input:disabled{position:absolute;inset:0;width:100%;height:100%;opacity:0 !important;margin:0;padding:0;border:0;cursor:pointer;}
+  .dt-pick input:disabled{cursor:default;}
+  .dt-col input[type=time]{padding:8px 10px;border:1.5px solid var(--border);border-radius:12px;background:#fff;font-size:13.5px;color:var(--ink);}
+  .dt-col input[type=time]:disabled{background:#fff;}
+  .dt-show{display:block;padding:9px 10px;border:1.5px solid var(--border);border-radius:12px;background:#fff;font-size:13.5px;color:var(--ink);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .dt-show.empty{color:var(--soft,var(--ink));opacity:.6;}
+  .dt-pick.dis .dt-show{opacity:.55;}
+  .dt-pick:focus-within .dt-show{border-color:var(--accent);}
+  .dt-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+  .dt-multi{margin-bottom:12px;}
+  .dt-multi .row-inline{align-items:center;gap:10px;}
+  .dt-multi-info{flex:1;font-size:13px;color:var(--ink);opacity:.7;white-space:nowrap;}
   .dt-col{display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:14px;background:var(--accent-soft);min-width:0;}
   .dt-col.off{opacity:.6;background:transparent;border:1.5px dashed var(--border);padding:10.5px;}
   .dt-col label{margin:0;font-size:13px;color:var(--ink);font-weight:700;}
@@ -1497,17 +1511,20 @@
     <div class="field"><label>標題</label><input id="taskTitle" placeholder="例如：完成季報"></div>
     <div class="dt-row">
       <div class="dt-col off" id="taskDateCol">
-        <div class="row-inline"><label id="taskDateLbl">開始日</label><button class="switch" id="taskDateSwitch" role="switch" aria-checked="false" aria-label="日期" onclick="toggleTaskDt('d')"></button></div>
-        <input type="date" id="taskDueDate" aria-label="日期" disabled onchange="taskDtPaint()">
+        <div class="row-inline"><label id="taskDateLbl">日期</label><button class="switch" id="taskDateSwitch" role="switch" aria-checked="false" aria-label="日期" onclick="toggleTaskDt('d')"></button></div>
+        <span class="dt-pick"><input type="date" id="taskDueDate" aria-label="日期" disabled onchange="taskDtPaint()"><span class="dt-show empty"></span></span>
       </div>
       <div class="dt-col off" id="taskTimeCol">
         <div class="row-inline"><label>時間</label><button class="switch" id="taskTimeSwitch" role="switch" aria-checked="false" aria-label="時間" onclick="toggleTaskDt('t')"></button></div>
         <input type="time" id="taskDueTime" aria-label="時間" disabled>
       </div>
     </div>
-    <div class="dt-range off" id="taskRangeBox">
-      <div class="row-inline"><label>結束日</label><button class="switch" id="taskRangeSwitch" role="switch" aria-checked="false" aria-label="結束日" onclick="toggleTaskDt('g')"></button></div>
-      <input type="date" id="taskEndDate" aria-label="結束日" onchange="taskDtPaint()" disabled>
+    <div class="dt-col dt-multi off" id="taskRangeCol">
+      <div class="row-inline"><label>多天</label><span class="dt-multi-info" id="taskRangeInfo">單日</span><button class="switch" id="taskRangeSwitch" role="switch" aria-checked="false" aria-label="多天" onclick="toggleTaskDt('g')"></button></div>
+    </div>
+    <div class="dt-range" id="taskRangeBox" style="display:none">
+      <div class="row-inline"><label>結束日</label></div>
+      <span class="dt-pick"><input type="date" id="taskEndDate" aria-label="結束日" onchange="taskDtPaint()" disabled><span class="dt-show empty"></span></span>
     </div>
     <div class="row-inline dt-reminder">
       <span class="dt-bell" aria-label="提醒"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 17V11a6 6 0 0 1 12 0v6l1.5 2h-15z"/><path d="M10 21.5a2.2 2.2 0 0 0 4 0"/></svg></span>
@@ -1516,7 +1533,7 @@
     <div class="rm-box" id="taskRemindBox" style="display:none">
       <div class="rm-chips" id="taskRemindChips" role="radiogroup" aria-label="提醒方式"></div>
       <div id="taskRemindCustom" style="display:none">
-        <div class="rm-add"><input type="date" id="taskCustomDate" aria-label="提醒日"><button type="button" class="btn-ghost" onclick="addTaskCustomDate()">＋ 新增提醒日</button></div>
+        <div class="rm-add"><span class="dt-pick"><input type="date" id="taskCustomDate" aria-label="提醒日" onchange="paintDateShow('taskCustomDate','選擇提醒日')"><span class="dt-show empty"></span></span><button type="button" class="btn-ghost" onclick="addTaskCustomDate()">＋ 新增提醒日</button></div>
         <div class="rm-dates" id="taskCustomList"></div>
       </div>
     </div>
@@ -4395,18 +4412,35 @@ function saveNote(){
 }
 
 /* 事項視窗的三個開關:日期 → 時間、提醒。日期關掉,時間和提醒一起關掉(時間值先留著,再打開還在) */
+/* 日期欄顯示:今年的日期不寫年份(11/7),別年才寫(2027/1/3);沒選就顯示提示字 */
+function dateShowText(v){
+  if(!validYmd(v)) return '';
+  const y = +v.slice(0,4), m = +v.slice(5,7), d = +v.slice(8,10);
+  return (y===new Date().getFullYear() ? '' : y+'/') + m + '/' + d;
+}
+function paintDateShow(id, ph){
+  const el = document.getElementById(id); if(!el || !el.parentNode) return;
+  const sh = el.parentNode.querySelector('.dt-show'); if(!sh) return;
+  const t = dateShowText(el.value);
+  sh.textContent = t || ph; sh.classList.toggle('empty', !t);
+  el.parentNode.classList.toggle('dis', !!el.disabled);
+}
+function paintAllDateShow(){ paintDateShow('taskDueDate','選擇日期'); paintDateShow('taskEndDate','選擇結束日'); paintDateShow('taskCustomDate','選擇提醒日'); }
 function taskDtPaint(){
   const g = id=>document.getElementById(id);
   const dOn = g('taskDateSwitch').classList.contains('on');
   if(!dOn){ g('taskTimeSwitch').classList.remove('on'); g('taskReminderSwitch').classList.remove('on'); g('taskRangeSwitch').classList.remove('on'); }
   const tOn = g('taskTimeSwitch').classList.contains('on'), rOn = g('taskReminderSwitch').classList.contains('on'), gOn = g('taskRangeSwitch').classList.contains('on');
-  g('taskDateCol').classList.toggle('off',!dOn); g('taskTimeCol').classList.toggle('off',!tOn);
+  g('taskDateCol').classList.toggle('off',!dOn); g('taskTimeCol').classList.toggle('off',!tOn); g('taskRangeCol').classList.toggle('off',!gOn);
+  g('taskDateLbl').textContent = gOn ? '開始日' : '日期';
   g('taskDueDate').disabled = !dOn; g('taskTimeSwitch').disabled = !dOn; g('taskDueTime').disabled = !tOn; g('taskReminderSwitch').disabled = !dOn;
   g('taskDateSwitch').setAttribute('aria-checked',dOn); g('taskTimeSwitch').setAttribute('aria-checked',tOn); g('taskReminderSwitch').setAttribute('aria-checked',rOn);
-  g('taskRangeBox').classList.toggle('off',!gOn); g('taskRangeSwitch').disabled = !dOn; g('taskRangeSwitch').setAttribute('aria-checked',gOn);
+  g('taskRangeBox').style.display = gOn ? 'flex' : 'none'; g('taskRangeSwitch').disabled = !dOn; g('taskRangeSwitch').setAttribute('aria-checked',gOn);
   g('taskEndDate').disabled = !gOn;
+  { const a = g('taskDueDate').value, b = g('taskEndDate').value; g('taskRangeInfo').textContent = !gOn ? '單日' : (validYmd(a) && validYmd(b) && b>a ? '共 '+(daysBetween(a,b)+1)+' 天' : '選結束日'); }
   g('taskRemindBox').style.display = (rOn && gOn) ? 'block' : 'none';
   if(rOn && gOn) renderTaskRemindBox();
+  paintAllDateShow();
 }
 /* 時段的提醒方式(每天 / 開始日 / 結束日 / 開始與結束 / 自訂)。自訂:一個一個新增提醒日 */
 let taskRemindSel = 'end', taskCustomDates = [];
@@ -4416,6 +4450,7 @@ function renderTaskRemindBox(){
   g('taskRemindCustom').style.display = taskRemindSel==='custom' ? 'block' : 'none';
   const st = g('taskDueDate').value, du = g('taskEndDate').value;
   g('taskCustomDate').min = validYmd(st) ? st : ''; g('taskCustomDate').max = validYmd(du) ? du : '';
+  paintDateShow('taskCustomDate','選擇提醒日');
   g('taskCustomList').innerHTML = taskCustomDates.map(d=>`<span class="rm-date">${fmtDate(d)}<button type="button" aria-label="移除 ${fmtDate(d)}" onclick="removeTaskCustomDate('${d}')">✕</button></span>`).join('');
 }
 function setTaskRemindMode(m){ if(!REMIND_MODES[m]) return; taskRemindSel = m; renderTaskRemindBox(); }
