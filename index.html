@@ -4928,20 +4928,23 @@ function renderCalendar(){
     const L = laneEnd.length;
     const shown = segs.filter(sg=> sg.lane>=0);
     shown.forEach(sg=>{ for(let c=sg.a;c<=sg.b;c++){ (coveredBy[dayAt(c)] = coveredBy[dayAt(c)] || new Set()).add(sg.g.id); } });
-    let cells = '';
+    let cells = '', tightBusy = false;
     for(let c=0;c<7;c++){
       if(!valid(c)){ cells += `<div class="cal-cell pad" style="grid-column:${c+1};grid-row:1"></div>`; continue; }
       const mine = shown.filter(sg=> sg.a<=c && c<=sg.b);
       /* 這一天底下沒有方塊 → 一路加長到這週最底;有方塊 → 加長到第一個方塊上面 */
       const endRow = mine.length ? 2 + Math.min(...mine.map(sg=>sg.lane)) : L + 2;
-      cells += cellHtml(dayAt(c), `grid-column:${c+1};grid-row:1 / ${endRow}`);
+      const ch = cellHtml(dayAt(c), `grid-column:${c+1};grid-row:1 / ${endRow}`);
+      /* 只佔第一列、正上方就是方塊的日子:裡面沒事項/標記,這列就能縮短,空間留給時段 */
+      if(endRow===2 && (/cal-dots"><span/.test(ch) || /cal-(holiday|special)-tag/.test(ch))) tightBusy = true;
+      cells += ch;
     }
     const boxes = shown.map(sg=>{
       const g = sg.g;
       return `<div class="cal-rng ${sg.cl?'cl':''} ${sg.cr?'cr':''} ${g.done?'done':''}" style="--c:${g.color};grid-column:${sg.a+1} / ${sg.b+2};grid-row:${2+sg.lane}" onclick="selectDate(${y},${m},${dayAt(sg.a)})" title="${escapeAttr(g.title)}"><span>${sg.cl?'‹ ':''}${escapeHtml(g.title)}<small>${fmtDate(g.s)}–${fmtDate(g.e)}</small>${sg.cr?' ›':''}</span></div>`;
     }).join('');
-    const busy = L || /cal-dots"><span/.test(cells) || /cal-(holiday|special)-tag/.test(cells);
-    weeksHtml += `<div class="cal-week${busy?'':' calm'}" style="grid-template-rows:minmax(${busy?74:46}px,auto)${L?` repeat(${L},22px)`:''}">${cells}${boxes}</div>`;
+    const compact = L>0 && !tightBusy;
+    weeksHtml += `<div class="cal-week${compact?' calm':''}" style="grid-template-rows:minmax(${compact?46:74}px,auto)${L?` repeat(${L},22px)`:''}">${cells}${boxes}</div>`;
   }
 
   el.innerHTML = `
