@@ -271,16 +271,17 @@
   .cal-cell.selected{background:var(--accent-soft);border-color:var(--accent);}
   .cal-cell .num{display:inline-flex;align-items:center;justify-content:center;}
   .cal-cell.today .num{font-weight:700;color:#fff;background:var(--accent);width:20px;height:20px;border-radius:50%;}
-  /* 時段事項在月曆上是一條接在一起的長條(跨過格子之間的空隙);--lanes = 這個月最多同時幾條,格子底下留出位置 */
-  .cal-grid.has-bars .cal-cell{padding-bottom:calc(6px + var(--lanes)*9px);}
-  .cal-grid.has-bars .cal-special-tag{bottom:calc(5px + var(--lanes)*9px);}
-  .cal-bar{position:absolute;height:6px;background:var(--bc);left:-1.5px;right:-1.5px;pointer-events:none;}
-  .cal-bar.done{opacity:.4;}
-  .cal-bar.s{left:6px;border-radius:3px 0 0 3px;}
-  .cal-bar.e{right:6px;border-radius:0 3px 3px 0;}
-  .cal-bar.s.e{border-radius:3px;}
-  .cal-bar.cl{left:-7.5px;}
-  .cal-bar.cr{right:-7.5px;}
+  /* 時段事項在月曆上是一個橫跨那幾天的方塊(淡色底＋左色條),放在每一週的格子下面 */
+  .cal-week{grid-column:1/-1;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px 6px;}
+  .cal-rng{position:relative;overflow:hidden;min-width:0;border-radius:9px;color:var(--c);font-size:11px;font-weight:700;line-height:22px;padding:0 9px 0 11px;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;}
+  .cal-rng::before{content:'';position:absolute;inset:0;background:var(--c);opacity:.16;}
+  .cal-rng::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--c);}
+  .cal-rng.cl{border-top-left-radius:3px;border-bottom-left-radius:3px;padding-left:9px;}
+  .cal-rng.cl::after{display:none;}
+  .cal-rng.cr{border-top-right-radius:3px;border-bottom-right-radius:3px;}
+  .cal-rng.done{opacity:.45;}
+  .cal-rng span{position:relative;z-index:1;}
+  .cal-rng small{font-weight:400;font-size:10px;opacity:.85;margin-left:6px;}
   .cal-dots{display:flex;gap:3px;margin-top:5px;flex-wrap:wrap;}
   .cal-dots span{width:6px;height:6px;border-radius:50%;display:inline-block;}
   .day-detail{margin-top:20px;border-top:1.5px solid var(--border);padding-top:16px;}
@@ -4871,31 +4872,18 @@ function renderCalendar(){
   const today = new Date();
   const isSameDay=(a,b)=> a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
 
-  /* 時段事項的長條:每件事整個月固定在同一條「車道」(同時重疊的才會分到不同條),最多 3 條,放不下的退回成小點 */
-  const monthFirst = ymdStr(y,m+1,1), monthLast = ymdStr(y,m+1,daysInMonth);
+  /* 時段事項:每件事是一個橫跨那幾天的方塊,放在「那一週的格子下面」;同一週重疊的上下疊(最多 3 層,放不下的退回成小點)。
+     沒有方塊的日期,格子往下加長把空白填滿。方塊不動日期格子本身,所以選取、點擊都不受影響。 */
   const spans = new Map();
-  items.forEach(it=>{ if(it.rid && !spans.has(it.rid)) spans.set(it.rid, {id:it.rid, s:it.rs, e:it.re, color:it.color, done:it.status==='done', lane:-1}); });
-  const laneEnd = [];
-  Array.from(spans.values()).filter(g=> g.e>=monthFirst && g.s<=monthLast).sort((a,b)=> a.s.localeCompare(b.s) || b.e.localeCompare(a.e) || a.id.localeCompare(b.id)).forEach(g=>{
-    let l = laneEnd.findIndex(end=> end < g.s);
-    if(l<0){ if(laneEnd.length>=3) return; l = laneEnd.length; laneEnd.push(''); }
-    laneEnd[l] = g.e; g.lane = l;
-  });
-  const lanes = laneEnd.length;
-  const barOf = Array.from(spans.values()).filter(g=> g.lane>=0);
+  items.forEach(it=>{ if(it.rid && !spans.has(it.rid)) spans.set(it.rid, {id:it.rid, title:it.title, s:it.rs, e:it.re, color:it.color, done:it.status==='done'}); });
+  const spanList = Array.from(spans.values());
+  const rows = Math.ceil((startOffset+daysInMonth)/7);
 
-  let cells='';
-  for(let i=0;i<startOffset;i++) cells+=`<div class="cal-cell pad"></div>`;
-  for(let d=1; d<=daysInMonth; d++){
+  const cellHtml = (d, place)=>{
     const cellDate = new Date(y,m,d);
     const dayItems = items.filter(it=> isSameDay(new Date(it.time), cellDate));
-    const barIds = new Set(barOf.map(g=>g.id));
-    const colors = [...new Set(dayItems.filter(i=> !(i.rid && barIds.has(i.rid))).map(i=>i.color))].slice(0,4);
-    const dayStr0 = ymdStr(y, m+1, d), col = (startOffset + d - 1) % 7;
-    const bars = barOf.filter(g=> g.s<=dayStr0 && dayStr0<=g.e).map(g=>{
-      const cont = (g.s<dayStr0 && col>0), contR = (dayStr0<g.e && col<6);
-      return `<i class="cal-bar ${g.s===dayStr0?'s':''} ${g.e===dayStr0?'e':''} ${cont?'cl':''} ${contR?'cr':''} ${g.done?'done':''}" style="--bc:${g.color};bottom:calc(6px + ${g.lane}*9px)"></i>`;
-    }).join('');
+    const covered = coveredBy[d] || new Set();
+    const colors = [...new Set(dayItems.filter(i=> !(i.rid && covered.has(i.rid))).map(i=>i.color))].slice(0,4);
     const isToday = isSameDay(cellDate, today);
     const isSel = ui.selectedDate && isSameDay(cellDate, ui.selectedDate);
     const info = getDayInfo(y, m+1, d);
@@ -4904,12 +4892,50 @@ function renderCalendar(){
     let lunarClass = info.festival ? 'cal-lunar festival' : (info.holiday ? 'cal-lunar holiday-day' : 'cal-lunar');
     if(sp.festivals.length){ lunarLabel = sp.festivals.map(f=>f.name).join('、'); lunarClass = 'cal-lunar special'; }   /* 自己設定的節日優先顯示 */
     const spTag = sp.marks.length ? `<div class="cal-special-tag" title="${escapeAttr(sp.marks.map(x=>x.text).join('、'))}">★</div>` : '';
-    cells += `<div class="cal-cell ${isSel?'selected':''} ${isToday?'today':''}" onclick="selectDate(${y},${m},${d})">
+    return `<div class="cal-cell ${isSel?'selected':''} ${isToday?'today':''}" style="${place}" onclick="selectDate(${y},${m},${d})">
       <div class="num">${d}</div>
       <div class="${lunarClass}">${escapeHtml(lunarLabel)}</div>
       ${info.holiday? '<div class="cal-holiday-tag">休</div>' : ''}${spTag}
-      <div class="cal-dots">${colors.map(c=>`<span style="background:${c}"></span>`).join('')}</div>${bars}
+      <div class="cal-dots">${colors.map(c=>`<span style="background:${c}"></span>`).join('')}</div>
     </div>`;
+  };
+
+  const coveredBy = {};      /* 日期 → 這天有方塊顯示的時段 id(這些不再畫小點) */
+  let weeksHtml = '';
+  for(let w=0; w<rows; w++){
+    const dayAt = c=> w*7 + c - startOffset + 1;
+    const valid = c=> dayAt(c)>=1 && dayAt(c)<=daysInMonth;
+    const dateAt = c=> ymdStr(y, m+1, dayAt(c));
+    /* 這一週每個時段的片段 */
+    const segs = [];
+    spanList.forEach(g=>{
+      let a=-1, b=-1;
+      for(let c=0;c<7;c++){ if(valid(c) && dateAt(c)>=g.s && dateAt(c)<=g.e){ if(a<0) a=c; b=c; } }
+      if(a>=0) segs.push({g, a, b, cl: g.s < dateAt(a), cr: g.e > dateAt(b), lane:-1});
+    });
+    segs.sort((x,y2)=> x.a-y2.a || (y2.b-y2.a)-(x.b-x.a) || x.g.id.localeCompare(y2.g.id));
+    const laneEnd = [];
+    segs.forEach(sg=>{
+      let l = laneEnd.findIndex(e=> e < sg.a);
+      if(l<0){ if(laneEnd.length>=3) return; l = laneEnd.length; laneEnd.push(-1); }
+      laneEnd[l] = sg.b; sg.lane = l;
+    });
+    const L = laneEnd.length;
+    const shown = segs.filter(sg=> sg.lane>=0);
+    shown.forEach(sg=>{ for(let c=sg.a;c<=sg.b;c++){ (coveredBy[dayAt(c)] = coveredBy[dayAt(c)] || new Set()).add(sg.g.id); } });
+    let cells = '';
+    for(let c=0;c<7;c++){
+      if(!valid(c)){ cells += `<div class="cal-cell pad" style="grid-column:${c+1};grid-row:1"></div>`; continue; }
+      const mine = shown.filter(sg=> sg.a<=c && c<=sg.b);
+      /* 這一天底下沒有方塊 → 一路加長到這週最底;有方塊 → 加長到第一個方塊上面 */
+      const endRow = mine.length ? 2 + Math.min(...mine.map(sg=>sg.lane)) : L + 2;
+      cells += cellHtml(dayAt(c), `grid-column:${c+1};grid-row:1 / ${endRow}`);
+    }
+    const boxes = shown.map(sg=>{
+      const g = sg.g;
+      return `<div class="cal-rng ${sg.cl?'cl':''} ${sg.cr?'cr':''} ${g.done?'done':''}" style="--c:${g.color};grid-column:${sg.a+1} / ${sg.b+2};grid-row:${2+sg.lane}" onclick="selectDate(${y},${m},${dayAt(sg.a)})" title="${escapeAttr(g.title)}"><span>${sg.cl?'‹ ':''}${escapeHtml(g.title)}<small>${fmtDate(g.s)}–${fmtDate(g.e)}</small>${sg.cr?' ›':''}</span></div>`;
+    }).join('');
+    weeksHtml += `<div class="cal-week" style="grid-template-rows:minmax(74px,auto)${L?` repeat(${L},22px)`:''}">${cells}${boxes}</div>`;
   }
 
   el.innerHTML = `
@@ -4919,9 +4945,9 @@ function renderCalendar(){
       <div class="cal-title">${y}年 ${m+1}月</div>
       <button class="cal-nav-btn" onclick="changeMonth(1)" aria-label="下個月">›</button>
     </div>
-    <div class="cal-grid ${lanes?'has-bars':''}" style="--lanes:${lanes}">
+    <div class="cal-grid">
       ${['日','一','二','三','四','五','六'].map(d=>`<div class="cal-dow">${d}</div>`).join('')}
-      ${cells}
+      ${weeksHtml}
     </div>
     <div style="font-size:10.5px;color:var(--ink-soft);margin-top:10px;">農曆與節日僅供參考，國定假日以政府公告為準</div>
     <div class="day-detail" id="dayDetail"></div>
