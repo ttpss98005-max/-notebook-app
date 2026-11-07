@@ -4913,13 +4913,17 @@ function renderCalendar(){
       for(let c=0;c<7;c++){ if(valid(c) && dateAt(c)>=g.s && dateAt(c)<=g.e){ if(a<0) a=c; b=c; } }
       if(a>=0) segs.push({g, a, b, cl: g.s < dateAt(a), cr: g.e > dateAt(b), lane:-1});
     });
-    segs.sort((x,y2)=> x.a-y2.a || (y2.b-y2.a)-(x.b-x.a) || x.g.id.localeCompare(y2.g.id));
-    const laneEnd = [];
+    /* 最長的時段優先、放最下面:先依總長度由長到短排,各自找第一個不重疊的層,最後把層順序翻轉 */
+    const spanLen = g=> Math.round((new Date(g.e+'T00:00:00') - new Date(g.s+'T00:00:00'))/86400000);
+    segs.sort((x,y2)=> spanLen(y2.g)-spanLen(x.g) || x.a-y2.a || x.g.id.localeCompare(y2.g.id));
+    const laneSegs = [];
     segs.forEach(sg=>{
-      let l = laneEnd.findIndex(e=> e < sg.a);
-      if(l<0){ if(laneEnd.length>=3) return; l = laneEnd.length; laneEnd.push(-1); }
-      laneEnd[l] = sg.b; sg.lane = l;
+      let l = laneSegs.findIndex(arr=> arr.every(o=> o.b < sg.a || o.a > sg.b));
+      if(l<0){ if(laneSegs.length>=3) return; l = laneSegs.length; laneSegs.push([]); }
+      laneSegs[l].push(sg); sg.lane = l;
     });
+    segs.forEach(sg=>{ if(sg.lane>=0) sg.lane = laneSegs.length-1-sg.lane; });
+    const laneEnd = laneSegs;
     const L = laneEnd.length;
     const shown = segs.filter(sg=> sg.lane>=0);
     shown.forEach(sg=>{ for(let c=sg.a;c<=sg.b;c++){ (coveredBy[dayAt(c)] = coveredBy[dayAt(c)] || new Set()).add(sg.g.id); } });
