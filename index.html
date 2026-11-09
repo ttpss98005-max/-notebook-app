@@ -3820,6 +3820,15 @@ function openCategorySheet(){
 function closeCategorySheet(){
   document.getElementById('categorySheet').classList.remove('open');
 }
+/* 日期 / 時間欄:電腦版瀏覽器只有最右邊的小圖示會開選擇器,點在欄位其他地方只會選到「月/日/年」其中一格。
+   這裡統一改成點哪裡都開(手機本來就整欄可點,不受影響) */
+document.addEventListener('click', (e)=>{
+  const t = e.target;
+  if (!t || t.tagName !== 'INPUT' || t.disabled || t.readOnly) return;
+  if (t.type !== 'date' && t.type !== 'time' && t.type !== 'month') return;
+  if (typeof t.showPicker !== 'function') return;
+  try { t.showPicker(); } catch (_) {}
+});
 document.addEventListener('click', (e)=>{
   const row = document.getElementById('catIndicatorRow');
   if(row && !row.contains(e.target)) closeCategorySheet();
