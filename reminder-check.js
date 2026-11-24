@@ -57,6 +57,18 @@ function nowInTaipei() {
    改成:提醒時間已經到了,而且在 CATCH_UP_MIN 分鐘內,今天還沒提醒過,就送出。
    超過這個時間窗(例如半夜才新增、早上的提醒時間早就過了)就不補送,避免深夜突然收到早上的提醒 */
 const CATCH_UP_MIN = 20;
+/* 這個習慣今天要不要做:每天 / 每週指定星期 / 每月指定日期。
+   網頁和 App 會把 freq、weekdays、monthdays(逗號字串,例如 "0,6")寫進文件;沒有 freq 的舊文件當作每天 */
+function habitScheduledOn(h, date) {
+  const f = h.freq || 'daily';
+  if (f === 'daily') return true;
+  const [y, m, d] = date.split('-').map(Number);
+  const dow = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+  const list = (v) => String(v == null ? '' : v).split(',').filter((x) => x !== '').map(Number);
+  if (f === 'weekly') return list(h.weekdays).includes(dow);
+  if (f === 'monthly') return list(h.monthdays).includes(d);
+  return true;
+}
 async function processHabitReminders() {
   const { date: today, minutes: nowMin } = nowInTaipei();
   const snap = await db.collection('habitReminders').get();
@@ -64,6 +76,7 @@ async function processHabitReminders() {
     const h = doc.data();
     if (!/^\d{2}:\d{2}$/.test(h.remindTime || '')) continue;
     if (h.lastRemindedDate === today) continue;
+    if (!habitScheduledOn(h, today)) continue;     // 只排在特定星期 / 日期的習慣,別天不提醒
     const [hh, mm] = h.remindTime.split(':').map(Number);
     const diff = nowMin - (hh * 60 + mm);
     if (diff < 0 || diff > CATCH_UP_MIN) continue;

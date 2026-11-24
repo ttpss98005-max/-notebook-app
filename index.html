@@ -2942,18 +2942,35 @@ async function devListScheduledNotifications(){
       : '查詢失敗：'+(e.code||e.message||e);
   }
 }
-async function writeHabitReminderDoc(habit){
+/* 習慣提醒排程文件:除了名稱、時間,也要寫「哪幾天要做」(freq / weekdays / monthdays),
+   後端排程送推播時才不會把只排週日的習慣每天都提醒。weekdays / monthdays 用逗號字串存(例如 "0,6") */
+function habitReminderFields(habit){
+  return { uid: currentStorageKey, habitName: habit.name, remindTime: habit.remindTime,
+    freq: habit.freq || 'daily', weekdays: (habit.weekdays||[]).join(','), monthdays: (habit.monthdays||[]).join(',') };
+}
+const habitReminderSig = {};
+/* resync=true:只更新欄位、不動「今天提醒過沒」,打開網頁時順手對一次舊文件用(沒有 freq 的舊文件會補上) */
+async function writeHabitReminderDoc(habit, resync){
   if(window.__tutActive) return;     /* 新手教學進行中(用練習資料):不存檔、不寫雲端 */
   if(!fbDb || !currentStorageKey) return;
   try{
     if(!habit.remindTime){
       await fbDb.collection('habitReminders').doc(habit.id).delete().catch(()=>{});
+      delete habitReminderSig[habit.id];
       return;
     }
-    await fbDb.collection('habitReminders').doc(habit.id).set({
-      uid: currentStorageKey, habitName: habit.name, remindTime: habit.remindTime, lastRemindedDate: null
-    });
+    const f = habitReminderFields(habit);
+    if(resync) await fbDb.collection('habitReminders').doc(habit.id).set(f, {merge:true});
+    else await fbDb.collection('habitReminders').doc(habit.id).set({...f, lastRemindedDate:null});
+    habitReminderSig[habit.id] = JSON.stringify(f);
   }catch(e){ console.error('寫入習慣提醒排程失敗', e); }
+}
+function syncHabitReminderDocs(){
+  if(window.__tutActive || !fbDb || !currentStorageKey) return;
+  data.habits.forEach(h=>{
+    if(!h.remindTime) return;
+    if(habitReminderSig[h.id] !== JSON.stringify(habitReminderFields(h))) writeHabitReminderDoc(h, true);
+  });
 }
 
 async function storageGet(key){
@@ -4284,6 +4301,7 @@ async function runTaskReminderSync(){
 const habitReminderTimers = {};
 function scheduleHabitReminders(){
   if(window.__tutActive) return;     /* 新手教學進行中(用練習資料):不存檔、不寫雲端 */
+  syncHabitReminderDocs();
   Object.values(habitReminderTimers).forEach(t=> clearTimeout(t));
   data.habits.forEach(h=>{
     if(!h.remindTime) return;
@@ -4295,7 +4313,7 @@ function scheduleHabitReminders(){
     habitReminderTimers[h.id] = setTimeout(()=>{
       /* 到時間用 id 重新找一次最新的資料(這段時間習慣可能被改掉、刪掉,或已經打過卡) */
       const cur = data && data.habits.find(x=>x.id===h.id);
-      if(cur && cur.remindTime===h.remindTime && !habitHasLog(cur, todayStr())){
+      if(cur && cur.remindTime===h.remindTime && habitScheduledOn(cur, todayStr()) && !habitHasLog(cur, todayStr())){
         if('Notification' in window && Notification.permission==='granted'){
           new Notification('習慣提醒：'+cur.name, {body:'今天還沒打卡喔', icon:'icon-192.png', badge:'icon-notification.png'});
         }else{
@@ -7311,7 +7329,7 @@ function showDailyBrief(withGreeting, briefOff){
   const day = todayStr();
   const dueTasks = data.tasks.filter(t=> t.status!=='done' && t.dueDate && t.dueDate<=day);
   const ongoing = data.tasks.filter(t=> t.status!=='done' && isRangeTask(t) && t.startDate<=day && t.dueDate>day);     /* 進行中的時段事項(還沒到結束日) */
-  const pendingHabits = data.habits.filter(h=> !habitHasLog(h, day));
+  const pendingHabits = data.habits.filter(h=> habitScheduledOn(h, day) && !habitHasLog(h, day));     /* 只列「排在今天」的習慣(只設週日的,別天不用出現) */
 
   let html = `<h2 style="margin:0 0 16px;font-size:18px;">今天要做的事</h2>`;
   if(dueTasks.length===0 && ongoing.length===0 && pendingHabits.length===0){
@@ -7608,11 +7626,13 @@ function openSummary(range){
     (t.subtasks||[]).forEach(st=>{ if(inRange(st)) completedTasks++; });
   });
 
+  /* 達成率只算「排在那幾天」的:每週日的習慣,一週只有 1 天要做,做了就是 100% */
   const habitRows = data.habits.map(h=>{
-    const doneDays = dateList.filter(d=> habitHasLog(h,d)).length;
-    const rate = Math.round((doneDays/days)*100);
-    return {name:h.name, rate};
-  });
+    const sched = dateList.filter(d=> habitScheduledOn(h,d));
+    if(!sched.length) return null;
+    const doneDays = sched.filter(d=> habitHasLog(h,d)).length;
+    return {name:h.name, rate:Math.round((doneDays/sched.length)*100)};
+  }).filter(Boolean);
   const avgRate = habitRows.length ? Math.round(habitRows.reduce((s,h)=>s+h.rate,0)/habitRows.length) : 0;
 
   const noteCount = data.quickNotes.filter(n=>{
